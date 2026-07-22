@@ -9,5 +9,11 @@ otl_Subtable *otl_read_gsub_multi(const font_file_pointer data, uint32_t tableLe
 json_value *otl_gsub_dump_multi(const otl_Subtable *_subtable);
 otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable, const otfcc_Options *options);
 caryll_Buffer *otfcc_build_gsub_multi_subtable(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics);
+// Builds one or more subtable buffers, splitting when a single subtable would
+// exceed the 16-bit internal offset limit. Returns a NEW'd array of *count
+// buffers (caller owns the array and the buffers).
+caryll_Buffer **otfcc_build_gsub_multi_subtable_split(const otl_Subtable *_subtable,
+                                                      otl_BuildHeuristics heuristics,
+                                                      tableid_t *count);
 
 #endif

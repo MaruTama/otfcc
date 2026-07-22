@@ -123,4 +123,7 @@ $(CFF_ROUNDTRIP_TARGETS_FJ) : cffroundtriptest-fj-% : tests/payload/%.json
 	@node tests/ttf-roundtrip-test.js build/fj-$(basename $(notdir $<)).5o3.json build/fj-$(basename $(notdir $<)).3o3.json
 	-@rm build/fj-$(basename $(notdir $<)).2o3.otf build/fj-$(basename $(notdir $<)).3o3.json build/fj-$(basename $(notdir $<)).4o3.otf build/fj-$(basename $(notdir $<)).5o3.json
 
-test: ttfroundtriptest cffroundtriptest cffopcodetest
+gsubalternatetest:
+	@node tests/gsub-alternate-large-test.js bin/release-x64 tests/payload/iosevka-r.ttf
+
+test: ttfroundtriptest cffroundtriptest cffopcodetest gsubalternatetest

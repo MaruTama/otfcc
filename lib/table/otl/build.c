@@ -61,6 +61,48 @@ static tableid_t _declare_lookup_writer(otl_LookupType type, _otl_Builder fn,
 		written = _declare_lookup_writer(type, fn, lookup, subtables, lastOffset,                  \
 		                                 preferExtensionForThisLUT, heuristics);
 
+// A split-capable builder may emit more than one output buffer per input
+// subtable (used to keep each written subtable under the 16-bit offset limit).
+typedef caryll_Buffer **(*_otl_SplitBuilder)(const otl_Subtable *_subtable,
+                                             otl_BuildHeuristics heuristics, tableid_t *count);
+
+static tableid_t _declare_lookup_writer_split(otl_LookupType type, _otl_SplitBuilder fn,
+                                              const otl_Lookup *lookup, caryll_Buffer ***subtables,
+                                              size_t *lastOffset, bool *preferExtensionForThisLUT,
+                                              otl_BuildHeuristics heuristics) {
+	if (lookup->type == type) {
+		caryll_Buffer **buffers = NULL;
+		tableid_t total = 0;
+		size_t totalBufSizeShort = 0;
+		for (tableid_t j = 0; j < lookup->subtables.length; j++) {
+			tableid_t nPart = 0;
+			caryll_Buffer **part = fn(lookup->subtables.items[j], heuristics, &nPart);
+			for (tableid_t k = 0; k < nPart; k++) {
+				RESIZE(buffers, total + 1);
+				buffers[total] = part[k];
+				totalBufSizeShort += part[k]->size;
+				total++;
+			}
+			FREE(part);
+		}
+		*subtables = buffers;
+		if (totalBufSizeShort > LARGE_SUBTABLE_LIMIT) {
+			*lastOffset += 8 * total;
+			*preferExtensionForThisLUT = true;
+		} else {
+			*lastOffset += totalBufSizeShort;
+			*preferExtensionForThisLUT = false;
+		}
+		return total;
+	}
+	return 0;
+}
+
+#define LOOKUP_WRITER_SPLIT(type, fn)                                                              \
+	if (!written)                                                                                  \
+		written = _declare_lookup_writer_split(type, fn, lookup, subtables, lastOffset,            \
+		                                       preferExtensionForThisLUT, heuristics);
+
 static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtables,
                                size_t *lastOffset, bool *preferExtensionForThisLUT,
                                otl_BuildHeuristics heuristics) {
@@ -70,8 +112,8 @@ static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtab
 
 	tableid_t written = 0;
 	LOOKUP_WRITER(otl_type_gsub_single, otfcc_build_gsub_single_subtable);
-	LOOKUP_WRITER(otl_type_gsub_multiple, otfcc_build_gsub_multi_subtable);
-	LOOKUP_WRITER(otl_type_gsub_alternate, otfcc_build_gsub_multi_subtable);
+	LOOKUP_WRITER_SPLIT(otl_type_gsub_multiple, otfcc_build_gsub_multi_subtable_split);
+	LOOKUP_WRITER_SPLIT(otl_type_gsub_alternate, otfcc_build_gsub_multi_subtable_split);
 	LOOKUP_WRITER(otl_type_gsub_ligature, otfcc_build_gsub_ligature_subtable);
 	LOOKUP_WRITER(otl_type_gsub_reverse, otfcc_build_gsub_reverse);
 	LOOKUP_WRITER(otl_type_gpos_single, otfcc_build_gpos_single);
