@@ -202,12 +202,15 @@ static size_t otfcc_bkblock_size(bk_Block *b) {
 static uint32_t getoffset(size_t *offsets, bk_Block *ref, bk_Block *target, uint8_t bits) {
 	size_t offref = offsets[ref->_index];
 	size_t offtgt = offsets[target->_index];
-	/*
-	if (offtgt < offref || (offtgt - offref) >> bits) {
-	    fprintf(stderr, "[otfcc-fea] Warning : Unable to fit offset %d into %d bits.\n",
-	(int32_t)(offtgt - offref), bits);
+	if (bits < 32 && (offtgt < offref || (offtgt - offref) >> bits)) {
+		// The offset does not fit into `bits` bits and will be silently
+		// truncated below, corrupting the output. This should not happen once
+		// oversized subtables are split (see #1); warn loudly if it ever does.
+		fprintf(stderr,
+		        "[otfcc-bk] Warning : Unable to fit offset %d into %d bits; output may be "
+		        "corrupted.\n",
+		        (int32_t)(offtgt - offref), bits);
 	}
-	*/
 	return (uint32_t)(offtgt - offref);
 }
 static int64_t getoffset_untangle(size_t *offsets, bk_Block *ref, bk_Block *target) {

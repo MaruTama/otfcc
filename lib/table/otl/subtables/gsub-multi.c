@@ -68,18 +68,20 @@ otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable, const otfcc_Opti
 	return (otl_Subtable *)st;
 }
 
-caryll_Buffer *otfcc_build_gsub_multi_subtable(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics) {
-	const subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
+// Builds a single Multiple/Alternate substitution subtable covering the
+// entries in the half-open range [start, end).
+static caryll_Buffer *buildGsubMultiSubtableRange(const subtable_gsub_multi *subtable,
+                                                  glyphid_t start, glyphid_t end) {
 	otl_Coverage *cov = Coverage.create();
-	for (glyphid_t j = 0; j < subtable->length; j++) {
+	for (glyphid_t j = start; j < end; j++) {
 		Coverage.push(cov, Handle.dup(subtable->items[j].from));
 	}
 
 	bk_Block *root = bk_new_Block(b16, 1,                                          // format
 	                              p16, bk_newBlockFromBuffer(Coverage.build(cov)), // coverage
-	                              b16, subtable->length,                           // quantity
+	                              b16, end - start,                                // quantity
 	                              bkover);
-	for (glyphid_t j = 0; j < subtable->length; j++) {
+	for (glyphid_t j = start; j < end; j++) {
 		bk_Block *b = bk_new_Block(b16, subtable->items[j].to->numGlyphs, bkover);
 		for (glyphid_t k = 0; k < subtable->items[j].to->numGlyphs; k++) {
 			bk_push(b, b16, subtable->items[j].to->glyphs[k].index, bkover);
@@ -88,4 +90,54 @@ caryll_Buffer *otfcc_build_gsub_multi_subtable(const otl_Subtable *_subtable, ot
 	}
 	Coverage.free(cov);
 	return bk_build_Block(root);
+}
+
+// A Multiple/Alternate subtable uses 16-bit internal offsets (Coverage offset
+// and one offset per Sequence/AlternateSet). When a single subtable grows past
+// 64KB these offsets silently overflow, corrupting the whole table (see #1).
+// We therefore split large subtables into several, each staying below the limit.
+// Keep a safety margin under 0xFFFF because the per-entry size below is an
+// upper-bound estimate (Coverage.build may pick the smaller of format 1 / 2).
+#define GSUB_MULTI_SUBTABLE_SIZE_LIMIT 0xFF00
+
+caryll_Buffer **otfcc_build_gsub_multi_subtable_split(const otl_Subtable *_subtable,
+                                                      otl_BuildHeuristics heuristics,
+                                                      tableid_t *count) {
+	const subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
+
+	caryll_Buffer **parts = NULL;
+	tableid_t nParts = 0;
+	glyphid_t start = 0;
+	while (start < subtable->length) {
+		// Fixed subtable overhead: format(2) + coverageOffset(2) + quantity(2).
+		// Coverage upper bound (format 1): 4 + 2 * n. Per Sequence offset: 2.
+		size_t size = 6 + 4;
+		glyphid_t end = start;
+		while (end < subtable->length) {
+			// cost of adding entry `end`: coverage glyph (2) + sequence offset (2)
+			//   + AlternateSet/Sequence table: count(2) + numGlyphs * 2
+			size_t entrySize = 2 + 2 + 2 + (size_t)subtable->items[end].to->numGlyphs * 2;
+			// Always keep at least one entry per subtable to guarantee progress.
+			if (end > start && size + entrySize > GSUB_MULTI_SUBTABLE_SIZE_LIMIT) break;
+			size += entrySize;
+			end++;
+		}
+		RESIZE(parts, nParts + 1);
+		parts[nParts] = buildGsubMultiSubtableRange(subtable, start, end);
+		nParts++;
+		start = end;
+	}
+	if (!nParts) {
+		// Empty subtable: still emit one (empty) buffer to preserve behavior.
+		RESIZE(parts, 1);
+		parts[0] = buildGsubMultiSubtableRange(subtable, 0, 0);
+		nParts = 1;
+	}
+	*count = nParts;
+	return parts;
+}
+
+caryll_Buffer *otfcc_build_gsub_multi_subtable(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics) {
+	const subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
+	return buildGsubMultiSubtableRange(subtable, 0, subtable->length);
 }
