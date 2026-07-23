@@ -42,10 +42,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Generate compile_commands.json
         run: OS=linux ./rust-migration/gen-compile-commands.sh
+      # c2rust chdir's into each entry's "directory" field (build/ninja) to
+      # resolve the relative paths in its "command", so that directory must
+      # exist verbatim in the next job too, not just compile_commands.json.
       - uses: actions/upload-artifact@v4
         with:
           name: compile_commands
-          path: compile_commands.json
+          path: |
+            compile_commands.json
+            build/ninja/
           retention-days: 1
 
   # Native arm64 (GitHub-hosted, free for public repos): c2rust must run
