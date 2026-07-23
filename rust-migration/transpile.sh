@@ -49,6 +49,13 @@ c2rust transpile "${DB}" \
 sed -i 's/let ref mut \(fresh[0-9]*\) =/let \1 = \&raw mut/' \
 	"${WORK}/src/dep/extern/sds.rs"
 
+# Runtime: the vendored dtoa indexes kPow10 (a [u32; 10]) with -kappa, which can
+# reach 12 for high-precision doubles. In C that reads adjacent memory (a large
+# value that makes GrisuRound a no-op); Rust bounds-checks and panics. Clamp the
+# index to the array bounds, reproducing C's effective (no-op-rounding) behavior.
+sed -i 's/kPow10\[-kappa as usize\]/kPow10[(-kappa as usize).min(9)]/; s/kPow10\[kappa as usize\]/kPow10[(kappa as usize).min(9)]/' \
+	"${WORK}/src/dep/extern/emyg_dtoa/emyg_dtoa.rs"
+
 echo "==> Copying finished crate to ${DEST}"
 rm -rf "${DEST}"
 mkdir -p "$(dirname "${DEST}")"
