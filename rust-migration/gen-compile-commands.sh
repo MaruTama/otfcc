@@ -18,6 +18,15 @@ export PREMAKE5="${BINDIR}/premake5"
 export BD_NINJA="${BINDIR}/ninja"
 chmod +x "${PREMAKE5}" "${BD_NINJA}" 2>/dev/null || true
 
+# quick.make's mf-ninja-linux target passes --cc=$(CC) to premake5, which
+# needs an actual compiler name (gcc/clang) — Make's built-in default
+# ($(CC) = "cc") isn't one, and premake5 rejects it ("invalid value 'cc' for
+# option 'cc'"). Only relevant for OS=linux; the macOS path doesn't pass --cc.
+if [ "${OS}" = "linux" ]; then
+	export CC="${CC:-gcc}"
+	if [ "${CC}" = "cc" ]; then export CC=gcc; fi
+fi
+
 make -f quick.make "${NINJA_TARGET}"
 ( cd build/ninja && "${BD_NINJA}" -t compdb cc ) > /tmp/compdb.full.json
 node rust-migration/filter-compdb.js /tmp/compdb.full.json compile_commands.json
