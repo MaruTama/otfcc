@@ -32,5 +32,10 @@ bin/
 .vscode/
 _test
 
+# c2rust migration: generated / machine-specific artifacts
+compile_commands.json
+rust-migration/transpiled/
+
 # Makefile is for local dev only
 makefile
+rust-migration/.compile_commands.native.json
