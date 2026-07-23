@@ -68,6 +68,10 @@ didn't.
   font (fvar + gvar, one `wght` axis, two masters, via fontTools APIs — no
   external download) to exercise the gvar delta-application path, which none
   of `tests/payload/*.ttf` has.
+- `test-dll.py` — exercises the `otfccdll` C API (`otfccbuild_json_otf` /
+  `otfcc_get_buf_len` / `otfcc_get_buf_data` / `otfccbuild_free_otfbuf`) via
+  `ctypes`, against either the C `libotfccdll.{dylib,so}` or the Rust
+  `cdylib`, to compare output byte-for-byte.
 
 Generated artifacts (`compile_commands.json`, `rust-migration/transpiled/`)
 are gitignored — nothing generated is committed.
@@ -139,6 +143,17 @@ pre-existing bug in the C CFF interpreter (verified: the C binary also exits
 SIGSEGV on them), not something the Rust translation introduced or needs to
 fix here.
 
+**`otfccdll` (cdylib) coverage**: the C build (`premake5.lua`) builds
+`otfccdll.c`'s exported functions as a `SharedLib`; `transpile.sh` adds
+`cdylib` to the crate's `crate-type` so the same `#[no_mangle] extern "C"`
+functions are callable the same way. Verified via `test-dll.py` (ctypes):
+calling `otfccbuild_json_otf` through the Rust `.so` and the C
+`.dylib`/`.so` on the same JSON input produces output that's byte-identical
+except at the 3 bytes that also differ between two separate invocations of
+the *C* library alone (the DLL API doesn't accept `--keep-modified-time`, so
+`head.created`/`modified`/`checkSumAdjustment` legitimately vary run to run)
+— i.e. functionally identical.
+
 > Non-obvious gotcha (handled by `transpile.sh`): the compile database
 > **must** live on the mounted filesystem, not the container's `/tmp`. With
 > the byte-identical DB on `/tmp`, c2rust panics reliably ("Type conversion
@@ -151,7 +166,5 @@ fix here.
 ## Next steps (Phase 2: idiomatization)
 
 - Wire steps 1–5 into CI alongside the existing C build.
-- Test against `otfccdll` payloads (compiles into the lib but untested as a
-  cdylib).
 - Begin replacing `unsafe`, macro-expanded, C-shaped code with idiomatic Rust,
   module by module, keeping the round-trip tests green throughout.
