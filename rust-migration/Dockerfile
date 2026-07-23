@@ -4,7 +4,9 @@
 # emulation hits a fatal GNU Make jobserver bug while building c2rust's vendored
 # tinycbor. Native avoids emulation entirely.
 #
-# Uses the modern coherent stack — Ubuntu 24.04 (LLVM/Clang 18) + latest c2rust.
+# Uses the modern coherent stack — Ubuntu 24.04 (LLVM/Clang 17) + c2rust 0.22.1.
+# (clang-18 tripped an unrelated c2rust ast-exporter bug on some ordinary code
+# in this codebase; clang-17 didn't.)
 #
 # c2rust cannot represent the SIMD vector-math declarations in aarch64 glibc's
 # <bits/math-vector.h> (the `_ZGVnN..` libm variants) and panics with "Could not
