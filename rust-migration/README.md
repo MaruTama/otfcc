@@ -63,21 +63,77 @@ non-idiomatic, and **not** committed.
 - `Dockerfile` — c2rust 0.16.0 on the project's known-good CI toolchain.
 - `transpile.sh` — in-container: `c2rust transpile … -b otfccdump -b otfccbuild -b otfccdll`.
 
-## Status
+## Status: Phase 1 complete
 
 The pipeline transpiles **all 118 translation units** to Rust in one pass with
 c2rust 0.22.1 on clang-17, emitting a full Cargo crate (`Cargo.toml`, `lib.rs`,
-`build.rs`, the three binaries, ~200k+ LOC of unsafe Rust).
+`build.rs`, the `otfccdump`/`otfccbuild` binaries — `otfccdll` compiles into
+the lib since it has no `main`).
 
-> Non-obvious gotcha (handled by `transpile.sh`): the compile database **must**
-> live on the mounted filesystem, not the container's `/tmp`. With the
-> byte-identical DB on `/tmp`, c2rust panics reliably ("Type conversion not
-> implemented for TagTypeUnknown"); on the bind mount it always succeeds.
+The crate **builds and its round-trips are byte-for-byte correct**: the Rust
+binaries pass the project's own `tests/ttf-roundtrip-test.js` on all 6 TTF
+payloads, the CFF payload `KRName-Regular`, and both from-JSON CFF payloads.
+`rust-migration/test.sh` + `compare-roundtrips.js` reproduce this from a clean
+transpile.
 
-## Next steps (Phase 1 completion)
+Two fonts (`Cormorant-Medium.otf`, `WorkSans-Regular.otf`) crash both the C
+*and* Rust `otfccdump` on this arm64 host with a stack overflow — a
+pre-existing bug in the C CFF interpreter (verified: the C binary also exits
+SIGSEGV on them), not something the Rust translation introduced or needs to
+fix here.
 
-- `cargo +nightly build` the transpiled project; fix whatever c2rust could not
-  translate cleanly (unsupported syntax, macro-expanded vector helpers, link
-  flags).
-- Run the existing Node round-trip suite against the Rust binaries.
-- Wire a CI job (cargo build + round-trip) alongside the C build.
+> Non-obvious gotchas (all handled by `transpile.sh`):
+> - The compile database **must** live on the mounted filesystem, not the
+>   container's `/tmp`. With the byte-identical DB on `/tmp`, c2rust panics
+>   reliably ("Type conversion not implemented for TagTypeUnknown"); on the
+>   bind mount it always succeeds.
+> - Build with the **pinned nightly** in `rust-toolchain.toml`, not
+>   `cargo +nightly` (the image's latest nightly) — c2rust's va_list output
+>   only matches the pinned toolchain's API.
+> - c2rust sometimes drops the `unsafe extern "C"` ABI on struct-returning
+>   function-pointer calls (`fix-transmute-abi.py`) and mistranslates
+>   `pos_t -> uintN_t` implicit narrowing casts (`fix-float-narrowing.py`),
+>   both silently corrupting output without crashing. See the two scripts for
+>   the exact mechanism and how each was found.
+
+## Usage
+
+1. Generate the compilation database on the host (macOS shown; `OS=linux` on Linux):
+
+   ```bash
+   ./rust-migration/gen-compile-commands.sh
+   ```
+
+2. Build the transpiler image once (native arm64; slow — it compiles c2rust
+   from source):
+
+   ```bash
+   docker build -t otfcc-c2rust -f rust-migration/Dockerfile rust-migration/
+   ```
+
+3. Transpile:
+
+   ```bash
+   docker run --rm -v "$PWD":"$PWD" -w "$PWD" \
+       --entrypoint bash otfcc-c2rust rust-migration/transpile.sh
+   ```
+
+4. Build the crate and run the dump/build cycles:
+
+   ```bash
+   docker run --rm -v "$PWD":"$PWD" -w "$PWD" \
+       --entrypoint bash otfcc-c2rust rust-migration/test.sh
+   ```
+
+5. Compare round-trip stability on the host (needs `node`):
+
+   ```bash
+   node rust-migration/compare-roundtrips.js
+   ```
+
+## Next steps (Phase 2: idiomatization)
+
+- Wire steps 1–5 into CI alongside the existing C build.
+- Test against variable-font and `otfccdll` payloads (untested so far).
+- Begin replacing `unsafe`, macro-expanded, C-shaped code with idiomatic Rust,
+  module by module, keeping the round-trip tests green throughout.
