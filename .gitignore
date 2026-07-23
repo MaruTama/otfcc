@@ -38,3 +38,4 @@ rust-migration/transpiled/
 
 # Makefile is for local dev only
 makefile
+rust-migration/.compile_commands.native.json

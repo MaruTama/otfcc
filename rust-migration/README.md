@@ -37,17 +37,18 @@ build.
 
    This writes `compile_commands.json` (118 release-x64 translation units).
 
-2. Build the transpiler image once (slow: it compiles c2rust from source):
+2. Build the transpiler image once (native arm64; slow — it compiles c2rust
+   from source):
 
    ```bash
-   docker build --platform linux/amd64 -t otfcc-c2rust -f rust-migration/Dockerfile rust-migration/
+   docker build -t otfcc-c2rust -f rust-migration/Dockerfile rust-migration/
    ```
 
 3. Run the transpile. The repo is mounted at its **host path** so the absolute
    paths in `compile_commands.json` resolve unchanged:
 
    ```bash
-   docker run --rm --platform linux/amd64 -v "$PWD":"$PWD" -w "$PWD" \
+   docker run --rm -v "$PWD":"$PWD" -w "$PWD" \
        --entrypoint bash otfcc-c2rust rust-migration/transpile.sh
    ```
 
@@ -64,19 +65,17 @@ non-idiomatic, and **not** committed.
 
 ## Status
 
-- The pipeline transpiles **all 116 of otfcc's own files** to Rust
-  (~207k LOC) cleanly with c2rust 0.22.1 on **clang-17**.
-- The two vendored json-parser files (`dep/extern/json.c`,
-  `dep/extern/json-builder.c`) trip a c2rust ast-exporter bug that only fires
-  in the *combined* translation-unit context ("Unsupported implicit cast:
-  Dependent" / "Missing child"); each file transpiles fine in isolation. The
-  clang version (14/17/18) changes which node trips it but not the outcome.
-  These are third-party and are the natural first candidates to replace with a
-  Rust JSON crate in Phase 2.
+The pipeline transpiles **all 118 translation units** to Rust in one pass with
+c2rust 0.22.1 on clang-17, emitting a full Cargo crate (`Cargo.toml`, `lib.rs`,
+`build.rs`, the three binaries, ~200k+ LOC of unsafe Rust).
+
+> Non-obvious gotcha (handled by `transpile.sh`): the compile database **must**
+> live on the mounted filesystem, not the container's `/tmp`. With the
+> byte-identical DB on `/tmp`, c2rust panics reliably ("Type conversion not
+> implemented for TagTypeUnknown"); on the bind mount it always succeeds.
 
 ## Next steps (Phase 1 completion)
 
-- Resolve the json-parser files (two-pass transpile, or swap for a Rust crate).
 - `cargo +nightly build` the transpiled project; fix whatever c2rust could not
   translate cleanly (unsupported syntax, macro-expanded vector helpers, link
   flags).

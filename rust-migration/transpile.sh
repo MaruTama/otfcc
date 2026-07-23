@@ -4,11 +4,18 @@
 # (generated on the host) resolve unchanged. No premake/ninja/node needed here.
 #
 # Invoke as:
-#   docker run --rm --platform linux/amd64 -v "$PWD":"$PWD" -w "$PWD" \
+#   docker run --rm -v "$PWD":"$PWD" -w "$PWD" \
 #       --entrypoint bash otfcc-c2rust rust-migration/transpile.sh
 set -euo pipefail
 
-OUT="rust-migration/transpiled"
+DEST="rust-migration/transpiled"
+# CRITICAL: the compile database must live on the *mounted* filesystem, not on
+# the container's tmpfs. With the DB on /tmp, c2rust panics reliably and
+# reproducibly ("Type conversion not implemented for TagTypeUnknown") partway
+# through; with the byte-identical DB on the bind mount it always succeeds.
+# (Likely c2rust's clang AST-exporter writes intermediates relative to the DB.)
+DB="rust-migration/.compile_commands.native.json"
+WORK=/tmp/otfcc-rust
 
 if [ ! -f compile_commands.json ]; then
 	echo "ERROR: compile_commands.json not found in $(pwd)." >&2
@@ -16,23 +23,28 @@ if [ ! -f compile_commands.json ]; then
 	exit 1
 fi
 
-# The host database was produced for an x86_64 config (-m64). This image is
-# native arm64 (c2rust ignores --target/--sysroot, so it parses the native
-# aarch64 headers), so strip -m64 to let clang target the native arch. The
-# image already neutralizes aarch64's SIMD <bits/math-vector.h>, which c2rust
-# cannot represent. x86_64 and arm64 Linux are both LP64, so the Rust matches.
-sed 's/ -m64//g' compile_commands.json > /tmp/compile_commands.native.json
+# The host database targets an x86_64 config (-m64). This image is native arm64
+# and c2rust ignores --target/--sysroot, so it parses the native aarch64 headers;
+# strip -m64 to let clang target the native arch. The image already neutralizes
+# aarch64's SIMD <bits/math-vector.h>, which c2rust cannot represent. x86_64 and
+# arm64 Linux are both LP64, so the transpiled Rust is equivalent.
+sed 's/ -m64//g' compile_commands.json > "${DB}"
 
-echo "==> Transpiling $(grep -c '"file"' /tmp/compile_commands.native.json) translation units (native aarch64)"
-rm -rf "${OUT}"
-
+echo "==> Transpiling $(grep -c '"file"' "${DB}") translation units"
+rm -rf "${WORK}"
 # --emit-build-files writes Cargo.toml/build.rs; -b marks binary entrypoints.
-c2rust transpile /tmp/compile_commands.native.json \
+c2rust transpile "${DB}" \
 	--emit-build-files \
-	--output-dir "${OUT}" \
+	--output-dir "${WORK}" \
 	-b otfccdump \
 	-b otfccbuild \
 	-b otfccdll
 
-echo "==> Transpile complete. Output in ${OUT}"
-ls -la "${OUT}" | head -40
+echo "==> Copying finished crate to ${DEST}"
+rm -rf "${DEST}"
+mkdir -p "$(dirname "${DEST}")"
+cp -r "${WORK}" "${DEST}"
+rm -f "${DB}"
+
+echo "==> Transpile complete. Crate at ${DEST}"
+echo "    modules: $(find "${DEST}" -name '*.rs' | wc -l)"
