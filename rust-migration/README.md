@@ -131,9 +131,28 @@ fix here.
    node rust-migration/compare-roundtrips.js
    ```
 
+## Variable-font (gvar) coverage
+
+None of `tests/payload/*.ttf` has an `fvar` table, so the gvar delta-application
+path (`applyPolymorphism` in `lib/table/glyf/read.c`) was completely untested
+by the payload matrix above. `rust-migration/make-test-variable-font.py`
+builds a minimal self-contained variable font (one `wght` axis, two masters,
+via fontTools — no external download) to close that gap.
+
+Result: **C and Rust are byte-identical at every stage** of a full two-cycle
+round trip (original dump, first build, post-build dump, second build,
+second post-build dump) — including a pre-existing otfcc limitation this
+test surfaced: `otfccbuild` does not reconstruct `fvar`/`gvar` from JSON
+containing delta-annotated coordinates (the variable dimension is lost after
+one build, and the affected coordinates collapse to 0). This reproduces
+**identically** in C and Rust (same bytes), so it's a gap in otfcc's existing
+build-side variable-font support, not a migration regression — out of scope
+to fix here.
+
 ## Next steps (Phase 2: idiomatization)
 
 - Wire steps 1–5 into CI alongside the existing C build.
-- Test against variable-font and `otfccdll` payloads (untested so far).
+- Test against `otfccdll` payloads (compiles into the lib but untested as a
+  cdylib).
 - Begin replacing `unsafe`, macro-expanded, C-shaped code with idiomatic Rust,
   module by module, keeping the round-trip tests green throughout.
