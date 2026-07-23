@@ -1,0 +1,84 @@
+# otfcc → Rust migration (c2rust) — Phase 1
+
+This directory holds the tooling for the c2rust-based Rust migration tracked in
+[issue #2](https://github.com/MaruTama/otfcc/issues/2). Phase 1 produces a
+**baseline transpilation**: an unsafe, non-idiomatic Rust port that builds and
+passes the existing round-trip tests. Idiomatic refactoring is Phase 2.
+
+The C-side fix for [issue #1](https://github.com/MaruTama/otfcc/issues/1)
+(large `gsub_alternate` corruption) landed separately and is carried into the
+transpiled code automatically, since it is part of the C sources being
+translated.
+
+## Why Docker / Linux, and this base image
+
+c2rust is best supported on Linux with a known LLVM. Building it from a stock
+Ubuntu proved brittle (Clang AST-API drift, old lockfile vs new rustc), so the
+image is based on the **c2rust project's own CI image**
+`immunant/c2rust:ubuntu-focal-latest` (Ubuntu 20.04, LLVM 10,
+rust `nightly-2022-08-08`) and just installs the matching **c2rust 0.16.0**.
+
+The image targets `linux/amd64`: the base is amd64 and the compilation database
+targets `x86_64` (`-m64`), keeping the transpiled Rust consistent with the C
+build.
+
+> If the sandboxed shell makes `docker` hang on "load metadata" (credential
+> helper), export `DOCKER_HOST=unix://$HOME/.docker/run/docker.sock` and
+> `DOCKER_CONFIG=<dir with config.json = {}>` to bypass the helper for
+> anonymous pulls.
+
+## Usage
+
+1. Generate the compilation database on the host (macOS shown; `OS=linux` on Linux):
+
+   ```bash
+   ./rust-migration/gen-compile-commands.sh
+   ```
+
+   This writes `compile_commands.json` (118 release-x64 translation units).
+
+2. Build the transpiler image once (slow: it compiles c2rust from source):
+
+   ```bash
+   docker build --platform linux/amd64 -t otfcc-c2rust -f rust-migration/Dockerfile rust-migration/
+   ```
+
+3. Run the transpile. The repo is mounted at its **host path** so the absolute
+   paths in `compile_commands.json` resolve unchanged:
+
+   ```bash
+   docker run --rm --platform linux/amd64 -v "$PWD":"$PWD" -w "$PWD" \
+       --entrypoint bash otfcc-c2rust rust-migration/transpile.sh
+   ```
+
+Output lands in `rust-migration/transpiled/` (a Cargo project with `Cargo.toml`,
+`build.rs`, and one Rust module per C translation unit). It is generated,
+non-idiomatic, and **not** committed.
+
+## Pipeline pieces
+
+- `gen-compile-commands.sh` — host: premake → `ninja -t compdb cc` → filter.
+- `filter-compdb.js` — reduce to the release-x64 C config.
+- `Dockerfile` — c2rust 0.16.0 on the project's known-good CI toolchain.
+- `transpile.sh` — in-container: `c2rust transpile … -b otfccdump -b otfccbuild -b otfccdll`.
+
+## Status
+
+- The pipeline transpiles **all 116 of otfcc's own files** to Rust
+  (~207k LOC) cleanly with c2rust 0.22.1 on **clang-17**.
+- The two vendored json-parser files (`dep/extern/json.c`,
+  `dep/extern/json-builder.c`) trip a c2rust ast-exporter bug that only fires
+  in the *combined* translation-unit context ("Unsupported implicit cast:
+  Dependent" / "Missing child"); each file transpiles fine in isolation. The
+  clang version (14/17/18) changes which node trips it but not the outcome.
+  These are third-party and are the natural first candidates to replace with a
+  Rust JSON crate in Phase 2.
+
+## Next steps (Phase 1 completion)
+
+- Resolve the json-parser files (two-pass transpile, or swap for a Rust crate).
+- `cargo +nightly build` the transpiled project; fix whatever c2rust could not
+  translate cleanly (unsupported syntax, macro-expanded vector helpers, link
+  flags).
+- Run the existing Node round-trip suite against the Rust binaries.
+- Wire a CI job (cargo build + round-trip) alongside the C build.
