@@ -37,8 +37,17 @@ c2rust transpile "${DB}" \
 	--emit-build-files \
 	--output-dir "${WORK}" \
 	-b otfccdump \
-	-b otfccbuild \
-	-b otfccdll
+	-b otfccbuild
+# Note: otfccdll.c is the shared-library entry (no main), so it is NOT a -b
+# binary target; it is compiled into the library.
+
+# --- Post-transpile fixups so the crate compiles (build with the pinned
+# nightly in rust-toolchain.toml; c2rust output needs release / overflow-checks
+# off at runtime) ---
+# c2rust emits `let ref mut freshN = (*packed).len;` which takes a reference to
+# a packed-struct field — a hard error (E0793). Rewrite to a raw pointer.
+sed -i 's/let ref mut \(fresh[0-9]*\) =/let \1 = \&raw mut/' \
+	"${WORK}/src/dep/extern/sds.rs"
 
 echo "==> Copying finished crate to ${DEST}"
 rm -rf "${DEST}"
