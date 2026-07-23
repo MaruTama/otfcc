@@ -39,7 +39,14 @@ c2rust transpile "${DB}" \
 	-b otfccdump \
 	-b otfccbuild
 # Note: otfccdll.c is the shared-library entry (no main), so it is NOT a -b
-# binary target; it is compiled into the library.
+# binary target; it is compiled into the library. The C build (premake5.lua)
+# builds it as a SharedLib, so add "cdylib" alongside c2rust's default
+# staticlib+rlib crate-type — otfccdll.c's #[no_mangle] extern "C" fns
+# (otfccbuild_json_otf / otfcc_get_buf_len / otfcc_get_buf_data /
+# otfccbuild_free_otfbuf) are already in lib.rs and just need a cdylib
+# target to be callable from outside the crate.
+sed -i 's/crate-type = \["staticlib", "rlib"\]/crate-type = ["staticlib", "rlib", "cdylib"]/' \
+	"${WORK}/Cargo.toml"
 
 # --- Post-transpile fixups so the crate compiles (build with the pinned
 # nightly in rust-toolchain.toml; c2rust output needs release / overflow-checks

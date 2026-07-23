@@ -70,6 +70,12 @@ for f in ${CFF_FJ_PAYLOADS}; do
 	run_fj_cycle "${f}" otf "tests/payload/${f}.json"
 done
 
+echo "==> Testing the otfccdll cdylib API (otfccbuild_json_otf et al.) via ctypes"
+python3 "$(dirname "$0")/test-dll.py" \
+	"${BIN}/libotfcc_rust.so" \
+	"${BUILD}/Molengo-Regular.1.json" \
+	"${BUILD}/dll-otfccbuild.otf"
+
 echo "==> All cycles completed without crashing."
 echo "==> Run stability comparisons on the host (needs node, outside this container):"
 echo "    node rust-migration/compare-roundtrips.js"
