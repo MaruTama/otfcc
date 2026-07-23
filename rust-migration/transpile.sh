@@ -56,6 +56,30 @@ sed -i 's/let ref mut \(fresh[0-9]*\) =/let \1 = \&raw mut/' \
 sed -i 's/kPow10\[-kappa as usize\]/kPow10[(-kappa as usize).min(9)]/; s/kPow10\[kappa as usize\]/kPow10[(kappa as usize).min(9)]/' \
 	"${WORK}/src/dep/extern/emyg_dtoa/emyg_dtoa.rs"
 
+# For zero-arg, struct-returning function-pointer-field calls that get an
+# outer typedef-alias cast (e.g. `Handle.empty()` returning otfcc_Handle,
+# assigned to an otfcc_GlyphHandle field), c2rust sometimes emits
+#   ::core::mem::transmute::<_, fn(..) -> T>( fnptr_after_.expect(..) )( )
+# which silently drops the `unsafe extern "C"` ABI, corrupting every such call
+# (observed: struct-by-value returns come back with garbage fields — e.g. a
+# glyph handle's `name` field ends up holding an unrelated function's address,
+# leading to `free(): invalid pointer` aborts). The wrapped expression already
+# has the correct `unsafe extern "C" fn(..) -> T` type, so the transmute is
+# both needless and the actual bug; strip it, calling the function pointer
+# directly. See rust-migration/fix-transmute-abi.py for the implementation.
+python3 "$(dirname "$0")/fix-transmute-abi.py" "${WORK}"
+
+# Runtime: c2rust mistranslates the IMPLICIT `pos_t` (double) -> `uintN_t`
+# narrowing conversion at bufwriteNNb() call sites that have no explicit
+# intermediate cast in the C source (e.g. `bufwrite16b(buf,
+# hmtx->metrics[j].lsb)`). It emits a direct `lsb as uint16_t`, which uses
+# Rust's SATURATING float->unsigned semantics (any negative value becomes 0),
+# whereas C's actual runtime behavior converts through a signed integer first
+# then reinterprets the bits as unsigned (-41.0 -> 0xFFD7). Observed impact:
+# negative side-bearing / vertical-origin values silently corrupt to 0 in the
+# built binary. See rust-migration/fix-float-narrowing.py for the target list.
+python3 "$(dirname "$0")/fix-float-narrowing.py" "${WORK}"
+
 echo "==> Copying finished crate to ${DEST}"
 rm -rf "${DEST}"
 mkdir -p "$(dirname "${DEST}")"
