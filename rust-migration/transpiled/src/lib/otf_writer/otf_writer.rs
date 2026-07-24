@@ -1561,18 +1561,14 @@ unsafe extern "C" fn serializeToOTF(
 ) -> *mut ::core::ffi::c_void {
     otfcc_statFont(font, options);
     let mut builder: *mut otfcc_SFNTBuilder = otfcc_newSFNTBuilder(
-        (if (*font).subtype as ::core::ffi::c_uint
-            == FONTTYPE_CFF as ::core::ffi::c_int as ::core::ffi::c_uint
-        {
+        (if (*font).subtype == FONTTYPE_CFF {
             1330926671i32
         } else {
             0x10000 as ::core::ffi::c_int
         }) as uint32_t,
         options,
     );
-    if (*font).subtype as ::core::ffi::c_uint
-        == FONTTYPE_TTF as ::core::ffi::c_int as ::core::ffi::c_uint
-    {
+    if (*font).subtype == FONTTYPE_TTF {
         let mut pair: table_GlyfAndLocaBuffers =
             otfcc_buildGlyf((*font).glyf, (*font).head, options);
         otfcc_SFNTBuilder_pushTable(builder, 1735162214i32 as uint32_t, pair.glyf);
@@ -1633,9 +1629,7 @@ unsafe extern "C" fn serializeToOTF(
         1734439792i32 as uint32_t,
         otfcc_buildGasp((*font).gasp, options),
     );
-    if (*font).subtype as ::core::ffi::c_uint
-        == FONTTYPE_TTF as ::core::ffi::c_int as ::core::ffi::c_uint
-    {
+    if (*font).subtype == FONTTYPE_TTF {
         otfcc_SFNTBuilder_pushTable(
             builder,
             1718642541i32 as uint32_t,
