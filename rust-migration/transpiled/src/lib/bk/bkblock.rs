@@ -2,10 +2,7 @@ extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
     pub type _IO_marker;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
@@ -114,55 +111,10 @@ pub const VISIT_BLACK: bk_cell_visit_state = 2;
 pub const VISIT_GRAY: bk_cell_visit_state = 1;
 pub const VISIT_WHITE: bk_cell_visit_state = 0;
 pub type bk_Block = __caryll_bkblock;
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const NULL_0: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
-}
 unsafe extern "C" fn bkblock_acells(mut b: *mut bk_Block, mut len: uint32_t) {
     if len <= (*b).length.wrapping_add((*b).free) {
         (*b).free = (*b).free.wrapping_sub(len.wrapping_sub((*b).length));

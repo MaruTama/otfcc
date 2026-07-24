@@ -8,10 +8,7 @@ extern "C" {
         __format: *const ::core::ffi::c_char,
         ...
     ) -> ::core::ffi::c_int;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     fn memcpy(
         __dest: *mut ::core::ffi::c_void,
         __src: *const ::core::ffi::c_void,
@@ -118,6 +115,7 @@ pub struct caryll_Buffer {
     pub free: size_t,
     pub data: *mut uint8_t,
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const SDS_TYPE_5: ::core::ffi::c_int = 0;
@@ -400,50 +398,4 @@ pub unsafe extern "C" fn bufprint(buf: *mut caryll_Buffer) {
         }
     }
     fprintf(stderr, b"\n\0" as *const u8 as *const ::core::ffi::c_char);
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
 }

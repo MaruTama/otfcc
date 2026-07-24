@@ -2,10 +2,7 @@ extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
     pub type _IO_marker;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
         __base: *mut ::core::ffi::c_void,
         __nmemb: size_t,
@@ -144,54 +141,9 @@ pub struct bk_Graph {
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
-}
 unsafe extern "C" fn _bkgraph_grow(mut f: *mut bk_Graph) -> *mut bk_GraphNode {
     if (*f).free != 0 {
         (*f).length = (*f).length.wrapping_add(1);
