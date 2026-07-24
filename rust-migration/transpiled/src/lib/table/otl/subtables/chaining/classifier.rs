@@ -29,6 +29,7 @@ extern "C" {
     fn otfcc_build_contextual(_subtable: *const otl_Subtable) -> *mut caryll_Buffer;
     fn otfcc_chainingLookupIsContextualLookup(lookup: *const otl_Lookup) -> bool;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -531,26 +532,6 @@ pub const HASH_INITIAL_NUM_BUCKETS: ::core::ffi::c_uint = 32 as ::core::ffi::c_u
 pub const HASH_INITIAL_NUM_BUCKETS_LOG2: ::core::ffi::c_uint = 5 as ::core::ffi::c_uint;
 pub const HASH_BKT_CAPACITY_THRESH: ::core::ffi::c_uint = 10 as ::core::ffi::c_uint;
 pub const HASH_SIGNATURE: ::core::ffi::c_uint = 0xa0111fe1 as ::core::ffi::c_uint;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
 unsafe extern "C" fn by_gid_clsh(
     mut a: *mut classifier_hash,
     mut b: *mut classifier_hash,
@@ -1915,7 +1896,7 @@ unsafe extern "C" fn classCompatible(
                                 .log2_num_buckets
                                 .wrapping_add(1 as ::core::ffi::c_uint))
                         .wrapping_add(
-                            (if (*(*rss).hh.tbl).num_items
+                            if (*(*rss).hh.tbl).num_items
                                 & (*(*rss).hh.tbl)
                                     .num_buckets
                                     .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1925,7 +1906,7 @@ unsafe extern "C" fn classCompatible(
                                 1 as ::core::ffi::c_uint
                             } else {
                                 0 as ::core::ffi::c_uint
-                            }),
+                            },
                         );
                         (*(*rss).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                         _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -1983,7 +1964,7 @@ unsafe extern "C" fn classCompatible(
             }
             j_0 = j_0.wrapping_add(1);
         }
-        let mut allcheck: bool = true_0 != 0;
+        let mut allcheck: bool = true;
         ss = *h;
         while !ss.is_null() {
             if (*ss).cls == (*s).cls {
@@ -2314,7 +2295,7 @@ unsafe extern "C" fn classCompatible(
                     }
                 }
                 if rss_0.is_null() {
-                    allcheck = false_0 != 0;
+                    allcheck = false;
                     break;
                 }
             }
@@ -3431,7 +3412,7 @@ unsafe extern "C" fn classCompatible(
                                 .log2_num_buckets
                                 .wrapping_add(1 as ::core::ffi::c_uint))
                         .wrapping_add(
-                            (if (*(*s_0).hh.tbl).num_items
+                            if (*(*s_0).hh.tbl).num_items
                                 & (*(*s_0).hh.tbl)
                                     .num_buckets
                                     .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -3441,7 +3422,7 @@ unsafe extern "C" fn classCompatible(
                                 1 as ::core::ffi::c_uint
                             } else {
                                 0 as ::core::ffi::c_uint
-                            }),
+                            },
                         );
                         (*(*s_0).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                         _he_bkt_i_0 = 0 as ::core::ffi::c_uint;
@@ -4105,7 +4086,7 @@ pub unsafe extern "C" fn tryClassifyAround(
                         .chaining
                         .c2rust_unnamed
                         .rule;
-                let mut allcheck: bool = true_0 != 0;
+                let mut allcheck: bool = true;
                 let mut m_0: tableid_t = 0 as tableid_t;
                 while (m_0 as ::core::ffi::c_int) < (*rule).matchCount as ::core::ffi::c_int {
                     let mut check_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -4130,7 +4111,7 @@ pub unsafe extern "C" fn tryClassifyAround(
                         );
                     }
                     if check_0 == 0 {
-                        allcheck = false_0 != 0;
+                        allcheck = false;
                         break 's_74;
                     } else {
                         m_0 = m_0.wrapping_add(1);

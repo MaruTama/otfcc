@@ -81,6 +81,7 @@ extern "C" {
     ) -> *mut table_TSI;
     fn otfcc_parseTSI5(root: *const json_value, options: *const otfcc_Options) -> *mut table_TSI5;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
@@ -1641,26 +1642,6 @@ pub const HASH_INITIAL_NUM_BUCKETS_LOG2: ::core::ffi::c_uint = 5 as ::core::ffi:
 pub const HASH_BKT_CAPACITY_THRESH: ::core::ffi::c_uint = 10 as ::core::ffi::c_uint;
 pub const HASH_SIGNATURE: ::core::ffi::c_uint = 0xa0111fe1 as ::core::ffi::c_uint;
 #[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL_0;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
 unsafe extern "C" fn json_obj_get(
     mut obj: *const json_value,
     mut key: *const ::core::ffi::c_char,
@@ -2390,7 +2371,7 @@ unsafe extern "C" fn setOrderByName(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hhName.tbl).num_items
+                    if (*(*s).hhName.tbl).num_items
                         & (*(*s).hhName.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2400,7 +2381,7 @@ unsafe extern "C" fn setOrderByName(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hhName.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2982,7 +2963,7 @@ unsafe extern "C" fn orderGlyphs(mut go: *mut otfcc_GlyphOrder) {
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*current).hhID.tbl).num_items
+                    if (*(*current).hhID.tbl).num_items
                         & (*(*current).hhID.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2992,7 +2973,7 @@ unsafe extern "C" fn orderGlyphs(mut go: *mut otfcc_GlyphOrder) {
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*current).hhID.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -3541,7 +3522,7 @@ unsafe extern "C" fn parseGlyphOrder(
                             as *const ::core::ffi::c_char,
                     ),
                 );
-                ignoreGlyphOrder = false_0 != 0;
+                ignoreGlyphOrder = false;
             }
             placeOrderEntriesFromSubtable(table, go, ignoreGlyphOrder);
         }
@@ -3551,7 +3532,7 @@ unsafe extern "C" fn parseGlyphOrder(
 }
 unsafe extern "C" fn readJson(
     mut _root: *mut ::core::ffi::c_void,
-    mut index: uint32_t,
+    mut _index: uint32_t,
     mut options: *const otfcc_Options,
 ) -> *mut otfcc_Font {
     let mut root: *const json_value = _root as *mut json_value;

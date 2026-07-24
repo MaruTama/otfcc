@@ -3,10 +3,7 @@ extern "C" {
     pub type _IO_codecvt;
     pub type _IO_marker;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
         __base: *mut ::core::ffi::c_void,
         __nmemb: size_t,
@@ -55,6 +52,12 @@ extern "C" {
     fn bk_push(b: *mut bk_Block, type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_8u, read_16u, read_32u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -473,7 +476,7 @@ unsafe extern "C" fn cpal_Color_replace(mut dst: *mut cpal_Color, src: cpal_Colo
     );
 }
 #[no_mangle]
-pub static mut cpal_iColor: __caryll_elementinterface_cpal_Color = unsafe {
+pub static mut cpal_iColor: __caryll_elementinterface_cpal_Color = {
     __caryll_elementinterface_cpal_Color {
         init: Some(cpal_Color_init as unsafe extern "C" fn(*mut cpal_Color) -> ()),
         copy: Some(
@@ -513,7 +516,7 @@ unsafe extern "C" fn cpal_Color_copy(mut dst: *mut cpal_Color, mut src: *const c
     );
 }
 #[inline]
-unsafe extern "C" fn cpal_Color_dispose(mut x: *mut cpal_Color) {}
+unsafe extern "C" fn cpal_Color_dispose(mut _x: *mut cpal_Color) {}
 #[inline]
 unsafe extern "C" fn cpal_ColorSet_disposeItem(mut arr: *mut cpal_ColorSet, mut n: size_t) {
     if cpal_iColor.dispose.is_some() {
@@ -605,29 +608,8 @@ unsafe extern "C" fn cpal_ColorSet_initCapN(mut arr: *mut cpal_ColorSet, mut n: 
     cpal_ColorSet_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn cpal_ColorSet_growToN(mut arr: *mut cpal_ColorSet, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<cpal_Color>() as size_t),
-        ) as *mut cpal_Color;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<cpal_Color>() as size_t,
-        ) as *mut cpal_Color;
-    };
+unsafe extern "C" fn cpal_ColorSet_growToN(arr: *mut cpal_ColorSet, target: size_t) {
+    cvec_grow_to_n(cpal_ColorSet_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn cpal_ColorSet_initN(mut arr: *mut cpal_ColorSet, mut n: size_t) {
@@ -680,27 +662,23 @@ unsafe extern "C" fn cpal_ColorSet_fill(mut arr: *mut cpal_ColorSet, mut n: size
     }
 }
 #[inline]
-unsafe extern "C" fn cpal_ColorSet_push(mut arr: *mut cpal_ColorSet, mut elem: cpal_Color) {
-    cpal_ColorSet_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn cpal_ColorSet_push(arr: *mut cpal_ColorSet, elem: cpal_Color) {
+    cvec_push(cpal_ColorSet_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn cpal_ColorSet_grow(mut arr: *mut cpal_ColorSet) {
-    cpal_ColorSet_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn cpal_ColorSet_grow(arr: *mut cpal_ColorSet) {
+    cvec_grow(cpal_ColorSet_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn cpal_ColorSet_move(mut dst: *mut cpal_ColorSet, mut src: *mut cpal_ColorSet) {
-    *dst = *src;
-    cpal_ColorSet_init(src);
+unsafe extern "C" fn cpal_ColorSet_move(dst: *mut cpal_ColorSet, src: *mut cpal_ColorSet) {
+    cvec_move(cpal_ColorSet_as_cvec(dst), cpal_ColorSet_as_cvec(src));
 }
 #[inline]
 unsafe extern "C" fn cpal_ColorSet_shrinkToFit(mut arr: *mut cpal_ColorSet) {
     cpal_ColorSet_resizeTo(arr, (*arr).length);
 }
 #[no_mangle]
-pub static mut cpal_iColorSet: __caryll_vectorinterface_cpal_ColorSet = unsafe {
+pub static mut cpal_iColorSet: __caryll_vectorinterface_cpal_ColorSet = {
     __caryll_vectorinterface_cpal_ColorSet {
         init: Some(cpal_ColorSet_init as unsafe extern "C" fn(*mut cpal_ColorSet) -> ()),
         copy: Some(
@@ -763,62 +741,24 @@ pub static mut cpal_iColorSet: __caryll_vectorinterface_cpal_ColorSet = unsafe {
     }
 };
 #[inline]
-unsafe extern "C" fn cpal_ColorSet_growTo(mut arr: *mut cpal_ColorSet, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<cpal_Color>() as size_t),
-        ) as *mut cpal_Color;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<cpal_Color>() as size_t,
-        ) as *mut cpal_Color;
-    };
+unsafe extern "C" fn cpal_ColorSet_growTo(arr: *mut cpal_ColorSet, target: size_t) {
+    cvec_grow_to(cpal_ColorSet_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn cpal_ColorSet_pop(mut arr: *mut cpal_ColorSet) -> cpal_Color {
-    let mut t: cpal_Color = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn cpal_ColorSet_pop(arr: *mut cpal_ColorSet) -> cpal_Color {
+    cvec_pop(cpal_ColorSet_as_cvec(arr))
 }
 #[inline]
-unsafe extern "C" fn cpal_ColorSet_resizeTo(mut arr: *mut cpal_ColorSet, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<cpal_Color>() as size_t),
-        ) as *mut cpal_Color;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<cpal_Color>() as size_t,
-        ) as *mut cpal_Color;
-    };
+unsafe extern "C" fn cpal_ColorSet_resizeTo(arr: *mut cpal_ColorSet, target: size_t) {
+    cvec_resize_to(cpal_ColorSet_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn cpal_ColorSet_init(mut arr: *mut cpal_ColorSet) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<cpal_Color>();
+unsafe fn cpal_ColorSet_as_cvec(arr: *mut cpal_ColorSet) -> *mut CVecRaw<cpal_Color> {
+    arr as *mut CVecRaw<cpal_Color>
+}
+#[inline]
+unsafe extern "C" fn cpal_ColorSet_init(arr: *mut cpal_ColorSet) {
+    cvec_init(cpal_ColorSet_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn cpal_ColorSet_copyReplace(mut dst: *mut cpal_ColorSet, src: cpal_ColorSet) {
@@ -865,7 +805,7 @@ unsafe extern "C" fn disposePalette(mut p: *mut cpal_Palette) {
     cpal_iColorSet.dispose.expect("non-null function pointer")(&raw mut (*p).colorset);
 }
 #[no_mangle]
-pub static mut cpal_iPalette: __caryll_elementinterface_cpal_Palette = unsafe {
+pub static mut cpal_iPalette: __caryll_elementinterface_cpal_Palette = {
     __caryll_elementinterface_cpal_Palette {
         init: Some(cpal_Palette_init as unsafe extern "C" fn(*mut cpal_Palette) -> ()),
         copy: Some(
@@ -923,18 +863,16 @@ unsafe extern "C" fn cpal_Palette_copy(mut dst: *mut cpal_Palette, mut src: *con
     );
 }
 #[inline]
-unsafe extern "C" fn cpal_PaletteSet_init(mut arr: *mut cpal_PaletteSet) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<cpal_Palette>();
+unsafe fn cpal_PaletteSet_as_cvec(arr: *mut cpal_PaletteSet) -> *mut CVecRaw<cpal_Palette> {
+    arr as *mut CVecRaw<cpal_Palette>
 }
 #[inline]
-unsafe extern "C" fn cpal_PaletteSet_move(
-    mut dst: *mut cpal_PaletteSet,
-    mut src: *mut cpal_PaletteSet,
-) {
-    *dst = *src;
-    cpal_PaletteSet_init(src);
+unsafe extern "C" fn cpal_PaletteSet_init(arr: *mut cpal_PaletteSet) {
+    cvec_init(cpal_PaletteSet_as_cvec(arr));
+}
+#[inline]
+unsafe extern "C" fn cpal_PaletteSet_move(dst: *mut cpal_PaletteSet, src: *mut cpal_PaletteSet) {
+    cvec_move(cpal_PaletteSet_as_cvec(dst), cpal_PaletteSet_as_cvec(src));
 }
 #[inline]
 unsafe extern "C" fn cpal_PaletteSet_filterEnv(
@@ -1021,50 +959,20 @@ unsafe extern "C" fn cpal_PaletteSet_fill(mut arr: *mut cpal_PaletteSet, mut n: 
     }
 }
 #[inline]
-unsafe extern "C" fn cpal_PaletteSet_push(mut arr: *mut cpal_PaletteSet, mut elem: cpal_Palette) {
-    cpal_PaletteSet_grow(arr);
-    let fresh2 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh2 as isize) = elem;
+unsafe extern "C" fn cpal_PaletteSet_push(arr: *mut cpal_PaletteSet, elem: cpal_Palette) {
+    cvec_push(cpal_PaletteSet_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn cpal_PaletteSet_grow(mut arr: *mut cpal_PaletteSet) {
-    cpal_PaletteSet_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn cpal_PaletteSet_grow(arr: *mut cpal_PaletteSet) {
+    cvec_grow(cpal_PaletteSet_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn cpal_PaletteSet_growTo(mut arr: *mut cpal_PaletteSet, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<cpal_Palette>() as size_t),
-        ) as *mut cpal_Palette;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<cpal_Palette>() as size_t,
-        ) as *mut cpal_Palette;
-    };
+unsafe extern "C" fn cpal_PaletteSet_growTo(arr: *mut cpal_PaletteSet, target: size_t) {
+    cvec_grow_to(cpal_PaletteSet_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn cpal_PaletteSet_pop(mut arr: *mut cpal_PaletteSet) -> cpal_Palette {
-    let mut t: cpal_Palette = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn cpal_PaletteSet_pop(arr: *mut cpal_PaletteSet) -> cpal_Palette {
+    cvec_pop(cpal_PaletteSet_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn cpal_PaletteSet_copyReplace(
@@ -1137,29 +1045,8 @@ unsafe extern "C" fn cpal_PaletteSet_initCapN(mut arr: *mut cpal_PaletteSet, mut
     cpal_PaletteSet_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn cpal_PaletteSet_growToN(mut arr: *mut cpal_PaletteSet, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<cpal_Palette>() as size_t),
-        ) as *mut cpal_Palette;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<cpal_Palette>() as size_t,
-        ) as *mut cpal_Palette;
-    };
+unsafe extern "C" fn cpal_PaletteSet_growToN(arr: *mut cpal_PaletteSet, target: size_t) {
+    cvec_grow_to_n(cpal_PaletteSet_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn cpal_PaletteSet_initN(mut arr: *mut cpal_PaletteSet, mut n: size_t) {
@@ -1194,7 +1081,7 @@ unsafe extern "C" fn cpal_PaletteSet_shrinkToFit(mut arr: *mut cpal_PaletteSet) 
     cpal_PaletteSet_resizeTo(arr, (*arr).length);
 }
 #[no_mangle]
-pub static mut cpal_iPaletteSet: __caryll_vectorinterface_cpal_PaletteSet = unsafe {
+pub static mut cpal_iPaletteSet: __caryll_vectorinterface_cpal_PaletteSet = {
     __caryll_vectorinterface_cpal_PaletteSet {
         init: Some(cpal_PaletteSet_init as unsafe extern "C" fn(*mut cpal_PaletteSet) -> ()),
         copy: Some(
@@ -1266,21 +1153,8 @@ pub static mut cpal_iPaletteSet: __caryll_vectorinterface_cpal_PaletteSet = unsa
     }
 };
 #[inline]
-unsafe extern "C" fn cpal_PaletteSet_resizeTo(mut arr: *mut cpal_PaletteSet, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<cpal_Palette>() as size_t),
-        ) as *mut cpal_Palette;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<cpal_Palette>() as size_t,
-        ) as *mut cpal_Palette;
-    };
+unsafe extern "C" fn cpal_PaletteSet_resizeTo(arr: *mut cpal_PaletteSet, target: size_t) {
+    cvec_resize_to(cpal_PaletteSet_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn initCPAL(mut cpal: *mut table_CPAL) {
@@ -1338,7 +1212,7 @@ unsafe extern "C" fn table_CPAL_move(mut dst: *mut table_CPAL, mut src: *mut tab
     table_CPAL_init(src);
 }
 #[no_mangle]
-pub static mut table_iCPAL: __caryll_elementinterface_table_CPAL = unsafe {
+pub static mut table_iCPAL: __caryll_elementinterface_table_CPAL = {
     __caryll_elementinterface_table_CPAL {
         init: Some(table_CPAL_init as unsafe extern "C" fn(*mut table_CPAL) -> ()),
         copy: Some(
@@ -1377,7 +1251,7 @@ pub static mut white: cpal_Color = cpal_Color {
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readCPAL(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut table_CPAL {
     let mut version: uint16_t = 0;
     let mut tableHeaderLength: uint32_t = 0;
@@ -1781,7 +1655,7 @@ pub unsafe extern "C" fn otfcc_dumpCPAL(
             b"CPAL\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _t: *mut json_value = json_object_new(2 as size_t);
         json_object_push(
@@ -1808,7 +1682,7 @@ pub unsafe extern "C" fn otfcc_dumpCPAL(
             b"CPAL\0" as *const u8 as *const ::core::ffi::c_char,
             _t,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1874,7 +1748,7 @@ pub unsafe extern "C" fn otfcc_parseCPAL(
             b"CPAL\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _palettes: *mut json_value = json_obj_get_type(
             table,
@@ -1939,7 +1813,7 @@ pub unsafe extern "C" fn otfcc_parseCPAL(
             }
             j = j.wrapping_add(1);
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1948,11 +1822,11 @@ pub unsafe extern "C" fn otfcc_parseCPAL(
 }
 #[inline]
 unsafe extern "C" fn buildPaletteType(mut cpal: *const table_CPAL) -> *mut bk_Block {
-    let mut needsPaletteType: bool = false_0 != 0;
+    let mut needsPaletteType: bool = false;
     let mut j: tableid_t = 0 as tableid_t;
     while (j as size_t) < (*cpal).palettes.length {
         if (*(*cpal).palettes.items.offset(j as isize)).type_0 != 0 {
-            needsPaletteType = true_0 != 0;
+            needsPaletteType = true;
         }
         j = j.wrapping_add(1);
     }
@@ -1974,11 +1848,11 @@ unsafe extern "C" fn buildPaletteType(mut cpal: *const table_CPAL) -> *mut bk_Bl
 }
 #[inline]
 unsafe extern "C" fn buildPaletteLabel(mut cpal: *const table_CPAL) -> *mut bk_Block {
-    let mut needsPaletteLabel: bool = false_0 != 0;
+    let mut needsPaletteLabel: bool = false;
     let mut j: tableid_t = 0 as tableid_t;
     while (j as size_t) < (*cpal).palettes.length {
         if (*(*cpal).palettes.items.offset(j as isize)).label != 0xffff as uint32_t {
-            needsPaletteLabel = true_0 != 0;
+            needsPaletteLabel = true;
         }
         j = j.wrapping_add(1);
     }
@@ -2000,7 +1874,7 @@ unsafe extern "C" fn buildPaletteLabel(mut cpal: *const table_CPAL) -> *mut bk_B
 }
 #[inline]
 unsafe extern "C" fn buildPaletteEntryLabel(mut cpal: *const table_CPAL) -> *mut bk_Block {
-    let mut needsPaletteEntryLabel: bool = false_0 != 0;
+    let mut needsPaletteEntryLabel: bool = false;
     let mut palette: *mut cpal_Palette = (*cpal)
         .palettes
         .items
@@ -2011,7 +1885,7 @@ unsafe extern "C" fn buildPaletteEntryLabel(mut cpal: *const table_CPAL) -> *mut
         if (*(*palette).colorset.items.offset(j as isize)).label as ::core::ffi::c_int
             != 0xffff as ::core::ffi::c_int
         {
-            needsPaletteEntryLabel = true_0 != 0;
+            needsPaletteEntryLabel = true;
         }
         j = j.wrapping_add(1);
     }
@@ -2034,7 +1908,7 @@ unsafe extern "C" fn buildPaletteEntryLabel(mut cpal: *const table_CPAL) -> *mut
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildCPAL(
     mut cpal: *const table_CPAL,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if cpal.is_null() || (*cpal).palettes.length == 0 {
         return ::core::ptr::null_mut::<caryll_Buffer>();
@@ -2116,26 +1990,6 @@ pub unsafe extern "C" fn otfcc_buildCPAL(
     return bk_build_Block(root);
 }
 pub const json_serialize_mode_packed: ::core::ffi::c_int = 2 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
 #[inline]
 unsafe extern "C" fn json_obj_get(
     mut obj: *const json_value,
@@ -2255,29 +2109,6 @@ unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     );
     (*xx).type_0 = json_pre_serialized;
     return xx;
-}
-#[inline]
-unsafe extern "C" fn read_8u(mut src: *const uint8_t) -> uint8_t {
-    return *src.offset(0 as ::core::ffi::c_int as isize);
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
-unsafe extern "C" fn read_32u(mut src: *const uint8_t) -> uint32_t {
-    let mut b0: uint32_t =
-        (*src.offset(0 as ::core::ffi::c_int as isize) as uint32_t) << 24 as ::core::ffi::c_int;
-    let mut b1: uint32_t =
-        (*src.offset(1 as ::core::ffi::c_int as isize) as uint32_t) << 16 as ::core::ffi::c_int;
-    let mut b2: uint32_t =
-        (*src.offset(2 as ::core::ffi::c_int as isize) as uint32_t) << 8 as ::core::ffi::c_int;
-    let mut b3: uint32_t = *src.offset(3 as ::core::ffi::c_int as isize) as uint32_t;
-    return b0 | b1 | b2 | b3;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

@@ -1456,16 +1456,16 @@ pub unsafe extern "C" fn consolidate_chaining(
                     as *const ::core::ffi::c_char,
             ),
         );
-        return false_0 != 0;
+        return false;
     }
     let mut rule: *mut otl_ChainingRule = &raw mut (*subtable).c2rust_unnamed.rule;
-    let mut possible: bool = true_0 != 0;
+    let mut possible: bool = true;
     let mut j: tableid_t = 0 as tableid_t;
     while (j as ::core::ffi::c_int) < (*rule).matchCount as ::core::ffi::c_int {
         fontop_consolidateCoverage(font, *(*rule).match_0.offset(j as isize), options);
         otl_iCoverage.shrink.expect("non-null function pointer")(
             *(*rule).match_0.offset(j as isize),
-            true_0 != 0,
+            true,
         );
         possible = possible as ::core::ffi::c_int != 0
             && (**(*rule).match_0.offset(j as isize)).numGlyphs as ::core::ffi::c_int
@@ -1480,7 +1480,7 @@ pub unsafe extern "C" fn consolidate_chaining(
     }
     let mut j_0: tableid_t = 0 as tableid_t;
     while (j_0 as ::core::ffi::c_int) < (*rule).applyCount as ::core::ffi::c_int {
-        let mut foundLookup: bool = false_0 != 0;
+        let mut foundLookup: bool = false;
         let mut h: *mut lookup_handle = &raw mut (*(*rule).apply.offset(j_0 as isize)).lookup;
         if !(*h).name.is_null() {
             let mut k: tableid_t = 0 as tableid_t;
@@ -1497,7 +1497,7 @@ pub unsafe extern "C" fn consolidate_chaining(
                             (*h).name as *const ::core::ffi::c_char,
                         ) != 0 as ::core::ffi::c_int)
                         {
-                            foundLookup = true_0 != 0;
+                            foundLookup = true;
                             otfcc_iHandle
                                 .consolidateTo
                                 .expect("non-null function pointer")(
@@ -1572,7 +1572,7 @@ pub unsafe extern "C" fn consolidate_chaining(
         }
         (*rule).applyCount = k_0;
         if (*rule).applyCount == 0 {
-            return true_0 != 0;
+            return true;
         }
     }
     return !possible;

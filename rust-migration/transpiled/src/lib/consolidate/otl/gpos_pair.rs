@@ -1408,7 +1408,7 @@ pub struct __otfcc_IClassDef {
 #[no_mangle]
 pub unsafe extern "C" fn consolidate_gpos_pair(
     mut font: *mut otfcc_Font,
-    mut table: *mut table_OTL,
+    mut _table: *mut table_OTL,
     mut _subtable: *mut otl_Subtable,
     mut options: *const otfcc_Options,
 ) -> bool {

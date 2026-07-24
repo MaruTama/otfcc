@@ -30,6 +30,7 @@ extern "C" {
     fn cff_encodeCffInteger(val: int32_t) -> *mut caryll_Buffer;
     fn cff_encodeCffFloat(val: ::core::ffi::c_double) -> *mut caryll_Buffer;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub type __uint8_t = u8;
 pub type __int32_t = i32;
 pub type __uint32_t = u32;
@@ -155,52 +156,6 @@ pub struct cff_get_key_context {
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
-}
 #[inline]
 unsafe extern "C" fn disposeDict(mut dict: *mut cff_Dict) {
     let mut j: uint32_t = 0 as uint32_t;
@@ -374,7 +329,7 @@ unsafe extern "C" fn callback_get_key(
 ) {
     let mut context: *mut cff_get_key_context = _context as *mut cff_get_key_context;
     if op == (*context).op && (*context).idx <= top as uint32_t {
-        (*context).found = true_0 != 0;
+        (*context).found = true;
         (*context).res = *stack.offset((*context).idx as isize);
     }
 }
@@ -393,7 +348,7 @@ unsafe extern "C" fn parseDictKey(
         op: 0,
         idx: 0,
     };
-    context.found = false_0 != 0;
+    context.found = false;
     context.idx = idx;
     context.op = op;
     context.res.t = 0 as cff_Value_Type;
@@ -454,7 +409,7 @@ unsafe extern "C" fn buildDict(mut dict: *const cff_Dict) -> *mut caryll_Buffer 
     return blob;
 }
 #[no_mangle]
-pub static mut cff_iDict: __caryll_elementinterface_cff_Dict = unsafe {
+pub static mut cff_iDict: __caryll_elementinterface_cff_Dict = {
     __caryll_elementinterface_cff_Dict {
         init: Some(cff_Dict_init as unsafe extern "C" fn(*mut cff_Dict) -> ()),
         copy: Some(cff_Dict_copy as unsafe extern "C" fn(*mut cff_Dict, *const cff_Dict) -> ()),

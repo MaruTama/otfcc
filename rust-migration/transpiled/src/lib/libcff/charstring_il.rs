@@ -21,6 +21,7 @@ extern "C" {
     static glyf_iPoint: __caryll_elementinterface_glyf_Point;
     static glyf_iContour: __caryll_vectorinterface_glyf_Contour;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub type __builtin_va_list = __va_list;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -498,52 +499,6 @@ pub struct cff_CharstringIL {
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
-}
 unsafe extern "C" fn ensureThereIsSpace(mut il: *mut cff_CharstringIL) {
     if (*il).free != 0 {
         return;
@@ -1015,18 +970,18 @@ unsafe extern "C" fn il_matchtype(
     mut t: cff_InstructionType,
 ) -> bool {
     if k >= (*il).length {
-        return false_0 != 0;
+        return false;
     }
     let mut m: uint32_t = j;
     while m < k {
         if (*(*il).instr.offset(m as isize)).type_0 as ::core::ffi::c_uint
             != t as ::core::ffi::c_uint
         {
-            return false_0 != 0;
+            return false;
         }
         m = m.wrapping_add(1);
     }
-    return true_0 != 0;
+    return true;
 }
 unsafe extern "C" fn il_matchop(
     mut il: *mut cff_CharstringIL,
@@ -1036,12 +991,12 @@ unsafe extern "C" fn il_matchop(
     if (*(*il).instr.offset(j as isize)).type_0 as ::core::ffi::c_uint
         != IL_ITEM_OPERATOR as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return false_0 != 0;
+        return false;
     }
     if (*(*il).instr.offset(j as isize)).c2rust_unnamed.i != op {
-        return false_0 != 0;
+        return false;
     }
-    return true_0 != 0;
+    return true;
 }
 unsafe extern "C" fn zroll(
     mut il: *mut cff_CharstringIL,
@@ -1381,7 +1336,7 @@ unsafe extern "C" fn nextstop(mut il: *mut cff_CharstringIL, mut j: uint32_t) ->
 unsafe extern "C" fn decideAdvance(
     mut il: *mut cff_CharstringIL,
     mut j: uint32_t,
-    mut optimizeLevel: uint8_t,
+    mut _optimizeLevel: uint8_t,
 ) -> uint8_t {
     let mut r: uint8_t = 0 as uint8_t;
     r = zroll(
@@ -1696,7 +1651,7 @@ pub unsafe extern "C" fn instruction_eq(
             return (*z1).c2rust_unnamed.i == (*z2).c2rust_unnamed.i;
         }
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -1705,19 +1660,19 @@ pub unsafe extern "C" fn cff_ilEqual(
     mut b: *mut cff_CharstringIL,
 ) -> bool {
     if a.is_null() || b.is_null() {
-        return false_0 != 0;
+        return false;
     }
     if (*a).length != (*b).length {
-        return false_0 != 0;
+        return false;
     }
     let mut j: uint32_t = 0 as uint32_t;
     while j < (*a).length {
         if !instruction_eq((*a).instr.offset(j as isize), (*b).instr.offset(j as isize)) {
-            return false_0 != 0;
+            return false;
         }
         j = j.wrapping_add(1);
     }
-    return true_0 != 0;
+    return true;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

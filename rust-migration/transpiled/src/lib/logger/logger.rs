@@ -18,6 +18,7 @@ extern "C" {
     fn sdscat(s: sds, t: *const ::core::ffi::c_char) -> sds;
     fn sdscatfmt(s: sds, fmt: *const ::core::ffi::c_char, ...) -> sds;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -381,7 +382,7 @@ unsafe extern "C" fn loggerDispose(mut _self: *mut otfcc_ILogger) {
     self_0 = ::core::ptr::null_mut::<Logger>();
 }
 #[no_mangle]
-pub static mut VTABLE_LOGGER: otfcc_ILogger = unsafe {
+pub static mut VTABLE_LOGGER: otfcc_ILogger = {
     otfcc_ILogger {
         dispose: Some(loggerDispose as unsafe extern "C" fn(*mut otfcc_ILogger) -> ()),
         indent: Some(
@@ -455,7 +456,7 @@ pub unsafe extern "C" fn stderrTargetPush(mut _self: *mut otfcc_ILoggerTarget, m
     sdsfree(data);
 }
 #[no_mangle]
-pub static mut VTABLE_STDERR_TARGET: otfcc_ILoggerTarget = unsafe {
+pub static mut VTABLE_STDERR_TARGET: otfcc_ILoggerTarget = {
     otfcc_ILoggerTarget {
         dispose: Some(stderrTargetDispose as unsafe extern "C" fn(*mut otfcc_ILoggerTarget) -> ()),
         push: Some(stderrTargetPush as unsafe extern "C" fn(*mut otfcc_ILoggerTarget, sds) -> ()),
@@ -485,7 +486,7 @@ pub unsafe extern "C" fn emptyTargetPush(mut _self: *mut otfcc_ILoggerTarget, mu
     sdsfree(data);
 }
 #[no_mangle]
-pub static mut VTABLE_EMPTY_TARGET: otfcc_ILoggerTarget = unsafe {
+pub static mut VTABLE_EMPTY_TARGET: otfcc_ILoggerTarget = {
     otfcc_ILoggerTarget {
         dispose: Some(emptyTargetDispose as unsafe extern "C" fn(*mut otfcc_ILoggerTarget) -> ()),
         push: Some(emptyTargetPush as unsafe extern "C" fn(*mut otfcc_ILoggerTarget, sds) -> ()),
@@ -500,50 +501,4 @@ pub unsafe extern "C" fn otfcc_newEmptyTarget() -> *mut otfcc_ILoggerTarget {
     ) as *mut StderrTarget;
     (*target).vtable = VTABLE_EMPTY_TARGET;
     return target as *mut otfcc_ILoggerTarget;
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
 }

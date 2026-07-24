@@ -40,6 +40,8 @@ extern "C" {
     fn json_integer_new(_: int64_t) -> *mut json_value;
     fn base64_decode(src: *const uint8_t, len: size_t, out_len: *mut size_t) -> *mut uint8_t;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_16u};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -326,7 +328,7 @@ unsafe extern "C" fn table_cvt_dispose(mut x: *mut table_cvt) {
     disposeCvt(x);
 }
 #[no_mangle]
-pub static mut table_iCvt: __caryll_elementinterface_table_cvt = unsafe {
+pub static mut table_iCvt: __caryll_elementinterface_table_cvt = {
     __caryll_elementinterface_table_cvt {
         init: Some(table_cvt_init as unsafe extern "C" fn(*mut table_cvt) -> ()),
         copy: Some(table_cvt_copy as unsafe extern "C" fn(*mut table_cvt, *const table_cvt) -> ()),
@@ -343,7 +345,7 @@ pub static mut table_iCvt: __caryll_elementinterface_table_cvt = unsafe {
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readCvt(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
     mut tag: uint32_t,
 ) -> *mut table_cvt {
     let mut t: *mut table_cvt = ::core::ptr::null_mut::<table_cvt>();
@@ -408,7 +410,7 @@ pub unsafe extern "C" fn otfcc_dumpCvt(
             b"cvt\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut arr: *mut json_value = json_array_new((*table).length as size_t);
         let mut j: uint16_t = 0 as uint16_t;
@@ -420,7 +422,7 @@ pub unsafe extern "C" fn otfcc_dumpCvt(
             j = j.wrapping_add(1);
         }
         json_object_push(root, tag, arr);
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -445,7 +447,7 @@ pub unsafe extern "C" fn otfcc_parseCvt(
                 b"cvt\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             t = __caryll_allocate_clean(
                 ::core::mem::size_of::<table_cvt>() as size_t,
@@ -474,7 +476,7 @@ pub unsafe extern "C" fn otfcc_parseCvt(
                 }
                 j = j.wrapping_add(1);
             }
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -493,7 +495,7 @@ pub unsafe extern "C" fn otfcc_parseCvt(
                     b"cvt\0" as *const u8 as *const ::core::ffi::c_char,
                 ),
             );
-            let mut ___loggedstep_v_0: bool = true_0 != 0;
+            let mut ___loggedstep_v_0: bool = true;
             while ___loggedstep_v_0 {
                 t = __caryll_allocate_clean(
                     ::core::mem::size_of::<table_cvt>() as size_t,
@@ -520,7 +522,7 @@ pub unsafe extern "C" fn otfcc_parseCvt(
                 }
                 free(raw as *mut ::core::ffi::c_void);
                 raw = ::core::ptr::null_mut::<uint8_t>();
-                ___loggedstep_v_0 = false_0 != 0;
+                ___loggedstep_v_0 = false;
                 (*(*options).logger)
                     .finish
                     .expect("non-null function pointer")(
@@ -534,7 +536,7 @@ pub unsafe extern "C" fn otfcc_parseCvt(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildCvt(
     mut table: *const table_cvt,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if table.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();
@@ -546,26 +548,6 @@ pub unsafe extern "C" fn otfcc_buildCvt(
         j = j.wrapping_add(1);
     }
     return buf;
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
 }
 #[inline]
 unsafe extern "C" fn json_obj_get(
@@ -599,14 +581,6 @@ unsafe extern "C" fn json_obj_get_type(
         return v;
     }
     return ::core::ptr::null_mut::<json_value>();
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

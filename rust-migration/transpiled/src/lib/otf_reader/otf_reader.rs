@@ -78,6 +78,7 @@ extern "C" {
         maxp: *mut table_maxp,
     ) -> *mut table_hmtx;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
@@ -1505,50 +1506,21 @@ pub struct GlyfIOContext {
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
 unsafe extern "C" fn decideFontSubtypeOTF(
-    mut sfnt: *mut otfcc_SplineFontContainer,
-    mut index: uint32_t,
+    sfnt: *mut otfcc_SplineFontContainer,
+    index: uint32_t,
 ) -> otfcc_font_subtype {
-    let mut packet: otfcc_Packet = *(*sfnt).packets.offset(index as isize);
-    let mut __fortable_keep: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-    let mut __fortable_count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut __notfound: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-    while __notfound != 0
-        && __fortable_keep != 0
-        && __fortable_count < packet.numTables as ::core::ffi::c_int
-    {
-        let mut table: otfcc_PacketPiece = *packet.pieces.offset(__fortable_count as isize);
-        while __fortable_keep != 0 {
-            if table.tag == 1128678944i32 as uint32_t {
-                let mut __fortable_k2: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-                if __fortable_k2 != 0 {
-                    return FONTTYPE_CFF;
-                }
-            }
-            __fortable_keep = (__fortable_keep == 0) as ::core::ffi::c_int;
+    // c2rust's translation of a FOREACH_TABLE-style macro: the
+    // __fortable_keep/__notfound/__fortable_k2 flags simulate a
+    // single-iteration inner scope purely to give the original C a labeled
+    // break/continue target. Traced by hand: the whole thing reduces to
+    // "return FONTTYPE_CFF at the first 'CFF ' tag, else FONTTYPE_TTF".
+    let packet: otfcc_Packet = *(*sfnt).packets.offset(index as isize);
+    for i in 0..packet.numTables as ::core::ffi::c_int {
+        let table: otfcc_PacketPiece = *packet.pieces.offset(i as isize);
+        if table.tag == 1128678944i32 as uint32_t {
+            return FONTTYPE_CFF;
         }
-        __fortable_keep = (__fortable_keep == 0) as ::core::ffi::c_int;
-        __fortable_count += 1;
     }
     return FONTTYPE_TTF;
 }
@@ -1561,9 +1533,9 @@ unsafe extern "C" fn readOtf(
     if (*sfnt).count.wrapping_sub(1 as uint32_t) < index {
         return ::core::ptr::null_mut::<otfcc_Font>();
     } else {
-        let mut font: *mut otfcc_Font = (
+        let font: *mut otfcc_Font = (
             otfcc_iFont.create.expect("non-null function pointer"))();
-        let mut packet: otfcc_Packet = *(*sfnt).packets.offset(index as isize);
+        let packet: otfcc_Packet = *(*sfnt).packets.offset(index as isize);
         (*font).subtype = decideFontSubtypeOTF(sfnt, index);
         (*font).fvar = otfcc_readFvar(packet, options);
         (*font).head = otfcc_readHead(packet, options);
@@ -1574,9 +1546,7 @@ unsafe extern "C" fn readOtf(
         (*font).post = otfcc_readPost(packet, options);
         (*font).hhea = otfcc_readHhea(packet, options);
         (*font).cmap = otfcc_readCmap(packet, options);
-        if (*font).subtype as ::core::ffi::c_uint
-            == FONTTYPE_TTF as ::core::ffi::c_int as ::core::ffi::c_uint
-        {
+        if (*font).subtype == FONTTYPE_TTF {
             (*font).hmtx = otfcc_readHmtx(packet, options, (*font).hhea, (*font).maxp);
             (*font).vhea = otfcc_readVhea(packet, options);
             if !(*font).vhea.is_null() {

@@ -9,8 +9,6 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
@@ -65,6 +63,12 @@ extern "C" {
     fn bk_newBlockFromBuffer(buf: *mut caryll_Buffer) -> *mut bk_Block;
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_16u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -794,26 +798,6 @@ pub const HASH_INITIAL_NUM_BUCKETS_LOG2: ::core::ffi::c_uint = 5 as ::core::ffi:
 pub const HASH_BKT_CAPACITY_THRESH: ::core::ffi::c_uint = 10 as ::core::ffi::c_uint;
 pub const HASH_SIGNATURE: ::core::ffi::c_uint = 0xa0111fe1 as ::core::ffi::c_uint;
 #[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
 unsafe extern "C" fn json_obj_get(
     mut obj: *const json_value,
     mut key: *const ::core::ffi::c_char,
@@ -864,20 +848,12 @@ unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     (*xx).type_0 = json_pre_serialized;
     return xx;
 }
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
 unsafe extern "C" fn deleteGsubLigatureEntry(mut entry: *mut otl_GsubLigatureEntry) {
     otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).to);
     otl_iCoverage.free.expect("non-null function pointer")((*entry).from);
     (*entry).from = ::core::ptr::null_mut::<otl_Coverage>();
 }
-static mut gss_typeinfo: __caryll_elementinterface_otl_GsubLigatureEntry = unsafe {
+static mut gss_typeinfo: __caryll_elementinterface_otl_GsubLigatureEntry = {
     __caryll_elementinterface_otl_GsubLigatureEntry {
         init: None,
         copy: None,
@@ -890,42 +866,12 @@ static mut gss_typeinfo: __caryll_elementinterface_otl_GsubLigatureEntry = unsaf
     }
 };
 #[inline]
-unsafe extern "C" fn subtable_gsub_ligature_move(
-    mut dst: *mut subtable_gsub_ligature,
-    mut src: *mut subtable_gsub_ligature,
-) {
-    *dst = *src;
-    subtable_gsub_ligature_init(src);
+unsafe extern "C" fn subtable_gsub_ligature_move(dst: *mut subtable_gsub_ligature, src: *mut subtable_gsub_ligature) {
+    cvec_move(as_cvec(dst), as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_ligature_growTo(
-    mut arr: *mut subtable_gsub_ligature,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GsubLigatureEntry>() as size_t),
-        ) as *mut otl_GsubLigatureEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GsubLigatureEntry>() as size_t,
-        ) as *mut otl_GsubLigatureEntry;
-    };
+unsafe extern "C" fn subtable_gsub_ligature_growTo(arr: *mut subtable_gsub_ligature, target: size_t) {
+    cvec_grow_to(as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_ligature_free(mut x: *mut subtable_gsub_ligature) {
@@ -936,14 +882,8 @@ unsafe extern "C" fn subtable_gsub_ligature_free(mut x: *mut subtable_gsub_ligat
     free(x as *mut ::core::ffi::c_void);
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_ligature_pop(
-    mut arr: *mut subtable_gsub_ligature,
-) -> otl_GsubLigatureEntry {
-    let mut t: otl_GsubLigatureEntry = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn subtable_gsub_ligature_pop(arr: *mut subtable_gsub_ligature) -> otl_GsubLigatureEntry {
+    cvec_pop(as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_ligature_copyReplace(
@@ -1023,32 +963,8 @@ unsafe extern "C" fn subtable_gsub_ligature_initCapN(
     subtable_gsub_ligature_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_ligature_growToN(
-    mut arr: *mut subtable_gsub_ligature,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GsubLigatureEntry>() as size_t),
-        ) as *mut otl_GsubLigatureEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GsubLigatureEntry>() as size_t,
-        ) as *mut otl_GsubLigatureEntry;
-    };
+unsafe extern "C" fn subtable_gsub_ligature_growToN(arr: *mut subtable_gsub_ligature, target: size_t) {
+    cvec_grow_to_n(as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_ligature_initN(
@@ -1107,13 +1023,15 @@ unsafe extern "C" fn subtable_gsub_ligature_filterEnv(
     (*arr).length = j;
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_ligature_init(mut arr: *mut subtable_gsub_ligature) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_GsubLigatureEntry>();
+unsafe fn as_cvec(arr: *mut subtable_gsub_ligature) -> *mut CVecRaw<otl_GsubLigatureEntry> {
+    arr as *mut CVecRaw<otl_GsubLigatureEntry>
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_ligature_init(arr: *mut subtable_gsub_ligature) {
+    cvec_init(as_cvec(arr));
 }
 #[no_mangle]
-pub static mut iSubtable_gsub_ligature: __caryll_vectorinterface_subtable_gsub_ligature = unsafe {
+pub static mut iSubtable_gsub_ligature: __caryll_vectorinterface_subtable_gsub_ligature = {
     __caryll_vectorinterface_subtable_gsub_ligature {
         init: Some(
             subtable_gsub_ligature_init as unsafe extern "C" fn(*mut subtable_gsub_ligature) -> (),
@@ -1212,24 +1130,8 @@ pub static mut iSubtable_gsub_ligature: __caryll_vectorinterface_subtable_gsub_l
     }
 };
 #[inline]
-unsafe extern "C" fn subtable_gsub_ligature_resizeTo(
-    mut arr: *mut subtable_gsub_ligature,
-    mut target: size_t,
-) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GsubLigatureEntry>() as size_t),
-        ) as *mut otl_GsubLigatureEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GsubLigatureEntry>() as size_t,
-        ) as *mut otl_GsubLigatureEntry;
-    };
+unsafe extern "C" fn subtable_gsub_ligature_resizeTo(arr: *mut subtable_gsub_ligature, target: size_t) {
+    cvec_resize_to(as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_ligature_shrinkToFit(mut arr: *mut subtable_gsub_ligature) {
@@ -1299,26 +1201,20 @@ unsafe extern "C" fn subtable_gsub_ligature_fill(
     }
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_ligature_push(
-    mut arr: *mut subtable_gsub_ligature,
-    mut elem: otl_GsubLigatureEntry,
-) {
-    subtable_gsub_ligature_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn subtable_gsub_ligature_push(arr: *mut subtable_gsub_ligature, elem: otl_GsubLigatureEntry) {
+    cvec_push(as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_ligature_grow(mut arr: *mut subtable_gsub_ligature) {
-    subtable_gsub_ligature_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn subtable_gsub_ligature_grow(arr: *mut subtable_gsub_ligature) {
+    cvec_grow(as_cvec(arr));
 }
 #[no_mangle]
 pub unsafe extern "C" fn otl_read_gsub_ligature(
     data: font_file_pointer,
     mut tableLength: uint32_t,
     mut offset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut startCoverage: *mut otl_Coverage = ::core::ptr::null_mut::<otl_Coverage>();
     let mut setCount: glyphid_t = 0;
@@ -1556,7 +1452,7 @@ pub unsafe extern "C" fn otl_gsub_dump_ligature(
 #[no_mangle]
 pub unsafe extern "C" fn otl_gsub_parse_ligature(
     mut _subtable: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     if !json_obj_get_type(
         _subtable,
@@ -1651,7 +1547,7 @@ unsafe extern "C" fn by_gid(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_build_gsub_ligature_subtable(
     mut _subtable: *const otl_Subtable,
-    mut heuristics: otl_BuildHeuristics,
+    mut _heuristics: otl_BuildHeuristics,
 ) -> *mut caryll_Buffer {
     let mut subtable: *const subtable_gsub_ligature = &raw const (*_subtable).gsub_ligature;
     let mut h: *mut ligature_aggerator = ::core::ptr::null_mut::<ligature_aggerator>();
@@ -2344,7 +2240,7 @@ pub unsafe extern "C" fn otfcc_build_gsub_ligature_subtable(
                             .log2_num_buckets
                             .wrapping_add(1 as ::core::ffi::c_uint))
                     .wrapping_add(
-                        (if (*(*s).hh.tbl).num_items
+                        if (*(*s).hh.tbl).num_items
                             & (*(*s).hh.tbl)
                                 .num_buckets
                                 .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2354,7 +2250,7 @@ pub unsafe extern "C" fn otfcc_build_gsub_ligature_subtable(
                             1 as ::core::ffi::c_uint
                         } else {
                             0 as ::core::ffi::c_uint
-                        }),
+                        },
                     );
                     (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                     _he_bkt_i = 0 as ::core::ffi::c_uint;

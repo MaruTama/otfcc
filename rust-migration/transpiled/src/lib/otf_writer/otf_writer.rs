@@ -136,6 +136,7 @@ extern "C" {
         options: *const otfcc_Options,
     ) -> *mut caryll_Buffer;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
@@ -1535,44 +1536,20 @@ pub struct table_GlyfAndLocaBuffers {
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
 unsafe extern "C" fn serializeToOTF(
     mut font: *mut otfcc_Font,
     mut options: *const otfcc_Options,
 ) -> *mut ::core::ffi::c_void {
     otfcc_statFont(font, options);
     let mut builder: *mut otfcc_SFNTBuilder = otfcc_newSFNTBuilder(
-        (if (*font).subtype as ::core::ffi::c_uint
-            == FONTTYPE_CFF as ::core::ffi::c_int as ::core::ffi::c_uint
-        {
+        (if (*font).subtype == FONTTYPE_CFF {
             1330926671i32
         } else {
             0x10000 as ::core::ffi::c_int
         }) as uint32_t,
         options,
     );
-    if (*font).subtype as ::core::ffi::c_uint
-        == FONTTYPE_TTF as ::core::ffi::c_int as ::core::ffi::c_uint
-    {
+    if (*font).subtype == FONTTYPE_TTF {
         let mut pair: table_GlyfAndLocaBuffers =
             otfcc_buildGlyf((*font).glyf, (*font).head, options);
         otfcc_SFNTBuilder_pushTable(builder, 1735162214i32 as uint32_t, pair.glyf);
@@ -1633,9 +1610,7 @@ unsafe extern "C" fn serializeToOTF(
         1734439792i32 as uint32_t,
         otfcc_buildGasp((*font).gasp, options),
     );
-    if (*font).subtype as ::core::ffi::c_uint
-        == FONTTYPE_TTF as ::core::ffi::c_int as ::core::ffi::c_uint
-    {
+    if (*font).subtype == FONTTYPE_TTF {
         otfcc_SFNTBuilder_pushTable(
             builder,
             1718642541i32 as uint32_t,

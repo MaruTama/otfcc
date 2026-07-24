@@ -218,7 +218,7 @@ unsafe extern "C" fn sdslen(s: sds) -> size_t {
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildMeta(
     mut meta: *const table_meta,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if meta.is_null() || (*meta).entries.length == 0 {
         return ::core::ptr::null_mut::<caryll_Buffer>();

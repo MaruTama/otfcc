@@ -12,6 +12,7 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type size_t = usize;
 pub type __uint8_t = u8;
 pub type __off_t = ::core::ffi::c_long;
@@ -121,26 +122,6 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_newOptions() -> *mut otfcc_Options {
     let mut options: *mut otfcc_Options = ::core::ptr::null_mut::<otfcc_Options>();
@@ -171,24 +152,24 @@ pub unsafe extern "C" fn otfcc_Options_optimizeTo(
     mut options: *mut otfcc_Options,
     mut level: uint8_t,
 ) {
-    (*options).cff_rollCharString = false_0 != 0;
-    (*options).short_post = false_0 != 0;
-    (*options).ignore_glyph_order = false_0 != 0;
-    (*options).cff_short_vmtx = false_0 != 0;
-    (*options).merge_features = false_0 != 0;
-    (*options).force_cid = false_0 != 0;
-    (*options).cff_doSubroutinize = false_0 != 0;
+    (*options).cff_rollCharString = false;
+    (*options).short_post = false;
+    (*options).ignore_glyph_order = false;
+    (*options).cff_short_vmtx = false;
+    (*options).merge_features = false;
+    (*options).force_cid = false;
+    (*options).cff_doSubroutinize = false;
     if level as ::core::ffi::c_int >= 1 as ::core::ffi::c_int {
-        (*options).cff_rollCharString = true_0 != 0;
-        (*options).cff_short_vmtx = true_0 != 0;
+        (*options).cff_rollCharString = true;
+        (*options).cff_short_vmtx = true;
     }
     if level as ::core::ffi::c_int >= 2 as ::core::ffi::c_int {
-        (*options).short_post = true_0 != 0;
-        (*options).cff_doSubroutinize = true_0 != 0;
-        (*options).merge_features = true_0 != 0;
+        (*options).short_post = true;
+        (*options).cff_doSubroutinize = true;
+        (*options).merge_features = true;
     }
     if level as ::core::ffi::c_int >= 3 as ::core::ffi::c_int {
-        (*options).ignore_glyph_order = true_0 != 0;
-        (*options).force_cid = true_0 != 0;
+        (*options).ignore_glyph_order = true;
+        (*options).force_cid = true;
     }
 }

@@ -24,6 +24,7 @@ extern "C" {
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn exit(__status: ::core::ffi::c_int) -> !;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -292,26 +293,6 @@ pub unsafe extern "C" fn otfcc_deleteSFNT(mut font: *mut otfcc_SplineFontContain
     (*font).offsets = ::core::ptr::null_mut::<uint32_t>();
     free(font as *mut ::core::ffi::c_void);
     font = ::core::ptr::null_mut::<otfcc_SplineFontContainer>();
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
 }
 #[inline]
 unsafe extern "C" fn otfcc_check_endian() -> bool {

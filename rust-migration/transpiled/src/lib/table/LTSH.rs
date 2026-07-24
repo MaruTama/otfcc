@@ -26,6 +26,8 @@ extern "C" {
     fn bufwrite8(buf: *mut caryll_Buffer, byte: uint8_t);
     fn bufwrite16b(buf: *mut caryll_Buffer, x: uint16_t);
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_16u};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -201,7 +203,7 @@ unsafe extern "C" fn table_LTSH_free(mut x: *mut table_LTSH) {
     free(x as *mut ::core::ffi::c_void);
 }
 #[no_mangle]
-pub static mut table_iLTSH: __caryll_elementinterface_table_LTSH = unsafe {
+pub static mut table_iLTSH: __caryll_elementinterface_table_LTSH = {
     __caryll_elementinterface_table_LTSH {
         init: Some(table_LTSH_init as unsafe extern "C" fn(*mut table_LTSH) -> ()),
         copy: Some(
@@ -274,7 +276,7 @@ unsafe extern "C" fn table_LTSH_replace(mut dst: *mut table_LTSH, src: table_LTS
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readLTSH(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut table_LTSH {
     let mut __fortable_keep: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
     let mut __fortable_count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -321,7 +323,7 @@ pub unsafe extern "C" fn otfcc_readLTSH(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildLTSH(
     mut ltsh: *const table_LTSH,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if ltsh.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();
@@ -335,32 +337,4 @@ pub unsafe extern "C" fn otfcc_buildLTSH(
         j = j.wrapping_add(1);
     }
     return buf;
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
 }

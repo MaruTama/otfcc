@@ -2,10 +2,7 @@ extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
     pub type _IO_marker;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
@@ -114,55 +111,10 @@ pub const VISIT_BLACK: bk_cell_visit_state = 2;
 pub const VISIT_GRAY: bk_cell_visit_state = 1;
 pub const VISIT_WHITE: bk_cell_visit_state = 0;
 pub type bk_Block = __caryll_bkblock;
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const NULL_0: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
-}
 unsafe extern "C" fn bkblock_acells(mut b: *mut bk_Block, mut len: uint32_t) {
     if len <= (*b).length.wrapping_add((*b).free) {
         (*b).free = (*b).free.wrapping_sub(len.wrapping_sub((*b).length));
@@ -217,54 +169,41 @@ pub unsafe extern "C" fn bkblock_pushptr(
     (*cell).t = type_0;
     (*cell).c2rust_unnamed.p = p as *mut __caryll_bkblock;
 }
-unsafe extern "C" fn vbkpushitems(
-    mut b: *mut bk_Block,
-    mut type0: bk_CellType,
-    mut ap: ::core::ffi::VaList,
-) {
+unsafe extern "C" fn vbkpushitems(b: *mut bk_Block, type0: bk_CellType, mut ap: ::core::ffi::VaList) {
+    // bk_CellType's variants (bkover/b8/b16/b32/p16/p32/sp16/sp32/bkcopy/
+    // bkembed) are all the same c_uint type, so the c2rust-generated
+    // triple-cast comparisons (`x as c_uint == y as c_int as c_uint`) were
+    // always just `x == y`; matching on the named consts directly is
+    // equivalent and self-documenting.
     let mut curtype: bk_CellType = type0;
-    while curtype as u64 != 0 {
-        if curtype as ::core::ffi::c_uint == bkcopy as ::core::ffi::c_int as ::core::ffi::c_uint
-            || curtype as ::core::ffi::c_uint
-                == bkembed as ::core::ffi::c_int as ::core::ffi::c_uint
-        {
-            let mut par: *mut bk_Block = ap.arg::<*mut bk_Block>();
-            if !par.is_null() && !(*par).cells.is_null() {
-                let mut j: uint32_t = 0 as uint32_t;
-                while j < (*par).length {
-                    if bk_cellIsPointer((*par).cells.offset(j as isize)) {
-                        bkblock_pushptr(
-                            b,
-                            (*(*par).cells.offset(j as isize)).t,
-                            (*(*par).cells.offset(j as isize)).c2rust_unnamed.p as *mut bk_Block,
-                        );
-                    } else {
-                        bkblock_pushint(
-                            b,
-                            (*(*par).cells.offset(j as isize)).t,
-                            (*(*par).cells.offset(j as isize)).c2rust_unnamed.z,
-                        );
+    while curtype != bkover {
+        match curtype {
+            bkcopy | bkembed => {
+                let par: *mut bk_Block = ap.arg::<*mut bk_Block>();
+                if !par.is_null() && !(*par).cells.is_null() {
+                    for j in 0..(*par).length {
+                        let cell = (*par).cells.offset(j as isize);
+                        if bk_cellIsPointer(cell) {
+                            bkblock_pushptr(b, (*cell).t, (*cell).c2rust_unnamed.p as *mut bk_Block);
+                        } else {
+                            bkblock_pushint(b, (*cell).t, (*cell).c2rust_unnamed.z);
+                        }
                     }
-                    j = j.wrapping_add(1);
+                }
+                if curtype == bkembed && !par.is_null() {
+                    free((*par).cells as *mut ::core::ffi::c_void);
+                    (*par).cells = ::core::ptr::null_mut::<bk_Cell>();
+                    free(par as *mut ::core::ffi::c_void);
                 }
             }
-            if curtype as ::core::ffi::c_uint
-                == bkembed as ::core::ffi::c_int as ::core::ffi::c_uint
-                && !par.is_null()
-            {
-                free((*par).cells as *mut ::core::ffi::c_void);
-                (*par).cells = ::core::ptr::null_mut::<bk_Cell>();
-                free(par as *mut ::core::ffi::c_void);
-                par = ::core::ptr::null_mut::<bk_Block>();
+            t if t < p16 => {
+                let par_0: uint32_t = ap.arg::<::core::ffi::c_int>() as uint32_t;
+                bkblock_pushint(b, curtype, par_0);
             }
-        } else if (curtype as ::core::ffi::c_uint)
-            < p16 as ::core::ffi::c_int as ::core::ffi::c_uint
-        {
-            let mut par_0: uint32_t = ap.arg::<::core::ffi::c_int>() as uint32_t;
-            bkblock_pushint(b, curtype, par_0);
-        } else {
-            let mut par_1: *mut bk_Block = ap.arg::<*mut bk_Block>();
-            bkblock_pushptr(b, curtype, par_1);
+            _ => {
+                let par_1: *mut bk_Block = ap.arg::<*mut bk_Block>();
+                bkblock_pushptr(b, curtype, par_1);
+            }
         }
         curtype = ap.arg::<::core::ffi::c_int>() as bk_CellType;
     }
@@ -293,49 +232,43 @@ pub unsafe extern "C" fn bk_push(
 }
 #[no_mangle]
 pub unsafe extern "C" fn bk_newBlockFromStringLen(
-    mut len: size_t,
-    mut str: *const ::core::ffi::c_char,
+    len: size_t,
+    str: *const ::core::ffi::c_char,
 ) -> *mut bk_Block {
     if str.is_null() {
         return ::core::ptr::null_mut::<bk_Block>();
     }
-    let mut b: *mut bk_Block = bk_new_Block(bkover as ::core::ffi::c_int);
-    let mut j: size_t = 0 as size_t;
-    while j < len {
+    let b: *mut bk_Block = bk_new_Block(bkover as ::core::ffi::c_int);
+    for j in 0..len {
         bkblock_pushint(b, b8, *str.offset(j as isize) as uint32_t);
-        j = j.wrapping_add(1);
     }
     return b;
 }
 #[no_mangle]
-pub unsafe extern "C" fn bk_newBlockFromBuffer(mut buf: *mut caryll_Buffer) -> *mut bk_Block {
+pub unsafe extern "C" fn bk_newBlockFromBuffer(buf: *mut caryll_Buffer) -> *mut bk_Block {
     if buf.is_null() {
         return ::core::ptr::null_mut::<bk_Block>();
     }
-    let mut b: *mut bk_Block = bk_new_Block(bkover as ::core::ffi::c_int);
-    let mut j: size_t = 0 as size_t;
-    while j < (*buf).size {
+    let b: *mut bk_Block = bk_new_Block(bkover as ::core::ffi::c_int);
+    for j in 0..(*buf).size {
         bkblock_pushint(b, b8, *(*buf).data.offset(j as isize) as uint32_t);
-        j = j.wrapping_add(1);
     }
     buffree(buf);
     return b;
 }
 #[no_mangle]
-pub unsafe extern "C" fn bk_newBlockFromBufferCopy(mut buf: *const caryll_Buffer) -> *mut bk_Block {
+pub unsafe extern "C" fn bk_newBlockFromBufferCopy(buf: *const caryll_Buffer) -> *mut bk_Block {
     if buf.is_null() {
         return ::core::ptr::null_mut::<bk_Block>();
     }
-    let mut b: *mut bk_Block = bk_new_Block(bkover as ::core::ffi::c_int);
-    let mut j: size_t = 0 as size_t;
-    while j < (*buf).size {
+    let b: *mut bk_Block = bk_new_Block(bkover as ::core::ffi::c_int);
+    for j in 0..(*buf).size {
         bkblock_pushint(b, b8, *(*buf).data.offset(j as isize) as uint32_t);
-        j = j.wrapping_add(1);
     }
     return b;
 }
 #[no_mangle]
-pub unsafe extern "C" fn bk_printBlock(mut b: *mut bk_Block) {
+pub unsafe extern "C" fn bk_printBlock(b: *mut bk_Block) {
     fprintf(
         stderr,
         b"Block size %08x\n\0" as *const u8 as *const ::core::ffi::c_char,
@@ -345,33 +278,32 @@ pub unsafe extern "C" fn bk_printBlock(mut b: *mut bk_Block) {
         stderr,
         b"------------------\n\0" as *const u8 as *const ::core::ffi::c_char,
     );
-    let mut j: uint32_t = 0 as uint32_t;
-    while j < (*b).length {
-        if bk_cellIsPointer((*b).cells.offset(j as isize)) {
-            if !(*(*b).cells.offset(j as isize)).c2rust_unnamed.p.is_null() {
+    for j in 0..(*b).length {
+        let cell = (*b).cells.offset(j as isize);
+        if bk_cellIsPointer(cell) {
+            if !(*cell).c2rust_unnamed.p.is_null() {
                 fprintf(
                     stderr,
                     b"  %3d %p[%d]\n\0" as *const u8 as *const ::core::ffi::c_char,
-                    (*(*b).cells.offset(j as isize)).t as ::core::ffi::c_uint,
-                    (*(*b).cells.offset(j as isize)).c2rust_unnamed.p,
-                    (*(*(*b).cells.offset(j as isize)).c2rust_unnamed.p)._index,
+                    (*cell).t as ::core::ffi::c_uint,
+                    (*cell).c2rust_unnamed.p,
+                    (*(*cell).c2rust_unnamed.p)._index,
                 );
             } else {
                 fprintf(
                     stderr,
                     b"  %3d [NULL]\n\0" as *const u8 as *const ::core::ffi::c_char,
-                    (*(*b).cells.offset(j as isize)).t as ::core::ffi::c_uint,
+                    (*cell).t as ::core::ffi::c_uint,
                 );
             }
         } else {
             fprintf(
                 stderr,
                 b"  %3d %d\n\0" as *const u8 as *const ::core::ffi::c_char,
-                (*(*b).cells.offset(j as isize)).t as ::core::ffi::c_uint,
-                (*(*b).cells.offset(j as isize)).c2rust_unnamed.z,
+                (*cell).t as ::core::ffi::c_uint,
+                (*cell).c2rust_unnamed.z,
             );
         }
-        j = j.wrapping_add(1);
     }
     fprintf(
         stderr,

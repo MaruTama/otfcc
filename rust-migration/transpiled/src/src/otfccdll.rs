@@ -1443,8 +1443,8 @@ pub unsafe extern "C" fn otfccbuild_json_otf(
     );
     otfcc_Options_optimizeTo(options, olevel);
     if for_webfont {
-        (*options).ignore_glyph_order = true_0 != 0;
-        (*options).force_cid = true_0 != 0;
+        (*options).ignore_glyph_order = true;
+        (*options).force_cid = true;
     }
     let mut jsonRoot: *mut json_value = json_parse(injson, inlen as size_t);
     if jsonRoot.is_null() {

@@ -36,6 +36,7 @@ extern "C" {
         options: *const otfcc_Options,
     );
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
@@ -1571,26 +1572,6 @@ pub const HASH_INITIAL_NUM_BUCKETS: ::core::ffi::c_uint = 32 as ::core::ffi::c_u
 pub const HASH_INITIAL_NUM_BUCKETS_LOG2: ::core::ffi::c_uint = 5 as ::core::ffi::c_uint;
 pub const HASH_BKT_CAPACITY_THRESH: ::core::ffi::c_uint = 10 as ::core::ffi::c_uint;
 pub const HASH_SIGNATURE: ::core::ffi::c_uint = 0xa0111fe1 as ::core::ffi::c_uint;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
 unsafe extern "C" fn by_from_id_multi(
     mut a: *mut gsub_multi_hash,
     mut b: *mut gsub_multi_hash,
@@ -1600,7 +1581,7 @@ unsafe extern "C" fn by_from_id_multi(
 #[no_mangle]
 pub unsafe extern "C" fn consolidate_gsub_multi(
     mut font: *mut otfcc_Font,
-    mut table: *mut table_OTL,
+    mut _table: *mut table_OTL,
     mut _subtable: *mut otl_Subtable,
     mut options: *const otfcc_Options,
 ) -> bool {
@@ -1631,7 +1612,7 @@ pub unsafe extern "C" fn consolidate_gsub_multi(
             fontop_consolidateCoverage(font, (*(*subtable).items.offset(k as isize)).to, options);
             otl_iCoverage.shrink.expect("non-null function pointer")(
                 (*(*subtable).items.offset(k as isize)).to,
-                false_0 != 0,
+                false,
             );
             if (*(*(*subtable).items.offset(k as isize)).to).numGlyphs == 0 {
                 (*(*options).logger)
@@ -2372,7 +2353,7 @@ pub unsafe extern "C" fn consolidate_gsub_multi(
                                     .log2_num_buckets
                                     .wrapping_add(1 as ::core::ffi::c_uint))
                             .wrapping_add(
-                                (if (*(*s).hh.tbl).num_items
+                                if (*(*s).hh.tbl).num_items
                                     & (*(*s).hh.tbl)
                                         .num_buckets
                                         .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2382,7 +2363,7 @@ pub unsafe extern "C" fn consolidate_gsub_multi(
                                     1 as ::core::ffi::c_uint
                                 } else {
                                     0 as ::core::ffi::c_uint
-                                }),
+                                },
                             );
                             (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                             _he_bkt_i = 0 as ::core::ffi::c_uint;

@@ -288,7 +288,7 @@ pub unsafe extern "C" fn otfcc_parseMeta(
             b"meta\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut j: size_t = 0 as size_t;
         while j < (*_meta_entries).u.array.length as size_t {
@@ -314,7 +314,7 @@ pub unsafe extern "C" fn otfcc_parseMeta(
             }
             j = j.wrapping_add(1);
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

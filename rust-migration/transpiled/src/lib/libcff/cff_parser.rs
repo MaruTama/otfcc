@@ -38,6 +38,7 @@ extern "C" {
     );
     fn cff_decodeCS2Token(start: *const uint8_t, val: *mut cff_Value) -> uint32_t;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -589,26 +590,6 @@ pub struct cff_IOutlineBuilder {
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
 #[inline]
 unsafe extern "C" fn gu1(mut s: *mut uint8_t, mut p: uint32_t) -> uint32_t {
     let mut b0: uint32_t = *s.offset(p as isize) as uint32_t;
@@ -1177,44 +1158,44 @@ unsafe extern "C" fn reverseStack(
     }
 }
 unsafe extern "C" fn callback_nopSetWidth(
-    mut context: *mut ::core::ffi::c_void,
-    mut width: ::core::ffi::c_double,
+    mut _context: *mut ::core::ffi::c_void,
+    mut _width: ::core::ffi::c_double,
 ) {
 }
-unsafe extern "C" fn callback_nopNewContour(mut context: *mut ::core::ffi::c_void) {}
+unsafe extern "C" fn callback_nopNewContour(mut _context: *mut ::core::ffi::c_void) {}
 unsafe extern "C" fn callback_nopLineTo(
-    mut context: *mut ::core::ffi::c_void,
-    mut x1: ::core::ffi::c_double,
-    mut y1: ::core::ffi::c_double,
+    mut _context: *mut ::core::ffi::c_void,
+    mut _x1: ::core::ffi::c_double,
+    mut _y1: ::core::ffi::c_double,
 ) {
 }
 unsafe extern "C" fn callback_nopCurveTo(
-    mut context: *mut ::core::ffi::c_void,
-    mut x1: ::core::ffi::c_double,
-    mut y1: ::core::ffi::c_double,
-    mut x2: ::core::ffi::c_double,
-    mut y2: ::core::ffi::c_double,
-    mut x3: ::core::ffi::c_double,
-    mut y3: ::core::ffi::c_double,
+    mut _context: *mut ::core::ffi::c_void,
+    mut _x1: ::core::ffi::c_double,
+    mut _y1: ::core::ffi::c_double,
+    mut _x2: ::core::ffi::c_double,
+    mut _y2: ::core::ffi::c_double,
+    mut _x3: ::core::ffi::c_double,
+    mut _y3: ::core::ffi::c_double,
 ) {
 }
 unsafe extern "C" fn callback_nopsetHint(
-    mut context: *mut ::core::ffi::c_void,
-    mut isVertical: bool,
-    mut position: ::core::ffi::c_double,
-    mut width: ::core::ffi::c_double,
+    mut _context: *mut ::core::ffi::c_void,
+    mut _isVertical: bool,
+    mut _position: ::core::ffi::c_double,
+    mut _width: ::core::ffi::c_double,
 ) {
 }
 unsafe extern "C" fn callback_nopsetMask(
-    mut context: *mut ::core::ffi::c_void,
-    mut isContourMask: bool,
+    mut _context: *mut ::core::ffi::c_void,
+    mut _isContourMask: bool,
     mut mask: *mut bool,
 ) {
     free(mask as *mut ::core::ffi::c_void);
     mask = ::core::ptr::null_mut::<bool>();
 }
 unsafe extern "C" fn callback_nopgetrand(
-    mut context: *mut ::core::ffi::c_void,
+    mut _context: *mut ::core::ffi::c_void,
 ) -> ::core::ffi::c_double {
     return 0 as ::core::ffi::c_int as ::core::ffi::c_double;
 }

@@ -31,6 +31,7 @@ extern "C" {
     fn json_integer_new(_: int64_t) -> *mut json_value;
     fn json_double_new(_: ::core::ffi::c_double) -> *mut json_value;
 }
+use crate::src::lib::support::binio::{read_16u, read_32s};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -245,7 +246,7 @@ unsafe extern "C" fn initMaxp(mut maxp: *mut table_maxp) {
     (*maxp).version = 0x10000 as ::core::ffi::c_int as f16dot16;
 }
 #[inline]
-unsafe extern "C" fn disposeMaxp(mut maxp: *mut table_maxp) {}
+unsafe extern "C" fn disposeMaxp(mut _maxp: *mut table_maxp) {}
 #[inline]
 unsafe extern "C" fn table_maxp_replace(mut dst: *mut table_maxp, src: table_maxp) {
     table_maxp_dispose(dst);
@@ -256,7 +257,7 @@ unsafe extern "C" fn table_maxp_replace(mut dst: *mut table_maxp, src: table_max
     );
 }
 #[no_mangle]
-pub static mut table_iMaxp: __caryll_elementinterface_table_maxp = unsafe {
+pub static mut table_iMaxp: __caryll_elementinterface_table_maxp = {
     __caryll_elementinterface_table_maxp {
         init: Some(table_maxp_init as unsafe extern "C" fn(*mut table_maxp) -> ()),
         copy: Some(
@@ -447,7 +448,7 @@ pub unsafe extern "C" fn otfcc_dumpMaxp(
             b"maxp\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut maxp: *mut json_value = json_object_new(15 as size_t);
         json_object_push(
@@ -530,7 +531,7 @@ pub unsafe extern "C" fn otfcc_dumpMaxp(
             b"maxp\0" as *const u8 as *const ::core::ffi::c_char,
             maxp,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -559,7 +560,7 @@ pub unsafe extern "C" fn otfcc_parseMaxp(
                 b"maxp\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             (*maxp).version = otfcc_to_fixed(json_obj_getnum(
                 table,
@@ -593,7 +594,7 @@ pub unsafe extern "C" fn otfcc_parseMaxp(
                 table,
                 b"maxStackElements\0" as *const u8 as *const ::core::ffi::c_char,
             ) as uint16_t;
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -606,7 +607,7 @@ pub unsafe extern "C" fn otfcc_parseMaxp(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildMaxp(
     mut maxp: *const table_maxp,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if maxp.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();
@@ -697,29 +698,6 @@ unsafe extern "C" fn json_obj_getnum(
         _k = _k.wrapping_add(1);
     }
     return 0.0f64;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
-unsafe extern "C" fn read_32u(mut src: *const uint8_t) -> uint32_t {
-    let mut b0: uint32_t =
-        (*src.offset(0 as ::core::ffi::c_int as isize) as uint32_t) << 24 as ::core::ffi::c_int;
-    let mut b1: uint32_t =
-        (*src.offset(1 as ::core::ffi::c_int as isize) as uint32_t) << 16 as ::core::ffi::c_int;
-    let mut b2: uint32_t =
-        (*src.offset(2 as ::core::ffi::c_int as isize) as uint32_t) << 8 as ::core::ffi::c_int;
-    let mut b3: uint32_t = *src.offset(3 as ::core::ffi::c_int as isize) as uint32_t;
-    return b0 | b1 | b2 | b3;
-}
-#[inline]
-unsafe extern "C" fn read_32s(mut src: *const uint8_t) -> int32_t {
-    return read_32u(src) as int32_t;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

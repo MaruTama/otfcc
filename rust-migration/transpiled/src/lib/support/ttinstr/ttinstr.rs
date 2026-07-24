@@ -57,6 +57,7 @@ extern "C" {
     fn __ctype_b_loc() -> *mut *const ::core::ffi::c_ushort;
     fn __ctype_tolower_loc() -> *mut *const __int32_t;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
 pub type __int32_t = i32;
@@ -392,52 +393,6 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const json_serialize_mode_packed: ::core::ffi::c_int = 2 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
-}
-#[inline]
 unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     let mut opts: json_serialize_opts = json_serialize_opts {
         mode: json_serialize_mode_packed,
@@ -733,7 +688,7 @@ unsafe extern "C" fn strnmatch(
         let fresh21 = str2;
         str2 = str2.offset(1);
         ch2 = *fresh21 as ::core::ffi::c_int;
-        ch1 = ({
+        ch1 = {
             let mut __res: ::core::ffi::c_int = 0;
             if ::core::mem::size_of::<::core::ffi::c_int>() as usize > 1 as usize {
                 if 0 != 0 {
@@ -751,8 +706,8 @@ unsafe extern "C" fn strnmatch(
                 __res = *(*__ctype_tolower_loc()).offset(ch1 as isize) as ::core::ffi::c_int;
             }
             __res
-        });
-        ch2 = ({
+        };
+        ch2 = {
             let mut __res: ::core::ffi::c_int = 0;
             if ::core::mem::size_of::<::core::ffi::c_int>() as usize > 1 as usize {
                 if 0 != 0 {
@@ -770,7 +725,7 @@ unsafe extern "C" fn strnmatch(
                 __res = *(*__ctype_tolower_loc()).offset(ch2 as isize) as ::core::ffi::c_int;
             }
             __res
-        });
+        };
         if ch1 != ch2 || ch1 == '\0' as i32 {
             return ch1 - ch2;
         }

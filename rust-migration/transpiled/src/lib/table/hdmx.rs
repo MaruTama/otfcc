@@ -23,6 +23,8 @@ extern "C" {
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_16u, read_32u};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -221,7 +223,7 @@ unsafe extern "C" fn disposeHdmx(mut table: *mut table_hdmx) {
     (*table).records = ::core::ptr::null_mut::<device_record>();
 }
 #[no_mangle]
-pub static mut table_iHdmx: __caryll_elementinterface_table_hdmx = unsafe {
+pub static mut table_iHdmx: __caryll_elementinterface_table_hdmx = {
     __caryll_elementinterface_table_hdmx {
         init: Some(table_hdmx_init as unsafe extern "C" fn(*mut table_hdmx) -> ()),
         copy: Some(
@@ -302,7 +304,7 @@ unsafe extern "C" fn table_hdmx_init(mut x: *mut table_hdmx) {
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readHdmx(
     mut packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
     mut maxp: *mut table_maxp,
 ) -> *mut table_hdmx {
     let mut __fortable_keep: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
@@ -378,43 +380,4 @@ pub unsafe extern "C" fn otfcc_readHdmx(
         __fortable_count += 1;
     }
     return ::core::ptr::null_mut::<table_hdmx>();
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
-unsafe extern "C" fn read_32u(mut src: *const uint8_t) -> uint32_t {
-    let mut b0: uint32_t =
-        (*src.offset(0 as ::core::ffi::c_int as isize) as uint32_t) << 24 as ::core::ffi::c_int;
-    let mut b1: uint32_t =
-        (*src.offset(1 as ::core::ffi::c_int as isize) as uint32_t) << 16 as ::core::ffi::c_int;
-    let mut b2: uint32_t =
-        (*src.offset(2 as ::core::ffi::c_int as isize) as uint32_t) << 8 as ::core::ffi::c_int;
-    let mut b3: uint32_t = *src.offset(3 as ::core::ffi::c_int as isize) as uint32_t;
-    return b0 | b1 | b2 | b3;
 }

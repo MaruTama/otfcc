@@ -33,6 +33,7 @@ extern "C" {
     fn bufwrite_buf(buf: *mut caryll_Buffer, that: *mut caryll_Buffer);
     fn buflongalign(buf: *mut caryll_Buffer);
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -226,26 +227,6 @@ pub const HASH_INITIAL_NUM_BUCKETS: ::core::ffi::c_uint = 32 as ::core::ffi::c_u
 pub const HASH_INITIAL_NUM_BUCKETS_LOG2: ::core::ffi::c_uint = 5 as ::core::ffi::c_uint;
 pub const HASH_BKT_CAPACITY_THRESH: ::core::ffi::c_uint = 10 as ::core::ffi::c_uint;
 pub const HASH_SIGNATURE: ::core::ffi::c_uint = 0xa0111fe1 as ::core::ffi::c_uint;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
 #[inline]
 unsafe extern "C" fn otfcc_check_endian() -> bool {
     let mut check_union: C2RustUnnamed_0 = C2RustUnnamed_0 {
@@ -1088,7 +1069,7 @@ pub unsafe extern "C" fn otfcc_SFNTBuilder_pushTable(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*item).hh.tbl).num_items
+                    if (*(*item).hh.tbl).num_items
                         & (*(*item).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1098,7 +1079,7 @@ pub unsafe extern "C" fn otfcc_SFNTBuilder_pushTable(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*item).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -1196,15 +1177,15 @@ pub unsafe extern "C" fn otfcc_SFNTBuilder_serialize(
     {
         8 as ::core::ffi::c_int
     } else {
-        (if (nTables as ::core::ffi::c_int) < 32 as ::core::ffi::c_int {
+        if (nTables as ::core::ffi::c_int) < 32 as ::core::ffi::c_int {
             16 as ::core::ffi::c_int
         } else {
-            (if (nTables as ::core::ffi::c_int) < 64 as ::core::ffi::c_int {
+            if (nTables as ::core::ffi::c_int) < 64 as ::core::ffi::c_int {
                 32 as ::core::ffi::c_int
             } else {
                 64 as ::core::ffi::c_int
-            })
-        })
+            }
+        }
     }) * 16 as ::core::ffi::c_int) as uint16_t;
     bufwrite32b(buffer, (*builder).header);
     bufwrite16b(buffer, nTables);

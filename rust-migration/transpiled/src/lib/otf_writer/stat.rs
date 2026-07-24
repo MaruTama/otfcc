@@ -20,6 +20,7 @@ extern "C" {
     fn time(__timer: *mut time_t) -> time_t;
     fn round(__x: ::core::ffi::c_double) -> ::core::ffi::c_double;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
@@ -1491,13 +1492,11 @@ pub unsafe extern "C" fn stat_single_glyph(
         nCompositePoints: 0 as uint16_t,
         nCompositeContours: 0 as uint16_t,
     };
-    let mut j: glyphid_t = (*gr).glyph.index;
+    let j: glyphid_t = (*gr).glyph.index;
     if depth as ::core::ffi::c_int >= 0xff as ::core::ffi::c_int {
         return stat;
     }
-    if *stated.offset(j as isize) as ::core::ffi::c_uint
-        == stat_doing as ::core::ffi::c_int as ::core::ffi::c_uint
-    {
+    if *stated.offset(j as isize) == stat_doing {
         (*(*options).logger)
             .logSDS
             .expect(
@@ -1517,7 +1516,7 @@ pub unsafe extern "C" fn stat_single_glyph(
         *stated.offset(j as isize) = stat_completed;
         return stat;
     }
-    let mut g: *mut glyf_Glyph = *(*table).items.offset(j as isize) as *mut glyf_Glyph;
+    let g: *mut glyf_Glyph = *(*table).items.offset(j as isize) as *mut glyf_Glyph;
     *stated.offset(j as isize) = stat_doing;
     let mut xmin: pos_t = POS_MAX as pos_t;
     let mut xmax: pos_t = -POS_MAX as pos_t;
@@ -1527,14 +1526,11 @@ pub unsafe extern "C" fn stat_single_glyph(
     let mut nPoints: uint16_t = 0 as uint16_t;
     let mut nCompositePoints: uint16_t = 0 as uint16_t;
     let mut nCompositeContours: uint16_t = 0 as uint16_t;
-    let mut c: shapeid_t = 0 as shapeid_t;
-    while (c as size_t) < (*g).contours.length {
-        let mut pj: shapeid_t = 0 as shapeid_t;
-        while (pj as size_t) < (*(*g).contours.items.offset(c as isize)).length {
-            let mut p: *mut glyf_Point = (*(*g).contours.items.offset(c as isize))
-                .items
-                .offset(pj as isize) as *mut glyf_Point;
-            let mut x: pos_t = round(
+    for c in 0..(*g).contours.length as shapeid_t {
+        let contour = (*g).contours.items.offset(c as isize);
+        for pj in 0..(*contour).length as shapeid_t {
+            let p: *mut glyf_Point = (*contour).items.offset(pj as isize) as *mut glyf_Point;
+            let x: pos_t = round(
                 iVQ.getStill.expect("non-null function pointer")((*gr).x) as ::core::ffi::c_double
                     + (*gr).a as ::core::ffi::c_double
                         * iVQ.getStill.expect("non-null function pointer")((*p).x)
@@ -1565,14 +1561,11 @@ pub unsafe extern "C" fn stat_single_glyph(
                 ymax = y;
             }
             nPoints = (nPoints as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16_t;
-            pj = pj.wrapping_add(1);
         }
-        c = c.wrapping_add(1);
     }
     nCompositePoints = nPoints;
     nCompositeContours = (*g).contours.length as uint16_t;
-    let mut r: shapeid_t = 0 as shapeid_t;
-    while (r as size_t) < (*g).references.length {
+    for r in 0..(*g).references.length as shapeid_t {
         let mut ref_0: glyf_ComponentReference = glyf_ComponentReference {
             x: VQ {
                 kernel: 0.,
@@ -1608,13 +1601,12 @@ pub unsafe extern "C" fn stat_single_glyph(
         glyf_iComponentReference
             .init
             .expect("non-null function pointer")(&raw mut ref_0);
-        let mut rr: *mut glyf_ComponentReference =
+        let rr: *mut glyf_ComponentReference =
             (*g).references.items.offset(r as isize) as *mut glyf_ComponentReference;
         otfcc_iHandle.replace.expect("non-null function pointer")(
             &raw mut ref_0.glyph,
-            otfcc_iHandle.fromIndex.expect("non-null function pointer")(
-                (*(*g).references.items.offset(r as isize)).glyph.index,
-            ) as otfcc_Handle,
+            otfcc_iHandle.fromIndex.expect("non-null function pointer")((*rr).glyph.index)
+                as otfcc_Handle,
         );
         ref_0.a = (*gr).a * (*rr).a + (*rr).b * (*gr).c;
         ref_0.b = (*rr).a * (*gr).b + (*rr).b * (*gr).d;
@@ -1668,7 +1660,6 @@ pub unsafe extern "C" fn stat_single_glyph(
         nCompositeContours = (nCompositeContours as ::core::ffi::c_int
             + thatstat.nCompositeContours as ::core::ffi::c_int)
             as uint16_t;
-        r = r.wrapping_add(1);
     }
     if xmin > xmax {
         xmax = 0 as ::core::ffi::c_int as pos_t;
@@ -1701,8 +1692,7 @@ pub unsafe extern "C" fn statGlyf(mut font: *mut otfcc_Font, mut options: *const
     let mut xmax: pos_t = (0xffffffff as ::core::ffi::c_uint).wrapping_neg() as pos_t;
     let mut ymin: pos_t = 0xffffffff as ::core::ffi::c_uint as pos_t;
     let mut ymax: pos_t = (0xffffffff as ::core::ffi::c_uint).wrapping_neg() as pos_t;
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as size_t) < (*(*font).glyf).length {
+    for j in 0..(*(*font).glyf).length as glyphid_t {
         let mut gr: glyf_ComponentReference = glyf_ComponentReference {
             x: VQ {
                 kernel: 0.,
@@ -1760,7 +1750,6 @@ pub unsafe extern "C" fn statGlyf(mut font: *mut otfcc_Font, mut options: *const
         if thatstat.yMax > ymax {
             ymax = thatstat.yMax;
         }
-        j = j.wrapping_add(1);
     }
     (*(*font).head).xMin = xmin as int16_t;
     (*(*font).head).xMax = xmax as int16_t;
@@ -1778,9 +1767,8 @@ pub unsafe extern "C" fn statMaxp(mut font: *mut otfcc_Font) {
     let mut nCompositePoints: uint16_t = 0 as uint16_t;
     let mut nCompositeContours: uint16_t = 0 as uint16_t;
     let mut instSize: uint16_t = 0 as uint16_t;
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as size_t) < (*(*font).glyf).length {
-        let mut g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j as isize) as *mut glyf_Glyph;
+    for j in 0..(*(*font).glyf).length as glyphid_t {
+        let g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j as isize) as *mut glyf_Glyph;
         if (*g).contours.length > 0 as size_t {
             if (*g).stat.nPoints as ::core::ffi::c_int > nPoints as ::core::ffi::c_int {
                 nPoints = (*g).stat.nPoints;
@@ -1809,7 +1797,6 @@ pub unsafe extern "C" fn statMaxp(mut font: *mut otfcc_Font) {
         if (*g).instructionsLength as ::core::ffi::c_int > instSize as ::core::ffi::c_int {
             instSize = (*g).instructionsLength;
         }
-        j = j.wrapping_add(1);
     }
     (*(*font).maxp).maxPoints = nPoints;
     (*(*font).maxp).maxContours = nContours;
@@ -1819,7 +1806,7 @@ pub unsafe extern "C" fn statMaxp(mut font: *mut otfcc_Font) {
     (*(*font).maxp).maxComponentElements = nComponents;
     (*(*font).maxp).maxSizeOfInstructions = instSize;
 }
-unsafe extern "C" fn statHmtx(mut font: *mut otfcc_Font, mut options: *const otfcc_Options) {
+unsafe extern "C" fn statHmtx(mut font: *mut otfcc_Font, mut _options: *const otfcc_Options) {
     if (*font).glyf.is_null() {
         return;
     }
@@ -1830,10 +1817,8 @@ unsafe extern "C" fn statHmtx(mut font: *mut otfcc_Font, mut options: *const otf
     ) as *mut table_hmtx;
     let mut count_a: glyphid_t = (*(*font).glyf).length as glyphid_t;
     let mut count_k: glyphid_t = 0 as glyphid_t;
-    let mut lsbAtX_0: bool = true_0 != 0;
-    if !((*font).subtype as ::core::ffi::c_uint
-        == FONTTYPE_CFF as ::core::ffi::c_int as ::core::ffi::c_uint)
-    {
+    let mut lsbAtX_0: bool = true;
+    if (*font).subtype != FONTTYPE_CFF {
         while count_a as ::core::ffi::c_int > 2 as ::core::ffi::c_int
             && iVQ.getStill.expect("non-null function pointer")(
                 (**(*(*font).glyf)
@@ -1863,9 +1848,8 @@ unsafe extern "C" fn statHmtx(mut font: *mut otfcc_Font, mut options: *const otf
     let mut minRSB: pos_t = 0x7fff as ::core::ffi::c_int as pos_t;
     let mut maxExtent: pos_t = -(0x8000 as ::core::ffi::c_int) as pos_t;
     let mut maxWidth: length_t = 0 as ::core::ffi::c_int as length_t;
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as size_t) < (*(*font).glyf).length {
-        let mut g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j as isize) as *mut glyf_Glyph;
+    for j in 0..(*(*font).glyf).length as glyphid_t {
+        let g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j as isize) as *mut glyf_Glyph;
         if iVQ.isZero.expect("non-null function pointer")((*g).horizontalOrigin, 1.0f64 / 1000.0f64)
         {
             iVQ.replace.expect("non-null function pointer")(
@@ -1874,7 +1858,7 @@ unsafe extern "C" fn statHmtx(mut font: *mut otfcc_Font, mut options: *const otf
                     iVQ.neutral.expect("non-null function pointer"))() as VQ,
             );
         } else {
-            lsbAtX_0 = false_0 != 0;
+            lsbAtX_0 = false;
         }
         let hori: pos_t =
             iVQ.getStill.expect("non-null function pointer")((*g).horizontalOrigin) as pos_t;
@@ -1902,7 +1886,6 @@ unsafe extern "C" fn statHmtx(mut font: *mut otfcc_Font, mut options: *const otf
         if (*g).stat.xMax - hori > maxExtent {
             maxExtent = (*g).stat.xMax - hori;
         }
-        j = j.wrapping_add(1);
     }
     (*(*font).hhea).numberOfMetrics = count_a as uint16_t;
     (*(*font).hhea).minLeftSideBearing = minLSB as int16_t;
@@ -1912,11 +1895,8 @@ unsafe extern "C" fn statHmtx(mut font: *mut otfcc_Font, mut options: *const otf
     (*font).hmtx = hmtx;
     (*(*font).head).flags = ((*(*font).head).flags as ::core::ffi::c_int
         & !(0x2 as ::core::ffi::c_int)
-        | (if lsbAtX_0 as ::core::ffi::c_int != 0 {
-            0x2 as ::core::ffi::c_int
-        } else {
-            0 as ::core::ffi::c_int
-        })) as uint16_t;
+        | (if lsbAtX_0 { 0x2 as ::core::ffi::c_int } else { 0 as ::core::ffi::c_int }))
+        as uint16_t;
 }
 unsafe extern "C" fn statVmtx(mut font: *mut otfcc_Font, mut options: *const otfcc_Options) {
     if (*font).glyf.is_null() {
@@ -1929,10 +1909,7 @@ unsafe extern "C" fn statVmtx(mut font: *mut otfcc_Font, mut options: *const otf
     ) as *mut table_vmtx;
     let mut count_a: glyphid_t = (*(*font).glyf).length as glyphid_t;
     let mut count_k: glyphid_t = 0 as glyphid_t;
-    if !((*font).subtype as ::core::ffi::c_uint
-        == FONTTYPE_CFF as ::core::ffi::c_int as ::core::ffi::c_uint
-        && !(*options).cff_short_vmtx)
-    {
+    if !((*font).subtype == FONTTYPE_CFF && !(*options).cff_short_vmtx) {
         while count_a as ::core::ffi::c_int > 2 as ::core::ffi::c_int
             && iVQ.getStill.expect("non-null function pointer")(
                 (**(*(*font).glyf)
@@ -1962,9 +1939,8 @@ unsafe extern "C" fn statVmtx(mut font: *mut otfcc_Font, mut options: *const otf
     let mut minBSB: pos_t = 0x7fff as ::core::ffi::c_int as pos_t;
     let mut maxExtent: pos_t = -(0x8000 as ::core::ffi::c_int) as pos_t;
     let mut maxHeight: length_t = 0 as ::core::ffi::c_int as length_t;
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as size_t) < (*(*font).glyf).length {
-        let mut g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j as isize) as *mut glyf_Glyph;
+    for j in 0..(*(*font).glyf).length as glyphid_t {
+        let g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j as isize) as *mut glyf_Glyph;
         let vori: pos_t =
             iVQ.getStill.expect("non-null function pointer")((*g).verticalOrigin) as pos_t;
         let advh: pos_t =
@@ -1991,7 +1967,6 @@ unsafe extern "C" fn statVmtx(mut font: *mut otfcc_Font, mut options: *const otf
         if vori - (*g).stat.yMin > maxExtent {
             maxExtent = vori - (*g).stat.yMin;
         }
-        j = j.wrapping_add(1);
     }
     (*(*font).vhea).numOfLongVerMetrics = count_a as uint16_t;
     (*(*font).vhea).minTop = minTSB as int16_t;
@@ -2490,115 +2465,72 @@ unsafe extern "C" fn statOS_2AverageWidth(
         return;
     }
     let mut totalWidth: uint32_t = 0 as uint32_t;
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as size_t) < (*(*font).glyf).length {
+    for j in 0..(*(*font).glyf).length as glyphid_t {
         let adw: pos_t = iVQ.getStill.expect("non-null function pointer")(
             (**(*(*font).glyf).items.offset(j as isize)).advanceWidth,
         ) as pos_t;
         if adw > 0 as ::core::ffi::c_int as pos_t {
             totalWidth = (totalWidth as pos_t + adw) as uint32_t;
         }
-        j = j.wrapping_add(1);
     }
     (*(*font).OS_2).xAvgCharWidth =
         (totalWidth as size_t).wrapping_div((*(*font).glyf).length) as int16_t;
 }
-unsafe extern "C" fn statMaxContextOTL(mut table: *const table_OTL) -> uint16_t {
+unsafe extern "C" fn statMaxContextOTL(table: *const table_OTL) -> uint16_t {
+    // c2rust's translation of otfcc's own `foreach(item, vector) { ... }`
+    // macro (lib/otf-writer/stat.c): the __caryll_index*/keep* variables
+    // simulate a single-iteration inner while purely so the macro body can
+    // `continue`/`break`; every occurrence here reduces to a plain indexed
+    // for loop over the vector, confirmed against the original C source.
     let mut maxc: uint16_t = 1 as uint16_t;
-    let mut __caryll_index: size_t = 0 as size_t;
-    let mut keep: size_t = 1 as size_t;
-    while keep != 0 && __caryll_index < (*table).lookups.length {
-        let mut lookup_: *mut *mut otl_Lookup =
-            (*table).lookups.items.offset(__caryll_index as isize);
-        while keep != 0 {
-            let mut lookup: *mut otl_Lookup = *lookup_;
-            match (*lookup).type_0 as ::core::ffi::c_uint {
-                34 | 36 | 37 | 38 => {
-                    if (maxc as ::core::ffi::c_int) < 2 as ::core::ffi::c_int {
-                        maxc = 2 as uint16_t;
-                    }
+    for i in 0..(*table).lookups.length {
+        let lookup: *mut otl_Lookup = *(*table).lookups.items.offset(i as isize);
+        match (*lookup).type_0 {
+            otl_type_gpos_pair | otl_type_gpos_markToBase | otl_type_gpos_markToLigature
+            | otl_type_gpos_markToMark => {
+                if (maxc as ::core::ffi::c_int) < 2 as ::core::ffi::c_int {
+                    maxc = 2 as uint16_t;
                 }
-                20 => {
-                    let mut __caryll_index_0: size_t = 0 as size_t;
-                    let mut keep_0: size_t = 1 as size_t;
-                    while keep_0 != 0 && __caryll_index_0 < (*lookup).subtables.length {
-                        let mut subtable_: *mut *mut otl_Subtable =
-                            (*lookup).subtables.items.offset(__caryll_index_0 as isize);
-                        while keep_0 != 0 {
-                            let mut subtable: *mut subtable_gsub_ligature =
-                                *subtable_ as *mut subtable_gsub_ligature;
-                            let mut __caryll_index_1: size_t = 0 as size_t;
-                            let mut keep_1: size_t = 1 as size_t;
-                            while keep_1 != 0 && __caryll_index_1 < (*subtable).length {
-                                let mut entry: *mut otl_GsubLigatureEntry =
-                                    (*subtable).items.offset(__caryll_index_1 as isize);
-                                while keep_1 != 0 {
-                                    if (maxc as ::core::ffi::c_int)
-                                        < (*(*entry).from).numGlyphs as ::core::ffi::c_int
-                                    {
-                                        maxc = (*(*entry).from).numGlyphs as uint16_t;
-                                    }
-                                    keep_1 = (keep_1 == 0) as ::core::ffi::c_int as size_t;
-                                }
-                                keep_1 = (keep_1 == 0) as ::core::ffi::c_int as size_t;
-                                __caryll_index_1 = __caryll_index_1.wrapping_add(1);
-                            }
-                            keep_0 = (keep_0 == 0) as ::core::ffi::c_int as size_t;
-                        }
-                        keep_0 = (keep_0 == 0) as ::core::ffi::c_int as size_t;
-                        __caryll_index_0 = __caryll_index_0.wrapping_add(1);
-                    }
-                }
-                22 | 40 => {
-                    let mut __caryll_index_2: size_t = 0 as size_t;
-                    let mut keep_2: size_t = 1 as size_t;
-                    while keep_2 != 0 && __caryll_index_2 < (*lookup).subtables.length {
-                        let mut subtable__0: *mut *mut otl_Subtable =
-                            (*lookup).subtables.items.offset(__caryll_index_2 as isize);
-                        while keep_2 != 0 {
-                            let mut subtable_0: *mut subtable_chaining =
-                                *subtable__0 as *mut subtable_chaining;
-                            if (maxc as ::core::ffi::c_int)
-                                < (*subtable_0).c2rust_unnamed.rule.matchCount as ::core::ffi::c_int
-                            {
-                                maxc = (*subtable_0).c2rust_unnamed.rule.matchCount as uint16_t;
-                            }
-                            keep_2 = (keep_2 == 0) as ::core::ffi::c_int as size_t;
-                        }
-                        keep_2 = (keep_2 == 0) as ::core::ffi::c_int as size_t;
-                        __caryll_index_2 = __caryll_index_2.wrapping_add(1);
-                    }
-                }
-                24 => {
-                    let mut __caryll_index_3: size_t = 0 as size_t;
-                    let mut keep_3: size_t = 1 as size_t;
-                    while keep_3 != 0 && __caryll_index_3 < (*lookup).subtables.length {
-                        let mut subtable__1: *mut *mut otl_Subtable =
-                            (*lookup).subtables.items.offset(__caryll_index_3 as isize);
-                        while keep_3 != 0 {
-                            let mut subtable_1: *mut subtable_gsub_reverse =
-                                *subtable__1 as *mut subtable_gsub_reverse;
-                            if (maxc as ::core::ffi::c_int)
-                                < (*subtable_1).matchCount as ::core::ffi::c_int
-                            {
-                                maxc = (*subtable_1).matchCount as uint16_t;
-                            }
-                            keep_3 = (keep_3 == 0) as ::core::ffi::c_int as size_t;
-                        }
-                        keep_3 = (keep_3 == 0) as ::core::ffi::c_int as size_t;
-                        __caryll_index_3 = __caryll_index_3.wrapping_add(1);
-                    }
-                }
-                _ => {}
             }
-            keep = (keep == 0) as ::core::ffi::c_int as size_t;
+            otl_type_gsub_ligature => {
+                for si in 0..(*lookup).subtables.length {
+                    let subtable: *mut subtable_gsub_ligature =
+                        *(*lookup).subtables.items.offset(si as isize) as *mut subtable_gsub_ligature;
+                    for ei in 0..(*subtable).length {
+                        let entry: *mut otl_GsubLigatureEntry = (*subtable).items.offset(ei as isize);
+                        if (maxc as ::core::ffi::c_int) < (*(*entry).from).numGlyphs as ::core::ffi::c_int
+                        {
+                            maxc = (*(*entry).from).numGlyphs as uint16_t;
+                        }
+                    }
+                }
+            }
+            otl_type_gsub_chaining | otl_type_gpos_chaining => {
+                for si in 0..(*lookup).subtables.length {
+                    let subtable: *mut subtable_chaining =
+                        *(*lookup).subtables.items.offset(si as isize) as *mut subtable_chaining;
+                    if (maxc as ::core::ffi::c_int)
+                        < (*subtable).c2rust_unnamed.rule.matchCount as ::core::ffi::c_int
+                    {
+                        maxc = (*subtable).c2rust_unnamed.rule.matchCount as uint16_t;
+                    }
+                }
+            }
+            otl_type_gsub_reverse => {
+                for si in 0..(*lookup).subtables.length {
+                    let subtable: *mut subtable_gsub_reverse =
+                        *(*lookup).subtables.items.offset(si as isize) as *mut subtable_gsub_reverse;
+                    if (maxc as ::core::ffi::c_int) < (*subtable).matchCount as ::core::ffi::c_int {
+                        maxc = (*subtable).matchCount as uint16_t;
+                    }
+                }
+            }
+            _ => {}
         }
-        keep = (keep == 0) as ::core::ffi::c_int as size_t;
-        __caryll_index = __caryll_index.wrapping_add(1);
     }
     return maxc;
 }
-unsafe extern "C" fn statMaxContext(mut font: *mut otfcc_Font, mut options: *const otfcc_Options) {
+unsafe extern "C" fn statMaxContext(mut font: *mut otfcc_Font, mut _options: *const otfcc_Options) {
     let mut maxc: uint16_t = 1 as uint16_t;
     if !(*font).GSUB.is_null() {
         let mut maxc_gsub: uint16_t = statMaxContextOTL((*font).GSUB);
@@ -2629,31 +2561,26 @@ unsafe extern "C" fn statCFFWidths(mut font: *mut otfcc_Font) {
         (::core::mem::size_of::<uint32_t>() as size_t).wrapping_mul(4096 as size_t),
         524 as ::core::ffi::c_ulong,
     ) as *mut uint32_t;
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as size_t) < (*(*font).glyf).length {
-        let mut intWidth: uint16_t = iVQ.getStill.expect("non-null function pointer")(
+    for j in 0..(*(*font).glyf).length as glyphid_t {
+        let intWidth: uint16_t = iVQ.getStill.expect("non-null function pointer")(
             (**(*(*font).glyf).items.offset(j as isize)).advanceWidth,
         ) as uint16_t;
         if (intWidth as ::core::ffi::c_int) < MAX_STAT_METRIC {
-            let ref mut fresh1 = *frequency.offset(intWidth as isize);
+            let fresh1 = frequency.offset(intWidth as isize);
             *fresh1 = (*fresh1).wrapping_add(1 as uint32_t);
         }
-        j = j.wrapping_add(1);
     }
     let mut maxfreq: uint16_t = 0 as uint16_t;
     let mut maxj: uint16_t = 0 as uint16_t;
-    let mut j_0: uint16_t = 0 as uint16_t;
-    while (j_0 as ::core::ffi::c_int) < MAX_STAT_METRIC {
+    for j_0 in 0..MAX_STAT_METRIC as uint16_t {
         if *frequency.offset(j_0 as isize) > maxfreq as uint32_t {
             maxfreq = *frequency.offset(j_0 as isize) as uint16_t;
             maxj = j_0;
         }
-        j_0 = j_0.wrapping_add(1);
     }
     let mut nn: uint16_t = 0 as uint16_t;
     let mut nnsum: uint32_t = 0 as uint32_t;
-    let mut j_1: glyphid_t = 0 as glyphid_t;
-    while (j_1 as size_t) < (*(*font).glyf).length {
+    for j_1 in 0..(*(*font).glyf).length as glyphid_t {
         let adw: pos_t = iVQ.getStill.expect("non-null function pointer")(
             (**(*(*font).glyf).items.offset(j_1 as isize)).advanceWidth,
         ) as pos_t;
@@ -2661,7 +2588,6 @@ unsafe extern "C" fn statCFFWidths(mut font: *mut otfcc_Font) {
             nn = (nn as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16_t;
             nnsum = (nnsum as pos_t + adw) as uint32_t;
         }
-        j_1 = j_1.wrapping_add(1);
     }
     let mut nominalWidthX: int16_t = 0 as int16_t;
     if nn as ::core::ffi::c_int > 0 as ::core::ffi::c_int {
@@ -2674,17 +2600,13 @@ unsafe extern "C" fn statCFFWidths(mut font: *mut otfcc_Font) {
         }
     }
     if !(*(*font).CFF_).fdArray.is_null() {
-        let mut j_2: tableid_t = 0 as tableid_t;
-        while (j_2 as ::core::ffi::c_int) < (*(*font).CFF_).fdArrayCount as ::core::ffi::c_int {
-            (*(**(*(*font).CFF_).fdArray.offset(j_2 as isize)).privateDict).defaultWidthX =
-                maxj as ::core::ffi::c_double;
-            (*(**(*(*font).CFF_).fdArray.offset(j_2 as isize)).privateDict).nominalWidthX =
-                nominalWidthX as ::core::ffi::c_double;
-            j_2 = j_2.wrapping_add(1);
+        for j_2 in 0..(*(*font).CFF_).fdArrayCount {
+            let fd = *(*(*font).CFF_).fdArray.offset(j_2 as isize);
+            (*(*fd).privateDict).defaultWidthX = maxj as ::core::ffi::c_double;
+            (*(*fd).privateDict).nominalWidthX = nominalWidthX as ::core::ffi::c_double;
         }
     }
     free(frequency as *mut ::core::ffi::c_void);
-    frequency = ::core::ptr::null_mut::<uint32_t>();
 }
 unsafe extern "C" fn statVORG(mut font: *mut otfcc_Font) {
     if (*font).glyf.is_null()
@@ -2699,26 +2621,22 @@ unsafe extern "C" fn statVORG(mut font: *mut otfcc_Font) {
         (::core::mem::size_of::<uint32_t>() as size_t).wrapping_mul(4096 as size_t),
         562 as ::core::ffi::c_ulong,
     ) as *mut uint32_t;
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as size_t) < (*(*font).glyf).length {
+    for j in 0..(*(*font).glyf).length as glyphid_t {
         let vori: pos_t = iVQ.getStill.expect("non-null function pointer")(
             (**(*(*font).glyf).items.offset(j as isize)).verticalOrigin,
         ) as pos_t;
         if vori >= 0 as ::core::ffi::c_int as pos_t && vori < MAX_STAT_METRIC as pos_t {
-            let ref mut fresh0 = *frequency.offset(vori as uint16_t as isize);
+            let fresh0 = frequency.offset(vori as uint16_t as isize);
             *fresh0 = (*fresh0).wrapping_add(1 as uint32_t);
         }
-        j = j.wrapping_add(1);
     }
     let mut maxfreq: uint32_t = 0 as uint32_t;
     let mut maxj: glyphid_t = 0 as glyphid_t;
-    let mut j_0: glyphid_t = 0 as glyphid_t;
-    while (j_0 as ::core::ffi::c_int) < MAX_STAT_METRIC {
+    for j_0 in 0..MAX_STAT_METRIC as glyphid_t {
         if *frequency.offset(j_0 as isize) > maxfreq {
             maxfreq = *frequency.offset(j_0 as isize);
             maxj = j_0;
         }
-        j_0 = j_0.wrapping_add(1);
     }
     let mut vorg: *mut table_VORG = ::core::ptr::null_mut::<table_VORG>();
     vorg = __caryll_allocate_clean(
@@ -2727,15 +2645,13 @@ unsafe extern "C" fn statVORG(mut font: *mut otfcc_Font) {
     ) as *mut table_VORG;
     (*vorg).defaultVerticalOrigin = maxj as pos_t;
     let mut nVertOrigs: glyphid_t = 0 as glyphid_t;
-    let mut j_1: glyphid_t = 0 as glyphid_t;
-    while (j_1 as size_t) < (*(*font).glyf).length {
+    for j_1 in 0..(*(*font).glyf).length as glyphid_t {
         let vori_0: pos_t = iVQ.getStill.expect("non-null function pointer")(
             (**(*(*font).glyf).items.offset(j_1 as isize)).verticalOrigin,
         ) as pos_t;
         if vori_0 != maxj as ::core::ffi::c_int as pos_t {
             nVertOrigs = (nVertOrigs as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as glyphid_t;
         }
-        j_1 = j_1.wrapping_add(1);
     }
     (*vorg).numVertOriginYMetrics = nVertOrigs;
     (*vorg).entries = __caryll_allocate_clean(
@@ -2743,8 +2659,7 @@ unsafe extern "C" fn statVORG(mut font: *mut otfcc_Font) {
         587 as ::core::ffi::c_ulong,
     ) as *mut VORG_entry;
     let mut jj: glyphid_t = 0 as glyphid_t;
-    let mut j_2: glyphid_t = 0 as glyphid_t;
-    while (j_2 as size_t) < (*(*font).glyf).length {
+    for j_2 in 0..(*(*font).glyf).length as glyphid_t {
         let vori_1: pos_t = iVQ.getStill.expect("non-null function pointer")(
             (**(*(*font).glyf).items.offset(j_2 as isize)).verticalOrigin,
         ) as pos_t;
@@ -2753,25 +2668,21 @@ unsafe extern "C" fn statVORG(mut font: *mut otfcc_Font) {
             (*(*vorg).entries.offset(jj as isize)).verticalOrigin = vori_1 as int16_t;
             jj = (jj as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as glyphid_t;
         }
-        j_2 = j_2.wrapping_add(1);
     }
     free(frequency as *mut ::core::ffi::c_void);
-    frequency = ::core::ptr::null_mut::<uint32_t>();
     (*font).VORG = vorg;
 }
 unsafe extern "C" fn statLTSH(mut font: *mut otfcc_Font) {
     if (*font).glyf.is_null() {
         return;
     }
-    let mut needLTSH: bool = false_0 != 0;
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as size_t) < (*(*font).glyf).length {
+    let mut needLTSH: bool = false;
+    for j in 0..(*(*font).glyf).length as glyphid_t {
         if (**(*(*font).glyf).items.offset(j as isize)).yPel as ::core::ffi::c_int
             > 1 as ::core::ffi::c_int
         {
-            needLTSH = true_0 != 0;
+            needLTSH = true;
         }
-        j = j.wrapping_add(1);
     }
     if !needLTSH {
         return;
@@ -2786,10 +2697,8 @@ unsafe extern "C" fn statLTSH(mut font: *mut otfcc_Font) {
         (::core::mem::size_of::<uint8_t>() as size_t).wrapping_mul((*ltsh).numGlyphs as size_t),
         612 as ::core::ffi::c_ulong,
     ) as *mut uint8_t;
-    let mut j_0: glyphid_t = 0 as glyphid_t;
-    while (j_0 as size_t) < (*(*font).glyf).length {
+    for j_0 in 0..(*(*font).glyf).length as glyphid_t {
         *(*ltsh).yPels.offset(j_0 as isize) = (**(*(*font).glyf).items.offset(j_0 as isize)).yPel;
-        j_0 = j_0.wrapping_add(1);
     }
     (*font).LTSH = ltsh;
 }
@@ -2825,7 +2734,7 @@ pub unsafe extern "C" fn otfcc_statFont(
         {
             (*cff).fontBBoxRight = (*(*font).head).xMax as ::core::ffi::c_double;
         }
-        if !(*font).glyf.is_null() && (*cff).isCID as ::core::ffi::c_int != 0 {
+        if !(*font).glyf.is_null() && (*cff).isCID {
             (*cff).cidCount = (*(*font).glyf).length as uint32_t;
         }
         if (*cff).isCID {
@@ -2834,16 +2743,13 @@ pub unsafe extern "C" fn otfcc_statFont(
                 iVQ.dispose.expect("non-null function pointer")(&raw mut (*(*cff).fontMatrix).y);
                 free((*cff).fontMatrix as *mut ::core::ffi::c_void);
                 (*cff).fontMatrix = ::core::ptr::null_mut::<cff_FontMatrix>();
-                (*cff).fontMatrix = ::core::ptr::null_mut::<cff_FontMatrix>();
             }
-            let mut j: tableid_t = 0 as tableid_t;
-            while (j as ::core::ffi::c_int) < (*cff).fdArrayCount as ::core::ffi::c_int {
-                let mut fd: *mut table_CFF = *(*cff).fdArray.offset(j as isize);
+            for j in 0..(*cff).fdArrayCount {
+                let fd: *mut table_CFF = *(*cff).fdArray.offset(j as isize);
                 if !(*fd).fontMatrix.is_null() {
                     iVQ.dispose.expect("non-null function pointer")(&raw mut (*(*fd).fontMatrix).x);
                     iVQ.dispose.expect("non-null function pointer")(&raw mut (*(*fd).fontMatrix).y);
                     free((*fd).fontMatrix as *mut ::core::ffi::c_void);
-                    (*fd).fontMatrix = ::core::ptr::null_mut::<cff_FontMatrix>();
                     (*fd).fontMatrix = ::core::ptr::null_mut::<cff_FontMatrix>();
                 }
                 if (*(*font).head).unitsPerEm as ::core::ffi::c_int == 1000 as ::core::ffi::c_int {
@@ -2866,7 +2772,6 @@ pub unsafe extern "C" fn otfcc_statFont(
                     (*(*fd).fontMatrix).y = (
                         iVQ.neutral.expect("non-null function pointer"))();
                 }
-                j = j.wrapping_add(1);
             }
         } else if (*(*font).head).unitsPerEm as ::core::ffi::c_int == 1000 as ::core::ffi::c_int {
             (*cff).fontMatrix = ::core::ptr::null_mut::<cff_FontMatrix>();
@@ -2915,9 +2820,7 @@ pub unsafe extern "C" fn otfcc_statFont(
     if !(*font).OS_2.is_null() && !(*font).cmap.is_null() && !(*font).glyf.is_null() {
         statOS_2(font, options);
     }
-    if (*font).subtype as ::core::ffi::c_uint
-        == FONTTYPE_TTF as ::core::ffi::c_int as ::core::ffi::c_uint
-    {
+    if (*font).subtype == FONTTYPE_TTF {
         if !(*font).maxp.is_null() {
             (*(*font).maxp).version = 0x10000 as ::core::ffi::c_int as f16dot16;
         }
@@ -2936,33 +2839,13 @@ pub unsafe extern "C" fn otfcc_statFont(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_unstatFont(
     mut font: *mut otfcc_Font,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) {
     otfcc_iFont.deleteTable.expect("non-null function pointer")(font, 1751412088i32 as uint32_t);
     otfcc_iFont.deleteTable.expect("non-null function pointer")(font, 1752003704i32 as uint32_t);
     otfcc_iFont.deleteTable.expect("non-null function pointer")(font, 1448038983i32 as uint32_t);
     otfcc_iFont.deleteTable.expect("non-null function pointer")(font, 1986884728i32 as uint32_t);
     otfcc_iFont.deleteTable.expect("non-null function pointer")(font, 1280594760i32 as uint32_t);
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

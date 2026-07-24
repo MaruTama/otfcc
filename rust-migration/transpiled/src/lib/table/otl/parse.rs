@@ -98,6 +98,7 @@ extern "C" {
         options: *const otfcc_Options,
     ) -> *mut otl_Subtable;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -989,26 +990,6 @@ pub const HASH_INITIAL_NUM_BUCKETS_LOG2: ::core::ffi::c_uint = 5 as ::core::ffi:
 pub const HASH_BKT_CAPACITY_THRESH: ::core::ffi::c_uint = 10 as ::core::ffi::c_uint;
 pub const HASH_SIGNATURE: ::core::ffi::c_uint = 0xa0111fe1 as ::core::ffi::c_uint;
 #[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
 unsafe extern "C" fn json_obj_get(
     mut obj: *const json_value,
     mut key: *const ::core::ffi::c_char,
@@ -1084,7 +1065,7 @@ unsafe extern "C" fn json_obj_getbool(
         || (*obj).type_0 as ::core::ffi::c_uint
             != json_object as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return false_0 != 0;
+        return false;
     }
     let mut _k: uint32_t = 0 as uint32_t;
     while _k < (*obj).u.object.length as uint32_t {
@@ -1101,7 +1082,7 @@ unsafe extern "C" fn json_obj_getbool(
         }
         _k = _k.wrapping_add(1);
     }
-    return false_0 != 0;
+    return false;
 }
 #[inline]
 unsafe extern "C" fn otfcc_parse_flags(
@@ -1141,7 +1122,7 @@ unsafe extern "C" fn _parse_lookup(
     mut options: *const otfcc_Options,
     mut lh: *mut *mut lookup_hash,
 ) -> bool {
-    let mut parsed: bool = false_0 != 0;
+    let mut parsed: bool = false;
     if !parsed {
         parsed = _declareLookupParser(
             *(&raw mut tableNames as *mut *const ::core::ffi::c_char)
@@ -1410,7 +1391,7 @@ unsafe extern "C" fn _declareLookupParser(
                 ),
             );
         }
-        return false_0 != 0;
+        return false;
     }
     let mut item: *mut lookup_hash = ::core::ptr::null_mut::<lookup_hash>();
     let mut _hf_hashv: ::core::ffi::c_uint = 0;
@@ -1723,7 +1704,7 @@ unsafe extern "C" fn _declareLookupParser(
                 lookupName,
             ),
         );
-        return false_0 != 0;
+        return false;
     }
     let mut _subtables: *mut json_value = json_obj_get_type(
         _lookup,
@@ -1744,7 +1725,7 @@ unsafe extern "C" fn _declareLookupParser(
                 lookupName,
             ),
         );
-        return false_0 != 0;
+        return false;
     }
     let mut lookup: *mut otl_Lookup = ::core::ptr::null_mut::<otl_Lookup>();
     otl_iLookupPtr.init.expect("non-null function pointer")(&raw mut lookup);
@@ -1776,7 +1757,7 @@ unsafe extern "C" fn _declareLookupParser(
             lookupName,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut j: tableid_t = 0 as tableid_t;
         while (j as ::core::ffi::c_int) < subtableCount as ::core::ffi::c_int {
@@ -1795,7 +1776,7 @@ unsafe extern "C" fn _declareLookupParser(
             }
             j = j.wrapping_add(1);
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1815,7 +1796,7 @@ unsafe extern "C" fn _declareLookupParser(
             ),
         );
         otfcc_delete_lookup(lookup);
-        return false_0 != 0;
+        return false;
     }
     item = __caryll_allocate_clean(
         ::core::mem::size_of::<lookup_hash>() as size_t,
@@ -2180,7 +2161,7 @@ unsafe extern "C" fn _declareLookupParser(
                     .log2_num_buckets
                     .wrapping_add(1 as ::core::ffi::c_uint))
             .wrapping_add(
-                (if (*(*item).hh.tbl).num_items
+                if (*(*item).hh.tbl).num_items
                     & (*(*item).hh.tbl)
                         .num_buckets
                         .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2190,7 +2171,7 @@ unsafe extern "C" fn _declareLookupParser(
                     1 as ::core::ffi::c_uint
                 } else {
                     0 as ::core::ffi::c_uint
-                }),
+                },
             );
             (*(*item).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
             _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2243,7 +2224,7 @@ unsafe extern "C" fn _declareLookupParser(
             }
         }
     }
-    return true_0 != 0;
+    return true;
 }
 unsafe extern "C" fn figureOutLookupsFromJSON(
     mut lookups: *mut json_value,
@@ -2992,7 +2973,7 @@ unsafe extern "C" fn figureOutLookupsFromJSON(
                                 .log2_num_buckets
                                 .wrapping_add(1 as ::core::ffi::c_uint))
                         .wrapping_add(
-                            (if (*(*dup).hh.tbl).num_items
+                            if (*(*dup).hh.tbl).num_items
                                 & (*(*dup).hh.tbl)
                                     .num_buckets
                                     .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -3002,7 +2983,7 @@ unsafe extern "C" fn figureOutLookupsFromJSON(
                                 1 as ::core::ffi::c_uint
                             } else {
                                 0 as ::core::ffi::c_uint
-                            }),
+                            },
                         );
                         (*(*dup).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                         _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -3133,7 +3114,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
     if (*options).merge_features {
         feature_merger_activate(
             features,
-            true_0 != 0,
+            true,
             b"feature\0" as *const u8 as *const ::core::ffi::c_char,
             options,
         );
@@ -3840,7 +3821,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                         194 as ::core::ffi::c_ulong,
                     ) as *mut feature_hash;
                     (*s).name = sdsnew(featureName) as *mut ::core::ffi::c_char;
-                    (*s).alias = false_0 != 0;
+                    (*s).alias = false;
                     otl_iFeaturePtr.init.expect("non-null function pointer")(&raw mut (*s).feature);
                     (*(*s).feature).name = sdsdup((*s).name as sds);
                     otl_iLookupRefList
@@ -4235,7 +4216,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                                     .log2_num_buckets
                                     .wrapping_add(1 as ::core::ffi::c_uint))
                             .wrapping_add(
-                                (if (*(*s).hh.tbl).num_items
+                                if (*(*s).hh.tbl).num_items
                                     & (*(*s).hh.tbl)
                                         .num_buckets
                                         .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -4245,7 +4226,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                                     1 as ::core::ffi::c_uint
                                 } else {
                                     0 as ::core::ffi::c_uint
-                                }),
+                                },
                             );
                             (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                             _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -4671,7 +4652,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                     ::core::mem::size_of::<feature_hash>() as size_t,
                     220 as ::core::ffi::c_ulong,
                 ) as *mut feature_hash;
-                (*dup).alias = true_0 != 0;
+                (*dup).alias = true;
                 (*dup).name = sdsnew(featureName) as *mut ::core::ffi::c_char;
                 (*dup).feature = (*s_0).feature;
                 let mut _ha_hashv_0: ::core::ffi::c_uint = 0;
@@ -5057,7 +5038,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                                 .log2_num_buckets
                                 .wrapping_add(1 as ::core::ffi::c_uint))
                         .wrapping_add(
-                            (if (*(*dup).hh.tbl).num_items
+                            if (*(*dup).hh.tbl).num_items
                                 & (*(*dup).hh.tbl)
                                     .num_buckets
                                     .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -5067,7 +5048,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                                 1 as ::core::ffi::c_uint
                             } else {
                                 0 as ::core::ffi::c_uint
-                            }),
+                            },
                         );
                         (*(*dup).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                         _he_bkt_i_0 = 0 as ::core::ffi::c_uint;
@@ -6574,7 +6555,7 @@ unsafe extern "C" fn figureOutLanguagesFromJson(
                                     .log2_num_buckets
                                     .wrapping_add(1 as ::core::ffi::c_uint))
                             .wrapping_add(
-                                (if (*(*s).hh.tbl).num_items
+                                if (*(*s).hh.tbl).num_items
                                     & (*(*s).hh.tbl)
                                         .num_buckets
                                         .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -6584,7 +6565,7 @@ unsafe extern "C" fn figureOutLanguagesFromJson(
                                     1 as ::core::ffi::c_uint
                                 } else {
                                     0 as ::core::ffi::c_uint
-                                }),
+                                },
                             );
                             (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                             _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -6753,7 +6734,7 @@ pub unsafe extern "C" fn otfcc_parseOtl(
                     tag,
                 ),
             );
-            let mut ___loggedstep_v: bool = true_0 != 0;
+            let mut ___loggedstep_v: bool = true;
             loop {
                 if !___loggedstep_v {
                     current_block = 5279571973604048562;
@@ -7783,7 +7764,7 @@ pub unsafe extern "C" fn otfcc_parseOtl(
                         }) as *mut language_hash
                             as *mut language_hash;
                     }
-                    ___loggedstep_v = false_0 != 0;
+                    ___loggedstep_v = false;
                     (*(*options).logger)
                         .finish
                         .expect("non-null function pointer")(

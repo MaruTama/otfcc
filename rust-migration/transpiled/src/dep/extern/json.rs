@@ -163,7 +163,7 @@ unsafe extern "C" fn hex_value(mut c: ::core::ffi::c_char) -> ::core::ffi::c_uch
 unsafe extern "C" fn default_alloc(
     mut size: size_t,
     mut zero: ::core::ffi::c_int,
-    mut user_data: *mut ::core::ffi::c_void,
+    mut _user_data: *mut ::core::ffi::c_void,
 ) -> *mut ::core::ffi::c_void {
     return if zero != 0 {
         calloc(1 as size_t, size)
@@ -173,7 +173,7 @@ unsafe extern "C" fn default_alloc(
 }
 unsafe extern "C" fn default_free(
     mut ptr: *mut ::core::ffi::c_void,
-    mut user_data: *mut ::core::ffi::c_void,
+    mut _user_data: *mut ::core::ffi::c_void,
 ) {
     free(ptr);
 }

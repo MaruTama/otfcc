@@ -18,6 +18,8 @@ extern "C" {
     static otl_iClassDef: __otfcc_IClassDef;
     static iSubtable_chaining: __caryll_elementinterface_subtable_chaining;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_16u};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -565,43 +567,15 @@ pub struct classdefs {
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
 #[no_mangle]
 pub unsafe extern "C" fn singleCoverage(
-    mut data: font_file_pointer,
-    mut tableLength: uint32_t,
+    mut _data: font_file_pointer,
+    mut _tableLength: uint32_t,
     mut gid: uint16_t,
     mut _offset: uint32_t,
-    mut kind: uint16_t,
-    maxGlyphs: glyphid_t,
-    mut userdata: *mut ::core::ffi::c_void,
+    mut _kind: uint16_t,
+    _maxGlyphs: glyphid_t,
+    mut _userdata: *mut ::core::ffi::c_void,
 ) -> *mut otl_Coverage {
     let mut cov: *mut otl_Coverage = ::core::ptr::null_mut::<otl_Coverage>();
     cov = __caryll_allocate_clean(
@@ -619,8 +593,8 @@ pub unsafe extern "C" fn singleCoverage(
 }
 #[no_mangle]
 pub unsafe extern "C" fn classCoverage(
-    mut data: font_file_pointer,
-    mut tableLength: uint32_t,
+    mut _data: font_file_pointer,
+    mut _tableLength: uint32_t,
     mut cls: uint16_t,
     mut _offset: uint32_t,
     mut kind: uint16_t,
@@ -646,14 +620,14 @@ pub unsafe extern "C" fn classCoverage(
     if cls as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         let mut k: glyphid_t = 0 as glyphid_t;
         while (k as ::core::ffi::c_int) < maxGlyphs as ::core::ffi::c_int {
-            let mut found: bool = false_0 != 0;
+            let mut found: bool = false;
             let mut j: glyphid_t = 0 as glyphid_t;
             while (j as ::core::ffi::c_int) < (*cd).numGlyphs as ::core::ffi::c_int {
                 if *(*cd).classes.offset(j as isize) as ::core::ffi::c_int > 0 as ::core::ffi::c_int
                     && (*(*cd).glyphs.offset(j as isize)).index as ::core::ffi::c_int
                         == k as ::core::ffi::c_int
                 {
-                    found = true_0 != 0;
+                    found = true;
                     break;
                 } else {
                     j = j.wrapping_add(1);
@@ -687,7 +661,7 @@ pub unsafe extern "C" fn classCoverage(
     if cls as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         let mut k_0: glyphid_t = 0 as glyphid_t;
         while (k_0 as ::core::ffi::c_int) < maxGlyphs as ::core::ffi::c_int {
-            let mut found_0: bool = false_0 != 0;
+            let mut found_0: bool = false;
             let mut j_1: glyphid_t = 0 as glyphid_t;
             while (j_1 as ::core::ffi::c_int) < (*cd).numGlyphs as ::core::ffi::c_int {
                 if *(*cd).classes.offset(j_1 as isize) as ::core::ffi::c_int
@@ -695,7 +669,7 @@ pub unsafe extern "C" fn classCoverage(
                     && (*(*cd).glyphs.offset(j_1 as isize)).index as ::core::ffi::c_int
                         == k_0 as ::core::ffi::c_int
                 {
-                    found_0 = true_0 != 0;
+                    found_0 = true;
                     break;
                 } else {
                     j_1 = j_1.wrapping_add(1);
@@ -734,9 +708,9 @@ pub unsafe extern "C" fn format3Coverage(
     mut tableLength: uint32_t,
     mut shift: uint16_t,
     mut _offset: uint32_t,
-    mut kind: uint16_t,
-    maxGlyphs: glyphid_t,
-    mut userdata: *mut ::core::ffi::c_void,
+    mut _kind: uint16_t,
+    _maxGlyphs: glyphid_t,
+    mut _userdata: *mut ::core::ffi::c_void,
 ) -> *mut otl_Coverage {
     return otl_iCoverage.read.expect("non-null function pointer")(
         data as *const uint8_t,
@@ -997,7 +971,7 @@ unsafe extern "C" fn readContextualFormat1(
                                     srOffset,
                                     (*(*firstCoverage).glyphs.offset(j_0 as isize)).index
                                         as uint16_t,
-                                    true_0 != 0,
+                                    true,
                                     Some(
                                         singleCoverage
                                             as unsafe extern "C" fn(
@@ -1126,7 +1100,7 @@ unsafe extern "C" fn readContextualFormat2(
                             tableLength,
                             srOffset,
                             j_0 as uint16_t,
-                            true_0 != 0,
+                            true,
                             Some(
                                 classCoverage
                                     as unsafe extern "C" fn(
@@ -1209,7 +1183,7 @@ pub unsafe extern "C" fn otl_read_contextual(
                 tableLength,
                 offset.wrapping_add(2 as uint32_t),
                 0 as uint16_t,
-                false_0 != 0,
+                false,
                 Some(
                     format3Coverage
                         as unsafe extern "C" fn(
@@ -1634,7 +1608,7 @@ unsafe extern "C" fn readChainingFormat1(
                                     srOffset,
                                     (*(*firstCoverage).glyphs.offset(j_0 as isize)).index
                                         as uint16_t,
-                                    true_0 != 0,
+                                    true,
                                     Some(
                                         singleCoverage
                                             as unsafe extern "C" fn(
@@ -1776,7 +1750,7 @@ unsafe extern "C" fn readChainingFormat2(
                             tableLength,
                             srOffset,
                             j_0 as uint16_t,
-                            true_0 != 0,
+                            true,
                             Some(
                                 classCoverage
                                     as unsafe extern "C" fn(
@@ -1859,7 +1833,7 @@ pub unsafe extern "C" fn otl_read_chaining(
                 tableLength,
                 offset.wrapping_add(2 as uint32_t),
                 0 as uint16_t,
-                false_0 != 0,
+                false,
                 Some(
                     format3Coverage
                         as unsafe extern "C" fn(

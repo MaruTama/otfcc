@@ -1,7 +1,5 @@
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn qsort(
         __base: *mut ::core::ffi::c_void,
@@ -20,6 +18,10 @@ extern "C" {
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
 }
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
 pub type __uint16_t = u16;
@@ -218,7 +220,7 @@ unsafe extern "C" fn vdmx_Record_replace(mut dst: *mut vdmx_Record, src: vdmx_Re
     );
 }
 #[inline]
-unsafe extern "C" fn vdmx_Record_dispose(mut x: *mut vdmx_Record) {}
+unsafe extern "C" fn vdmx_Record_dispose(mut _x: *mut vdmx_Record) {}
 #[inline]
 unsafe extern "C" fn vdmx_Record_move(mut dst: *mut vdmx_Record, mut src: *mut vdmx_Record) {
     memcpy(
@@ -244,7 +246,7 @@ unsafe extern "C" fn vdmx_Record_copyReplace(mut dst: *mut vdmx_Record, src: vdm
     vdmx_Record_copy(dst, &raw const src);
 }
 #[no_mangle]
-pub static mut vdmx_iRecord: __caryll_elementinterface_vdmx_Record = unsafe {
+pub static mut vdmx_iRecord: __caryll_elementinterface_vdmx_Record = {
     __caryll_elementinterface_vdmx_Record {
         init: Some(vdmx_Record_init as unsafe extern "C" fn(*mut vdmx_Record) -> ()),
         copy: Some(
@@ -272,50 +274,20 @@ unsafe extern "C" fn vdmx_Group_createN(mut n: size_t) -> *mut vdmx_Group {
     return t;
 }
 #[inline]
-unsafe extern "C" fn vdmx_Group_push(mut arr: *mut vdmx_Group, mut elem: vdmx_Record) {
-    vdmx_Group_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn vdmx_Group_push(arr: *mut vdmx_Group, elem: vdmx_Record) {
+    cvec_push(vdmx_Group_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn vdmx_Group_grow(mut arr: *mut vdmx_Group) {
-    vdmx_Group_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn vdmx_Group_grow(arr: *mut vdmx_Group) {
+    cvec_grow(vdmx_Group_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn vdmx_Group_growTo(mut arr: *mut vdmx_Group, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vdmx_Record>() as size_t),
-        ) as *mut vdmx_Record;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<vdmx_Record>() as size_t,
-        ) as *mut vdmx_Record;
-    };
+unsafe extern "C" fn vdmx_Group_growTo(arr: *mut vdmx_Group, target: size_t) {
+    cvec_grow_to(vdmx_Group_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn vdmx_Group_pop(mut arr: *mut vdmx_Group) -> vdmx_Record {
-    let mut t: vdmx_Record = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn vdmx_Group_pop(arr: *mut vdmx_Group) -> vdmx_Record {
+    cvec_pop(vdmx_Group_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn vdmx_Group_copyReplace(mut dst: *mut vdmx_Group, src: vdmx_Group) {
@@ -382,29 +354,8 @@ unsafe extern "C" fn vdmx_Group_initCapN(mut arr: *mut vdmx_Group, mut n: size_t
     vdmx_Group_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn vdmx_Group_growToN(mut arr: *mut vdmx_Group, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vdmx_Record>() as size_t),
-        ) as *mut vdmx_Record;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<vdmx_Record>() as size_t,
-        ) as *mut vdmx_Record;
-    };
+unsafe extern "C" fn vdmx_Group_growToN(arr: *mut vdmx_Group, target: size_t) {
+    cvec_grow_to_n(vdmx_Group_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn vdmx_Group_initN(mut arr: *mut vdmx_Group, mut n: size_t) {
@@ -432,21 +383,8 @@ unsafe extern "C" fn vdmx_Group_create() -> *mut vdmx_Group {
     return x;
 }
 #[inline]
-unsafe extern "C" fn vdmx_Group_resizeTo(mut arr: *mut vdmx_Group, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vdmx_Record>() as size_t),
-        ) as *mut vdmx_Record;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<vdmx_Record>() as size_t,
-        ) as *mut vdmx_Record;
-    };
+unsafe extern "C" fn vdmx_Group_resizeTo(arr: *mut vdmx_Group, target: size_t) {
+    cvec_resize_to(vdmx_Group_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn vdmx_Group_fill(mut arr: *mut vdmx_Group, mut n: size_t) {
@@ -469,18 +407,19 @@ unsafe extern "C" fn vdmx_Group_fill(mut arr: *mut vdmx_Group, mut n: size_t) {
     }
 }
 #[inline]
-unsafe extern "C" fn vdmx_Group_init(mut arr: *mut vdmx_Group) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<vdmx_Record>();
+unsafe fn vdmx_Group_as_cvec(arr: *mut vdmx_Group) -> *mut CVecRaw<vdmx_Record> {
+    arr as *mut CVecRaw<vdmx_Record>
 }
 #[inline]
-unsafe extern "C" fn vdmx_Group_move(mut dst: *mut vdmx_Group, mut src: *mut vdmx_Group) {
-    *dst = *src;
-    vdmx_Group_init(src);
+unsafe extern "C" fn vdmx_Group_init(arr: *mut vdmx_Group) {
+    cvec_init(vdmx_Group_as_cvec(arr));
+}
+#[inline]
+unsafe extern "C" fn vdmx_Group_move(dst: *mut vdmx_Group, src: *mut vdmx_Group) {
+    cvec_move(vdmx_Group_as_cvec(dst), vdmx_Group_as_cvec(src));
 }
 #[no_mangle]
-pub static mut vdmx_iGroup: __caryll_vectorinterface_vdmx_Group = unsafe {
+pub static mut vdmx_iGroup: __caryll_vectorinterface_vdmx_Group = {
     __caryll_vectorinterface_vdmx_Group {
         init: Some(vdmx_Group_init as unsafe extern "C" fn(*mut vdmx_Group) -> ()),
         copy: Some(
@@ -650,7 +589,7 @@ unsafe extern "C" fn vdmx_RatioRange_replace(mut dst: *mut vdmx_RatioRange, src:
     );
 }
 #[no_mangle]
-pub static mut vdmx_iRatioRange: __caryll_elementinterface_vdmx_RatioRange = unsafe {
+pub static mut vdmx_iRatioRange: __caryll_elementinterface_vdmx_RatioRange = {
     __caryll_elementinterface_vdmx_RatioRange {
         init: Some(vdmx_RatioRange_init as unsafe extern "C" fn(*mut vdmx_RatioRange) -> ()),
         copy: Some(
@@ -685,7 +624,7 @@ unsafe extern "C" fn vdmx_RatioRagneList_disposeItem(
     };
 }
 #[no_mangle]
-pub static mut vdmx_iRatioRangeList: __caryll_vectorinterface_vdmx_RatioRagneList = unsafe {
+pub static mut vdmx_iRatioRangeList: __caryll_vectorinterface_vdmx_RatioRagneList = {
     __caryll_vectorinterface_vdmx_RatioRagneList {
         init: Some(
             vdmx_RatioRagneList_init as unsafe extern "C" fn(*mut vdmx_RatioRagneList) -> (),
@@ -778,38 +717,20 @@ unsafe extern "C" fn vdmx_RatioRagneList_shrinkToFit(mut arr: *mut vdmx_RatioRag
     vdmx_RatioRagneList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn vdmx_RatioRagneList_resizeTo(
-    mut arr: *mut vdmx_RatioRagneList,
-    mut target: size_t,
-) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vdmx_RatioRange>() as size_t),
-        ) as *mut vdmx_RatioRange;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<vdmx_RatioRange>() as size_t,
-        ) as *mut vdmx_RatioRange;
-    };
+unsafe extern "C" fn vdmx_RatioRagneList_resizeTo(arr: *mut vdmx_RatioRagneList, target: size_t) {
+    cvec_resize_to(vdmx_RatioRagneList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn vdmx_RatioRagneList_move(
-    mut dst: *mut vdmx_RatioRagneList,
-    mut src: *mut vdmx_RatioRagneList,
-) {
-    *dst = *src;
-    vdmx_RatioRagneList_init(src);
+unsafe extern "C" fn vdmx_RatioRagneList_move(dst: *mut vdmx_RatioRagneList, src: *mut vdmx_RatioRagneList) {
+    cvec_move(vdmx_RatioRagneList_as_cvec(dst), vdmx_RatioRagneList_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn vdmx_RatioRagneList_init(mut arr: *mut vdmx_RatioRagneList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<vdmx_RatioRange>();
+unsafe fn vdmx_RatioRagneList_as_cvec(arr: *mut vdmx_RatioRagneList) -> *mut CVecRaw<vdmx_RatioRange> {
+    arr as *mut CVecRaw<vdmx_RatioRange>
+}
+#[inline]
+unsafe extern "C" fn vdmx_RatioRagneList_init(arr: *mut vdmx_RatioRagneList) {
+    cvec_init(vdmx_RatioRagneList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn vdmx_RatioRagneList_filterEnv(
@@ -891,56 +812,20 @@ unsafe extern "C" fn vdmx_RatioRagneList_fill(mut arr: *mut vdmx_RatioRagneList,
     }
 }
 #[inline]
-unsafe extern "C" fn vdmx_RatioRagneList_push(
-    mut arr: *mut vdmx_RatioRagneList,
-    mut elem: vdmx_RatioRange,
-) {
-    vdmx_RatioRagneList_grow(arr);
-    let fresh2 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh2 as isize) = elem;
+unsafe extern "C" fn vdmx_RatioRagneList_push(arr: *mut vdmx_RatioRagneList, elem: vdmx_RatioRange) {
+    cvec_push(vdmx_RatioRagneList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn vdmx_RatioRagneList_grow(mut arr: *mut vdmx_RatioRagneList) {
-    vdmx_RatioRagneList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn vdmx_RatioRagneList_grow(arr: *mut vdmx_RatioRagneList) {
+    cvec_grow(vdmx_RatioRagneList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn vdmx_RatioRagneList_growTo(
-    mut arr: *mut vdmx_RatioRagneList,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vdmx_RatioRange>() as size_t),
-        ) as *mut vdmx_RatioRange;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<vdmx_RatioRange>() as size_t,
-        ) as *mut vdmx_RatioRange;
-    };
+unsafe extern "C" fn vdmx_RatioRagneList_growTo(arr: *mut vdmx_RatioRagneList, target: size_t) {
+    cvec_grow_to(vdmx_RatioRagneList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn vdmx_RatioRagneList_pop(mut arr: *mut vdmx_RatioRagneList) -> vdmx_RatioRange {
-    let mut t: vdmx_RatioRange = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn vdmx_RatioRagneList_pop(arr: *mut vdmx_RatioRagneList) -> vdmx_RatioRange {
+    cvec_pop(vdmx_RatioRagneList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn vdmx_RatioRagneList_copyReplace(
@@ -1019,32 +904,8 @@ unsafe extern "C" fn vdmx_RatioRagneList_initCapN(
     vdmx_RatioRagneList_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn vdmx_RatioRagneList_growToN(
-    mut arr: *mut vdmx_RatioRagneList,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vdmx_RatioRange>() as size_t),
-        ) as *mut vdmx_RatioRange;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<vdmx_RatioRange>() as size_t,
-        ) as *mut vdmx_RatioRange;
-    };
+unsafe extern "C" fn vdmx_RatioRagneList_growToN(arr: *mut vdmx_RatioRagneList, target: size_t) {
+    cvec_grow_to_n(vdmx_RatioRagneList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn vdmx_RatioRagneList_initN(mut arr: *mut vdmx_RatioRagneList, mut n: size_t) {
@@ -1110,7 +971,7 @@ unsafe extern "C" fn table_VDMX_copy(mut dst: *mut table_VDMX, mut src: *const t
     );
 }
 #[no_mangle]
-pub static mut table_iVDMX: __caryll_elementinterface_table_VDMX = unsafe {
+pub static mut table_iVDMX: __caryll_elementinterface_table_VDMX = {
     __caryll_elementinterface_table_VDMX {
         init: Some(table_VDMX_init as unsafe extern "C" fn(*mut table_VDMX) -> ()),
         copy: Some(

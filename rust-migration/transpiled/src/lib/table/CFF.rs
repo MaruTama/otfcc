@@ -122,6 +122,7 @@ extern "C" {
         options: *const otfcc_Options,
     );
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub type __builtin_va_list = __va_list;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -1663,7 +1664,7 @@ unsafe extern "C" fn table_CFF_replace(mut dst: *mut table_CFF, src: table_CFF) 
     );
 }
 #[no_mangle]
-pub static mut table_iCFF: __caryll_elementinterface_table_CFF = unsafe {
+pub static mut table_iCFF: __caryll_elementinterface_table_CFF = {
     __caryll_elementinterface_table_CFF {
         init: Some(table_CFF_init as unsafe extern "C" fn(*mut table_CFF) -> ()),
         copy: Some(table_CFF_copy as unsafe extern "C" fn(*mut table_CFF, *const table_CFF) -> ()),
@@ -2084,7 +2085,7 @@ unsafe extern "C" fn callback_extract_fd(
         }
         3102 => {
             if top as ::core::ffi::c_int >= 3 as ::core::ffi::c_int {
-                (*meta).isCID = true_0 != 0;
+                (*meta).isCID = true;
                 (*meta).cidRegistry = sdsget_cff_sid(
                     (*stack.offset((top as ::core::ffi::c_int - 3 as ::core::ffi::c_int) as isize))
                         .c2rust_unnamed
@@ -2401,7 +2402,7 @@ unsafe extern "C" fn callback_draw_getrand(
     };
     return a.d - q;
 }
-static mut drawPass: cff_IOutlineBuilder = unsafe {
+static mut drawPass: cff_IOutlineBuilder = {
     cff_IOutlineBuilder {
         setWidth: Some(
             callback_draw_setwidth
@@ -3393,14 +3394,14 @@ pub unsafe extern "C" fn otfcc_dumpCFF(
             b"CFF\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         json_object_push(
             root,
             b"CFF_\0" as *const u8 as *const ::core::ffi::c_char,
             fdToJson(table),
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -3632,7 +3633,7 @@ unsafe extern "C" fn fdFromJson(
         json_object,
     );
     if !fdarraydump.is_null() {
-        (*table).isCID = true_0 != 0;
+        (*table).isCID = true;
         (*table).fdArrayCount = (*fdarraydump).u.object.length as tableid_t;
         (*table).fdArray = __caryll_allocate_clean(
             (::core::mem::size_of::<*mut table_CFF>() as size_t)
@@ -3645,7 +3646,7 @@ unsafe extern "C" fn fdFromJson(
             *fresh11 = fdFromJson(
                 (*(*fdarraydump).u.object.values.offset(j as isize)).value,
                 options,
-                false_0 != 0,
+                false,
             );
             if !(**(*table).fdArray.offset(j as isize)).fontName.is_null() {
                 sdsfree((**(*table).fdArray.offset(j as isize)).fontName);
@@ -3685,7 +3686,7 @@ unsafe extern "C" fn fdFromJson(
             sdsdup((*table).fontName),
             b"-subfont0\0" as *const u8 as *const ::core::ffi::c_char,
         );
-        (*table).isCID = true_0 != 0;
+        (*table).isCID = true;
     }
     if (*table).isCID as ::core::ffi::c_int != 0 && (*table).cidRegistry.is_null() {
         (*table).cidRegistry = sdsnew(b"CARYLL\0" as *const u8 as *const ::core::ffi::c_char);
@@ -3718,10 +3719,10 @@ pub unsafe extern "C" fn otfcc_parseCFF(
                 b"CFF\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
-            cff = fdFromJson(dump, options, true_0 != 0);
-            ___loggedstep_v = false_0 != 0;
+            cff = fdFromJson(dump, options, true);
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -4434,7 +4435,7 @@ unsafe extern "C" fn sidof(mut h: *mut *mut cff_sid_entry, mut s: sds) -> ::core
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*item).hh.tbl).num_items
+                    if (*(*item).hh.tbl).num_items
                         & (*(*item).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -4444,7 +4445,7 @@ unsafe extern "C" fn sidof(mut h: *mut *mut cff_sid_entry, mut s: sds) -> ::core
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*item).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -5650,52 +5651,6 @@ pub unsafe extern "C" fn otfcc_buildCFF(
     return writecff_CIDKeyed(cffAndGlyf.meta, cffAndGlyf.glyphs, options);
 }
 #[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
-}
-#[inline]
 unsafe extern "C" fn json_obj_get(
     mut obj: *const json_value,
     mut key: *const ::core::ffi::c_char,
@@ -5871,7 +5826,7 @@ unsafe extern "C" fn json_obj_getbool(
         || (*obj).type_0 as ::core::ffi::c_uint
             != json_object as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return false_0 != 0;
+        return false;
     }
     let mut _k: uint32_t = 0 as uint32_t;
     while _k < (*obj).u.object.length as uint32_t {
@@ -5888,7 +5843,7 @@ unsafe extern "C" fn json_obj_getbool(
         }
         _k = _k.wrapping_add(1);
     }
-    return false_0 != 0;
+    return false;
 }
 #[inline]
 unsafe extern "C" fn json_from_sds(str: sds) -> *mut json_value {

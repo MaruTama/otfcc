@@ -81,6 +81,7 @@ extern "C" {
         heuristics: otl_BuildHeuristics,
     ) -> *mut caryll_Buffer;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -724,52 +725,6 @@ pub const HASH_INITIAL_NUM_BUCKETS: ::core::ffi::c_uint = 32 as ::core::ffi::c_u
 pub const HASH_INITIAL_NUM_BUCKETS_LOG2: ::core::ffi::c_uint = 5 as ::core::ffi::c_uint;
 pub const HASH_BKT_CAPACITY_THRESH: ::core::ffi::c_uint = 10 as ::core::ffi::c_uint;
 pub const HASH_SIGNATURE: ::core::ffi::c_uint = 0xa0111fe1 as ::core::ffi::c_uint;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
-}
 pub const LARGE_SUBTABLE_LIMIT: ::core::ffi::c_int = 4096 as ::core::ffi::c_int;
 unsafe extern "C" fn featureNameToTag(name: sds) -> uint32_t {
     let mut tag: uint32_t = 0 as uint32_t;
@@ -834,10 +789,10 @@ unsafe extern "C" fn _declare_lookup_writer(
         }
         if totalBufSizeShort > LARGE_SUBTABLE_LIMIT as size_t {
             *lastOffset = (*lastOffset).wrapping_add(totalBufSizeExt);
-            *preferExtensionForThisLUT = true_0 != 0;
+            *preferExtensionForThisLUT = true;
         } else {
             *lastOffset = (*lastOffset).wrapping_add(totalBufSizeShort);
-            *preferExtensionForThisLUT = false_0 != 0;
+            *preferExtensionForThisLUT = false;
         }
         return (*lookup).subtables.length as tableid_t;
     }
@@ -888,10 +843,10 @@ unsafe extern "C" fn _declare_lookup_writer_split(
         if totalBufSizeShort > LARGE_SUBTABLE_LIMIT as size_t {
             *lastOffset = (*lastOffset)
                 .wrapping_add((8 as ::core::ffi::c_int * total as ::core::ffi::c_int) as size_t);
-            *preferExtensionForThisLUT = true_0 != 0;
+            *preferExtensionForThisLUT = true;
         } else {
             *lastOffset = (*lastOffset).wrapping_add(totalBufSizeShort);
-            *preferExtensionForThisLUT = false_0 != 0;
+            *preferExtensionForThisLUT = false;
         }
         return total;
     }
@@ -1262,7 +1217,7 @@ unsafe extern "C" fn writeOTLLookups(
                     otl_type_gpos_unknown as ::core::ffi::c_int as ::core::ffi::c_uint,
                 )
             } else {
-                (if (*lookup_0).type_0 as ::core::ffi::c_uint
+                if (*lookup_0).type_0 as ::core::ffi::c_uint
                     > otl_type_gsub_unknown as ::core::ffi::c_int as ::core::ffi::c_uint
                 {
                     ((*lookup_0).type_0 as ::core::ffi::c_uint).wrapping_sub(
@@ -1270,7 +1225,7 @@ unsafe extern "C" fn writeOTLLookups(
                     )
                 } else {
                     0 as ::core::ffi::c_uint
-                })
+                }
             })
             .wrapping_sub(
                 (if canBeContextual as ::core::ffi::c_int != 0 {
@@ -1302,7 +1257,7 @@ unsafe extern "C" fn writeOTLLookups(
                         otl_type_gpos_unknown as ::core::ffi::c_int as ::core::ffi::c_uint,
                     )
                 } else {
-                    (if (*lookup_0).type_0 as ::core::ffi::c_uint
+                    if (*lookup_0).type_0 as ::core::ffi::c_uint
                         > otl_type_gsub_unknown as ::core::ffi::c_int as ::core::ffi::c_uint
                     {
                         ((*lookup_0).type_0 as ::core::ffi::c_uint).wrapping_sub(
@@ -1310,7 +1265,7 @@ unsafe extern "C" fn writeOTLLookups(
                         )
                     } else {
                         0 as ::core::ffi::c_uint
-                    })
+                    }
                 })
                 .wrapping_sub(
                     (if canBeContextual as ::core::ffi::c_int != 0 {
@@ -1371,7 +1326,7 @@ unsafe extern "C" fn writeOTLLookups(
 }
 unsafe extern "C" fn writeOTLFeatures(
     mut table: *const table_OTL,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut bk_Block {
     let mut root: *mut bk_Block = bk_new_Block(
         b16 as ::core::ffi::c_int,
@@ -1506,7 +1461,7 @@ unsafe extern "C" fn writeScript(
 }
 unsafe extern "C" fn writeOTLScriptAndLanguages(
     mut table: *const table_OTL,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut bk_Block {
     let mut h: *mut script_stat_hash = ::core::ptr::null_mut::<script_stat_hash>();
     let mut j: tableid_t = 0 as tableid_t;
@@ -2239,7 +2194,7 @@ unsafe extern "C" fn writeOTLScriptAndLanguages(
                             .log2_num_buckets
                             .wrapping_add(1 as ::core::ffi::c_uint))
                     .wrapping_add(
-                        (if (*(*s).hh.tbl).num_items
+                        if (*(*s).hh.tbl).num_items
                             & (*(*s).hh.tbl)
                                 .num_buckets
                                 .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2249,7 +2204,7 @@ unsafe extern "C" fn writeOTLScriptAndLanguages(
                             1 as ::core::ffi::c_uint
                         } else {
                             0 as ::core::ffi::c_uint
-                        }),
+                        },
                     );
                     (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                     _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2408,7 +2363,7 @@ pub unsafe extern "C" fn otfcc_buildOtl(
             tag,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut lookups: *mut bk_Block = writeOTLLookups(table, options, tag);
         let mut features: *mut bk_Block = writeOTLFeatures(table, options);
@@ -2425,7 +2380,7 @@ pub unsafe extern "C" fn otfcc_buildOtl(
             bkover as ::core::ffi::c_int,
         );
         buf = bk_build_Block(root);
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

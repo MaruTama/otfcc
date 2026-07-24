@@ -39,6 +39,7 @@ extern "C" {
     fn json_double_new(_: ::core::ffi::c_double) -> *mut json_value;
     fn json_boolean_new(_: ::core::ffi::c_int) -> *mut json_value;
 }
+use crate::src::lib::support::binio::{read_16u, read_32u, read_32s};
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
 pub type __uint16_t = u16;
@@ -719,7 +720,7 @@ unsafe extern "C" fn table_post_replace(mut dst: *mut table_post, src: table_pos
     );
 }
 #[no_mangle]
-pub static mut iTable_post: __caryll_elementinterface_table_post = unsafe {
+pub static mut iTable_post: __caryll_elementinterface_table_post = {
     __caryll_elementinterface_table_post {
         init: Some(table_post_init as unsafe extern "C" fn(*mut table_post) -> ()),
         copy: Some(
@@ -742,7 +743,7 @@ pub static mut iTable_post: __caryll_elementinterface_table_post = unsafe {
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readPost(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut table_post {
     let mut __fortable_keep: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
     let mut __fortable_count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -888,7 +889,7 @@ pub unsafe extern "C" fn otfcc_dumpPost(
             b"post\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut post: *mut json_value = json_object_new(10 as size_t);
         json_object_push(
@@ -941,7 +942,7 @@ pub unsafe extern "C" fn otfcc_dumpPost(
             b"post\0" as *const u8 as *const ::core::ffi::c_char,
             post,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -970,7 +971,7 @@ pub unsafe extern "C" fn otfcc_parsePost(
                 b"post\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             if (*options).short_post {
                 (*post).version = 0x30000 as ::core::ffi::c_int as f16dot16;
@@ -1012,7 +1013,7 @@ pub unsafe extern "C" fn otfcc_parsePost(
                 table,
                 b"maxMemType1\0" as *const u8 as *const ::core::ffi::c_char,
             ) as uint32_t;
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -1026,7 +1027,7 @@ pub unsafe extern "C" fn otfcc_parsePost(
 pub unsafe extern "C" fn otfcc_buildPost(
     mut post: *const table_post,
     mut glyphorder: *mut otfcc_GlyphOrder,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if post.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();
@@ -1165,7 +1166,7 @@ unsafe extern "C" fn json_obj_getbool(
         || (*obj).type_0 as ::core::ffi::c_uint
             != json_object as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return false_0 != 0;
+        return false;
     }
     let mut _k: uint32_t = 0 as uint32_t;
     while _k < (*obj).u.object.length as uint32_t {
@@ -1182,30 +1183,7 @@ unsafe extern "C" fn json_obj_getbool(
         }
         _k = _k.wrapping_add(1);
     }
-    return false_0 != 0;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
-unsafe extern "C" fn read_32u(mut src: *const uint8_t) -> uint32_t {
-    let mut b0: uint32_t =
-        (*src.offset(0 as ::core::ffi::c_int as isize) as uint32_t) << 24 as ::core::ffi::c_int;
-    let mut b1: uint32_t =
-        (*src.offset(1 as ::core::ffi::c_int as isize) as uint32_t) << 16 as ::core::ffi::c_int;
-    let mut b2: uint32_t =
-        (*src.offset(2 as ::core::ffi::c_int as isize) as uint32_t) << 8 as ::core::ffi::c_int;
-    let mut b3: uint32_t = *src.offset(3 as ::core::ffi::c_int as isize) as uint32_t;
-    return b0 | b1 | b2 | b3;
-}
-#[inline]
-unsafe extern "C" fn read_32s(mut src: *const uint8_t) -> int32_t {
-    return read_32u(src) as int32_t;
+    return false;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

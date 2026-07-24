@@ -29,6 +29,7 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
 pub type __int64_t = i64;
@@ -195,11 +196,11 @@ unsafe extern "C" fn compare_json_arrays(
             *(*a).u.array.values.offset(j as isize),
             *(*b).u.array.values.offset(j as isize),
         ) {
-            return false_0 != 0;
+            return false;
         }
         j = j.wrapping_add(1);
     }
-    return true_0 != 0;
+    return true;
 }
 unsafe extern "C" fn compare_json_objects(
     mut a: *const json_value,
@@ -517,7 +518,7 @@ unsafe extern "C" fn compare_json_objects(
             ) as *mut json_obj_entry;
             (*e).key = strdup(k);
             (*e).val = (*(*a).u.object.values.offset(j as isize)).value as *mut json_value;
-            (*e).check = false_0 != 0;
+            (*e).check = false;
             let mut _ha_hashv: ::core::ffi::c_uint = 0;
             let mut _hj_i_0: ::core::ffi::c_uint = 0;
             let mut _hj_j_0: ::core::ffi::c_uint = 0;
@@ -890,7 +891,7 @@ unsafe extern "C" fn compare_json_objects(
                             .log2_num_buckets
                             .wrapping_add(1 as ::core::ffi::c_uint))
                     .wrapping_add(
-                        (if (*(*e).hh.tbl).num_items
+                        if (*(*e).hh.tbl).num_items
                             & (*(*e).hh.tbl)
                                 .num_buckets
                                 .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -900,7 +901,7 @@ unsafe extern "C" fn compare_json_objects(
                             1 as ::core::ffi::c_uint
                         } else {
                             0 as ::core::ffi::c_uint
-                        }),
+                        },
                     );
                     (*(*e).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                     _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -958,7 +959,7 @@ unsafe extern "C" fn compare_json_objects(
         }
         j = j.wrapping_add(1);
     }
-    let mut allcheck: bool = true_0 != 0;
+    let mut allcheck: bool = true;
     let mut j_0: uint32_t = 0 as uint32_t;
     while j_0 < (*b).u.object.length as uint32_t {
         let mut k_0: *mut ::core::ffi::c_char = (*(*b).u.object.values.offset(j_0 as isize)).name;
@@ -1273,7 +1274,7 @@ unsafe extern "C" fn compare_json_objects(
             }
         }
         if e_0.is_null() {
-            allcheck = false_0 != 0;
+            allcheck = false;
             break;
         } else {
             let mut check: bool = json_ident(
@@ -1281,10 +1282,10 @@ unsafe extern "C" fn compare_json_objects(
                 (*(*b).u.object.values.offset(j_0 as isize)).value,
             );
             if !check {
-                allcheck = false_0 != 0;
+                allcheck = false;
                 break;
             } else {
-                (*e_0).check = true_0 != 0;
+                (*e_0).check = true;
                 j_0 = j_0.wrapping_add(1);
             }
         }
@@ -1356,16 +1357,16 @@ unsafe extern "C" fn compare_json_objects(
 #[no_mangle]
 pub unsafe extern "C" fn json_ident(mut a: *const json_value, mut b: *const json_value) -> bool {
     if a.is_null() && b.is_null() {
-        return true_0 != 0;
+        return true;
     }
     if a.is_null() || b.is_null() {
-        return false_0 != 0;
+        return false;
     }
     if (*a).type_0 as ::core::ffi::c_uint != (*b).type_0 as ::core::ffi::c_uint {
-        return false_0 != 0;
+        return false;
     }
     match (*a).type_0 as ::core::ffi::c_uint {
-        0 | 7 => return true_0 != 0,
+        0 | 7 => return true,
         3 => return (*a).u.integer == (*b).u.integer,
         4 => return (*a).u.dbl == (*b).u.dbl,
         6 => return (*a).u.boolean == (*b).u.boolean,
@@ -1381,26 +1382,6 @@ pub unsafe extern "C" fn json_ident(mut a: *const json_value, mut b: *const json
             return (*a).u.object.length == (*b).u.object.length
                 && compare_json_objects(a, b) as ::core::ffi::c_int != 0;
         }
-        _ => return false_0 != 0,
+        _ => return false,
     };
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
 }

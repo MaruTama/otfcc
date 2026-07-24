@@ -34,6 +34,8 @@ extern "C" {
     static table_iGlyf: __caryll_vectorinterface_table_glyf;
     fn otfcc_newGlyf_glyph() -> *mut glyf_Glyph;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_8u, read_8s, read_16u, read_16s, read_32u};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
@@ -832,7 +834,7 @@ unsafe extern "C" fn next_point(
 unsafe extern "C" fn otfcc_read_simple_glyph(
     mut start: font_file_pointer,
     mut numberOfContours: shapeid_t,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut glyf_Glyph {
     let mut g: *mut glyf_Glyph = otfcc_newGlyf_glyph();
     let mut contours: *mut glyf_ContourList = &raw mut (*g).contours;
@@ -1047,7 +1049,7 @@ unsafe extern "C" fn otfcc_read_composite_glyph(
     let mut g: *mut glyf_Glyph = otfcc_newGlyf_glyph();
     let mut flags: uint16_t = 0 as uint16_t;
     let mut offset: uint32_t = 0 as uint32_t;
-    let mut glyphHasInstruction: bool = false_0 != 0;
+    let mut glyphHasInstruction: bool = false;
     loop {
         flags = read_16u(start.offset(offset as isize) as *const uint8_t);
         let mut index: glyphid_t = read_16u(
@@ -1175,7 +1177,7 @@ unsafe extern "C" fn otfcc_read_composite_glyph(
             );
         }
         if flags as ::core::ffi::c_int & WE_HAVE_INSTRUCTIONS as ::core::ffi::c_int != 0 {
-            glyphHasInstruction = true_0 != 0;
+            glyphHasInstruction = true;
         }
         glyf_iReferenceList.push.expect("non-null function pointer")(
             &raw mut (*g).references,
@@ -1294,7 +1296,7 @@ unsafe extern "C" fn parsePointNumbers(
     if nPoints as ::core::ffi::c_int > 0 as ::core::ffi::c_int {
         let mut run: C2RustUnnamed_3 = C2RustUnnamed_3 {
             length: 0 as shapeid_t,
-            wide: false_0 != 0,
+            wide: false,
         };
         let mut filled: shapeid_t = 0 as shapeid_t;
         let mut jPoint: shapeid_t = 0 as shapeid_t;
@@ -1354,8 +1356,8 @@ unsafe extern "C" fn readPackedDelta(
 ) -> font_file_pointer {
     let mut run: C2RustUnnamed_2 = C2RustUnnamed_2 {
         length: 0 as shapeid_t,
-        wide: false_0 != 0,
-        zero: false_0 != 0,
+        wide: false,
+        zero: false,
     };
     let mut filled: shapeid_t = 0 as shapeid_t;
     while (filled as ::core::ffi::c_int) < nPoints as ::core::ffi::c_int {
@@ -1493,7 +1495,7 @@ unsafe extern "C" fn applyCoords(
     let mut j: shapeid_t = 0 as shapeid_t;
     while (j as ::core::ffi::c_int) < totalPoints as ::core::ffi::c_int {
         (*nudges.offset(j as isize)).type_0 = VQ_DELTA;
-        (*nudges.offset(j as isize)).val.delta.touched = false_0 != 0;
+        (*nudges.offset(j as isize)).val.delta.touched = false;
         (*nudges.offset(j as isize)).val.delta.quantity = 0 as ::core::ffi::c_int as pos_t;
         let ref mut fresh4 = (*nudges.offset(j as isize)).val.delta.region;
         *fresh4 = r;
@@ -1507,7 +1509,7 @@ unsafe extern "C" fn applyCoords(
             (*nudges.offset(*points.offset(j_0 as isize) as isize))
                 .val
                 .delta
-                .touched = true_0 != 0;
+                .touched = true;
             (*nudges.offset(*points.offset(j_0 as isize) as isize))
                 .val
                 .delta
@@ -1631,13 +1633,13 @@ unsafe extern "C" fn applyPolymorphism(
     {
         iVQ.addDelta.expect("non-null function pointer")(
             &raw mut (*glyph).horizontalOrigin,
-            true_0 != 0,
+            true,
             r,
             *deltaX.offset(totalPoints as isize),
         );
         iVQ.addDelta.expect("non-null function pointer")(
             &raw mut (*glyph).advanceWidth,
-            true_0 != 0,
+            true,
             r,
             *deltaX.offset((totalPoints as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize)
                 - *deltaX.offset(totalPoints as isize),
@@ -1648,13 +1650,13 @@ unsafe extern "C" fn applyPolymorphism(
     {
         iVQ.addDelta.expect("non-null function pointer")(
             &raw mut (*glyph).verticalOrigin,
-            true_0 != 0,
+            true,
             r,
             *deltaY.offset((totalPoints as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as isize),
         );
         iVQ.addDelta.expect("non-null function pointer")(
             &raw mut (*glyph).advanceHeight,
-            true_0 != 0,
+            true,
             r,
             *deltaY.offset((totalPoints as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as isize)
                 - *deltaY
@@ -1701,11 +1703,11 @@ unsafe extern "C" fn createRegionFromTuples(
 }
 #[inline]
 unsafe extern "C" fn polymorphizeGlyph(
-    mut gid: glyphid_t,
+    mut _gid: glyphid_t,
     mut glyph: glyf_GlyphPtr,
     mut ctx: *const TuplePolymorphizerCtx,
     mut gvd: *mut GlyphVariationData,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) {
     let mut totalPoints: shapeid_t = 0 as shapeid_t;
     let mut __caryll_index: size_t = 0 as size_t;
@@ -1952,7 +1954,7 @@ pub unsafe extern "C" fn otfcc_readGlyf(
         649 as ::core::ffi::c_ulong,
     ) as *mut uint32_t;
     if !offsets.is_null() {
-        foundLoca = false_0 != 0;
+        foundLoca = false;
         let mut __fortable_keep: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
         let mut __fortable_count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         let mut __notfound: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
@@ -2008,7 +2010,7 @@ pub unsafe extern "C" fn otfcc_readGlyf(
                             match current_block {
                                 15756379620357860923 => {}
                                 _ => {
-                                    foundLoca = true_0 != 0;
+                                    foundLoca = true;
                                     break;
                                 }
                             }
@@ -2144,57 +2146,6 @@ pub unsafe extern "C" fn otfcc_readGlyf(
         glyf = ::core::ptr::null_mut::<table_glyf>();
     }
     return ::core::ptr::null_mut::<table_glyf>();
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn read_8u(mut src: *const uint8_t) -> uint8_t {
-    return *src.offset(0 as ::core::ffi::c_int as isize);
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
-unsafe extern "C" fn read_32u(mut src: *const uint8_t) -> uint32_t {
-    let mut b0: uint32_t =
-        (*src.offset(0 as ::core::ffi::c_int as isize) as uint32_t) << 24 as ::core::ffi::c_int;
-    let mut b1: uint32_t =
-        (*src.offset(1 as ::core::ffi::c_int as isize) as uint32_t) << 16 as ::core::ffi::c_int;
-    let mut b2: uint32_t =
-        (*src.offset(2 as ::core::ffi::c_int as isize) as uint32_t) << 8 as ::core::ffi::c_int;
-    let mut b3: uint32_t = *src.offset(3 as ::core::ffi::c_int as isize) as uint32_t;
-    return b0 | b1 | b2 | b3;
-}
-#[inline]
-unsafe extern "C" fn read_8s(mut src: *const uint8_t) -> int8_t {
-    return read_8u(src) as int8_t;
-}
-#[inline]
-unsafe extern "C" fn read_16s(mut src: *const uint8_t) -> int16_t {
-    return read_16u(src) as int16_t;
 }
 #[inline]
 unsafe extern "C" fn be16(mut x: uint16_t) -> uint16_t {

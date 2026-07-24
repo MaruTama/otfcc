@@ -42,6 +42,8 @@ extern "C" {
     fn json_integer_new(_: int64_t) -> *mut json_value;
     fn json_double_new(_: ::core::ffi::c_double) -> *mut json_value;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_16u, read_32s};
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
 pub type __uint16_t = u16;
@@ -295,7 +297,7 @@ unsafe extern "C" fn initHhea(mut hhea: *mut table_hhea) {
     (*hhea).version = 0x10000 as ::core::ffi::c_int as f16dot16;
 }
 #[inline]
-unsafe extern "C" fn disposeHhea(mut hhea: *mut table_hhea) {}
+unsafe extern "C" fn disposeHhea(mut _hhea: *mut table_hhea) {}
 #[inline]
 unsafe extern "C" fn table_hhea_free(mut x: *mut table_hhea) {
     if x.is_null() {
@@ -305,7 +307,7 @@ unsafe extern "C" fn table_hhea_free(mut x: *mut table_hhea) {
     free(x as *mut ::core::ffi::c_void);
 }
 #[no_mangle]
-pub static mut table_iHhea: __caryll_elementinterface_table_hhea = unsafe {
+pub static mut table_iHhea: __caryll_elementinterface_table_hhea = {
     __caryll_elementinterface_table_hhea {
         init: Some(table_hhea_init as unsafe extern "C" fn(*mut table_hhea) -> ()),
         copy: Some(
@@ -493,7 +495,7 @@ pub unsafe extern "C" fn otfcc_dumpHhea(
             b"hhea\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut hhea: *mut json_value = json_object_new(13 as size_t);
         json_object_push(
@@ -556,7 +558,7 @@ pub unsafe extern "C" fn otfcc_dumpHhea(
             b"hhea\0" as *const u8 as *const ::core::ffi::c_char,
             hhea,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -585,7 +587,7 @@ pub unsafe extern "C" fn otfcc_parseHhea(
                 b"hhea\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             (*hhea).version = otfcc_to_fixed(json_obj_getnum_fallback(
                 table,
@@ -642,7 +644,7 @@ pub unsafe extern "C" fn otfcc_parseHhea(
                 b"caretOffset\0" as *const u8 as *const ::core::ffi::c_char,
                 0 as ::core::ffi::c_int as ::core::ffi::c_double,
             ) as int16_t;
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -655,7 +657,7 @@ pub unsafe extern "C" fn otfcc_parseHhea(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildHhea(
     mut hhea: *const table_hhea,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if hhea.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();
@@ -691,26 +693,6 @@ pub unsafe extern "C" fn otfcc_buildHhea(
     bufwrite16b(buf, 0 as uint16_t);
     bufwrite16b(buf, (*hhea).numberOfMetrics);
     return buf;
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
 }
 #[inline]
 unsafe extern "C" fn json_obj_get(
@@ -779,29 +761,6 @@ unsafe extern "C" fn json_obj_getnum_fallback(
         _k = _k.wrapping_add(1);
     }
     return fallback;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
-unsafe extern "C" fn read_32u(mut src: *const uint8_t) -> uint32_t {
-    let mut b0: uint32_t =
-        (*src.offset(0 as ::core::ffi::c_int as isize) as uint32_t) << 24 as ::core::ffi::c_int;
-    let mut b1: uint32_t =
-        (*src.offset(1 as ::core::ffi::c_int as isize) as uint32_t) << 16 as ::core::ffi::c_int;
-    let mut b2: uint32_t =
-        (*src.offset(2 as ::core::ffi::c_int as isize) as uint32_t) << 8 as ::core::ffi::c_int;
-    let mut b3: uint32_t = *src.offset(3 as ::core::ffi::c_int as isize) as uint32_t;
-    return b0 | b1 | b2 | b3;
-}
-#[inline]
-unsafe extern "C" fn read_32s(mut src: *const uint8_t) -> int32_t {
-    return read_32u(src) as int32_t;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

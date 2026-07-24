@@ -22,6 +22,7 @@ extern "C" {
     fn bk_push(b: *mut bk_Block, type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
     fn bk_build_Block_noMinimize(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
+use crate::src::lib::support::binio::{read_8u, read_16u, read_16s};
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
 pub type __uint16_t = u16;
@@ -554,7 +555,7 @@ pub unsafe extern "C" fn otfcc_dumpVDMX(
             b"VDMX\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _vdmx: *mut json_value = json_object_new(2 as size_t);
         json_object_push(
@@ -639,7 +640,7 @@ pub unsafe extern "C" fn otfcc_dumpVDMX(
             b"VDMX\0" as *const u8 as *const ::core::ffi::c_char,
             _vdmx,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -670,7 +671,7 @@ pub unsafe extern "C" fn otfcc_parseVDMX(
             b"VDMX\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         (*vdmx).version = json_obj_getnum(
             _vdmx,
@@ -761,7 +762,7 @@ pub unsafe extern "C" fn otfcc_parseVDMX(
             }
             j = j.wrapping_add(1);
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -771,7 +772,7 @@ pub unsafe extern "C" fn otfcc_parseVDMX(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildVDMX(
     mut vdmx: *const table_VDMX,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if vdmx.is_null() || (*vdmx).ratios.length == 0 {
         return ::core::ptr::null_mut::<caryll_Buffer>();
@@ -940,22 +941,6 @@ unsafe extern "C" fn json_obj_getnum(
         _k = _k.wrapping_add(1);
     }
     return 0.0f64;
-}
-#[inline]
-unsafe extern "C" fn read_8u(mut src: *const uint8_t) -> uint8_t {
-    return *src.offset(0 as ::core::ffi::c_int as isize);
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
-unsafe extern "C" fn read_16s(mut src: *const uint8_t) -> int16_t {
-    return read_16u(src) as int16_t;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

@@ -54,6 +54,8 @@ extern "C" {
     fn bufwrite_bufdel(buf: *mut caryll_Buffer, that: *mut caryll_Buffer);
     static otfcc_iHandle: otfcc_HandlePackage;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
+use crate::src::lib::support::binio::{read_16u};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -1228,7 +1230,7 @@ unsafe extern "C" fn readClassDef(
                                     .log2_num_buckets
                                     .wrapping_add(1 as ::core::ffi::c_uint))
                             .wrapping_add(
-                                (if (*(*item).hh.tbl).num_items
+                                if (*(*item).hh.tbl).num_items
                                     & (*(*item).hh.tbl)
                                         .num_buckets
                                         .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1238,7 +1240,7 @@ unsafe extern "C" fn readClassDef(
                                     1 as ::core::ffi::c_uint
                                 } else {
                                     0 as ::core::ffi::c_uint
-                                }),
+                                },
                             );
                             (*(*item).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                             _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2202,7 +2204,7 @@ unsafe extern "C" fn expandClassDef(
                             .log2_num_buckets
                             .wrapping_add(1 as ::core::ffi::c_uint))
                     .wrapping_add(
-                        (if (*(*item).hh.tbl).num_items
+                        if (*(*item).hh.tbl).num_items
                             & (*(*item).hh.tbl)
                                 .num_buckets
                                 .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2212,7 +2214,7 @@ unsafe extern "C" fn expandClassDef(
                             1 as ::core::ffi::c_uint
                         } else {
                             0 as ::core::ffi::c_uint
-                        }),
+                        },
                     );
                     (*(*item).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                     _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2969,7 +2971,7 @@ unsafe extern "C" fn expandClassDef(
                             .log2_num_buckets
                             .wrapping_add(1 as ::core::ffi::c_uint))
                     .wrapping_add(
-                        (if (*(*item_0).hh.tbl).num_items
+                        if (*(*item_0).hh.tbl).num_items
                             & (*(*item_0).hh.tbl)
                                 .num_buckets
                                 .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2979,7 +2981,7 @@ unsafe extern "C" fn expandClassDef(
                             1 as ::core::ffi::c_uint
                         } else {
                             0 as ::core::ffi::c_uint
-                        }),
+                        },
                     );
                     (*(*item_0).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                     _he_bkt_i_0 = 0 as ::core::ffi::c_uint;
@@ -3259,7 +3261,7 @@ unsafe extern "C" fn shrinkClassDef(mut cd: *mut otl_ClassDef) {
     (*cd).numGlyphs = k;
 }
 #[no_mangle]
-pub static mut otl_iClassDef: __otfcc_IClassDef = unsafe {
+pub static mut otl_iClassDef: __otfcc_IClassDef = {
     __otfcc_IClassDef {
         init: Some(otl_ClassDef_init as unsafe extern "C" fn(*mut otl_ClassDef) -> ()),
         copy: Some(
@@ -3298,52 +3300,6 @@ pub static mut otl_iClassDef: __otfcc_IClassDef = unsafe {
     }
 };
 #[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
-}
-#[inline]
 unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     let mut opts: json_serialize_opts = json_serialize_opts {
         mode: json_serialize_mode_packed,
@@ -3360,12 +3316,4 @@ unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     );
     (*xx).type_0 = json_pre_serialized;
     return xx;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
 }

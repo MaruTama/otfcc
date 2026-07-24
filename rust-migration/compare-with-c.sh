@@ -102,8 +102,12 @@ if [ -f "${DLL_C}" ] && [ -f "${DLL_RUST}" ]; then
 	# C-only invocations differ at those bytes. Diff byte count against that
 	# same-library baseline instead of expecting a plain cmp to pass.
 	python3 "$(dirname "$0")/test-dll.py" "${DLL_C}" "${DLL_JSON}" "${BUILD}/dll-c-2.otf"
-	baseline_diff=$(cmp -l "${BUILD}/dll-c.otf" "${BUILD}/dll-c-2.otf" 2>/dev/null | wc -l | tr -d ' ')
-	cross_diff=$(cmp -l "${BUILD}/dll-c.otf" "${BUILD}/dll-rust.otf" 2>/dev/null | wc -l | tr -d ' ')
+	# cmp -l exits non-zero whenever the files differ, which they legitimately
+	# do here (see comment above) — under `set -e`, that would abort the whole
+	# script at the very assignment meant to *measure* that expected diff, so
+	# tolerate cmp's exit status explicitly with `|| true`.
+	baseline_diff=$( (cmp -l "${BUILD}/dll-c.otf" "${BUILD}/dll-c-2.otf" 2>/dev/null || true) | wc -l | tr -d ' ')
+	cross_diff=$( (cmp -l "${BUILD}/dll-c.otf" "${BUILD}/dll-rust.otf" 2>/dev/null || true) | wc -l | tr -d ' ')
 	if [ "${cross_diff}" -le "${baseline_diff}" ]; then
 		echo "PASS  otfccdll: Rust matches C (differs in ${cross_diff} bytes, same as the ${baseline_diff}-byte run-to-run timestamp variance)"
 	else

@@ -1506,7 +1506,7 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 #[no_mangle]
 pub unsafe extern "C" fn consolidate_gsub_ligature(
     mut font: *mut otfcc_Font,
-    mut table: *mut table_OTL,
+    mut _table: *mut table_OTL,
     mut _subtable: *mut otl_Subtable,
     mut options: *const otfcc_Options,
 ) -> bool {
@@ -1544,7 +1544,7 @@ pub unsafe extern "C" fn consolidate_gsub_ligature(
             fontop_consolidateCoverage(font, (*(*subtable).items.offset(k as isize)).from, options);
             otl_iCoverage.shrink.expect("non-null function pointer")(
                 (*(*subtable).items.offset(k as isize)).from,
-                false_0 != 0,
+                false,
             );
             if (*(*(*subtable).items.offset(k as isize)).from).numGlyphs == 0 {
                 (*(*options).logger)

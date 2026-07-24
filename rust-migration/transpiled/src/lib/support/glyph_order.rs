@@ -32,6 +32,7 @@ extern "C" {
     fn sdscatprintf(s: sds, fmt: *const ::core::ffi::c_char, ...) -> sds;
     static otfcc_iHandle: otfcc_HandlePackage;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -1449,7 +1450,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByGID(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hhID.tbl).num_items
+                    if (*(*s).hhID.tbl).num_items
                         & (*(*s).hhID.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1459,7 +1460,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByGID(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hhID.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -1880,7 +1881,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByGID(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hhName.tbl).num_items
+                    if (*(*s).hhName.tbl).num_items
                         & (*(*s).hhName.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1890,7 +1891,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByGID(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hhName.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i_0 = 0 as ::core::ffi::c_uint;
@@ -2255,7 +2256,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
         }
     }
     if !s.is_null() {
-        return false_0 != 0;
+        return false;
     } else {
         s = __caryll_allocate_clean(
             ::core::mem::size_of::<otfcc_GlyphOrderEntry>() as size_t,
@@ -2625,7 +2626,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hhID.tbl).num_items
+                    if (*(*s).hhID.tbl).num_items
                         & (*(*s).hhID.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2635,7 +2636,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hhID.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -3056,7 +3057,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hhName.tbl).num_items
+                    if (*(*s).hhName.tbl).num_items
                         & (*(*s).hhName.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -3066,7 +3067,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hhName.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i_0 = 0 as ::core::ffi::c_uint;
@@ -3121,7 +3122,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
                 }
             }
         }
-        return true_0 != 0;
+        return true;
     };
 }
 unsafe extern "C" fn otfcc_gordNameAFieldShared(
@@ -3430,10 +3431,10 @@ unsafe extern "C" fn otfcc_gordNameAFieldShared(
     }
     if !t.is_null() {
         *field = (*t).name;
-        return true_0 != 0;
+        return true;
     } else {
         *field = ::core::ptr::null_mut::<::core::ffi::c_char>();
-        return false_0 != 0;
+        return false;
     };
 }
 unsafe extern "C" fn otfcc_gordConsolidateHandle(
@@ -3755,7 +3756,7 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
                 .expect("non-null function pointer")(
                 h as *mut otfcc_Handle, (*t).gid, (*t).name
             );
-            return true_0 != 0;
+            return true;
         }
         let mut _hf_hashv_0: ::core::ffi::c_uint = 0;
         let mut _hj_i_0: ::core::ffi::c_uint = 0;
@@ -4080,7 +4081,7 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
                 .expect("non-null function pointer")(
                 h as *mut otfcc_Handle, (*t).gid, (*t).name
             );
-            return true_0 != 0;
+            return true;
         }
     } else if (*h).state as ::core::ffi::c_uint
         == HANDLE_STATE_NAME as ::core::ffi::c_int as ::core::ffi::c_uint
@@ -4408,7 +4409,7 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
                 (*t_0).gid,
                 (*t_0).name,
             );
-            return true_0 != 0;
+            return true;
         }
     } else if (*h).state as ::core::ffi::c_uint
         == HANDLE_STATE_INDEX as ::core::ffi::c_int as ::core::ffi::c_uint
@@ -4421,10 +4422,10 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
                 .expect("non-null function pointer")(
                 h as *mut otfcc_Handle, (*h).index, name
             );
-            return true_0 != 0;
+            return true;
         }
     }
-    return false_0 != 0;
+    return false;
 }
 unsafe extern "C" fn gordLookupName(mut go: *mut otfcc_GlyphOrder, mut name: sds) -> bool {
     let mut t: *mut otfcc_GlyphOrderEntry = ::core::ptr::null_mut::<otfcc_GlyphOrderEntry>();
@@ -4729,12 +4730,12 @@ unsafe extern "C" fn gordLookupName(mut go: *mut otfcc_GlyphOrder, mut name: sds
         }
     }
     if !t.is_null() {
-        return true_0 != 0;
+        return true;
     }
-    return false_0 != 0;
+    return false;
 }
 #[no_mangle]
-pub static mut otfcc_pkgGlyphOrder: otfcc_GlyphOrderPackage = unsafe {
+pub static mut otfcc_pkgGlyphOrder: otfcc_GlyphOrderPackage = {
     otfcc_GlyphOrderPackage {
         init: Some(otfcc_GlyphOrder_init as unsafe extern "C" fn(*mut otfcc_GlyphOrder) -> ()),
         copy: Some(
@@ -4781,23 +4782,3 @@ pub static mut otfcc_pkgGlyphOrder: otfcc_GlyphOrderPackage = unsafe {
 };
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}

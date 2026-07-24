@@ -58,6 +58,8 @@ extern "C" {
     fn bk_push(b: *mut bk_Block, type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
+use crate::src::lib::support::binio::{read_16u, read_16s, read_32u};
 pub type size_t = usize;
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
@@ -424,7 +426,7 @@ unsafe extern "C" fn table_BASE_replace(mut dst: *mut table_BASE, src: table_BAS
     );
 }
 #[no_mangle]
-pub static mut table_iBASE: __caryll_elementinterface_table_BASE = unsafe {
+pub static mut table_iBASE: __caryll_elementinterface_table_BASE = {
     __caryll_elementinterface_table_BASE {
         init: Some(table_BASE_init as unsafe extern "C" fn(*mut table_BASE) -> ()),
         copy: Some(
@@ -861,7 +863,7 @@ pub unsafe extern "C" fn otfcc_dumpBASE(
             b"BASE\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _base: *mut json_value = json_object_new(2 as size_t);
         if !(*base).horizontal.is_null() {
@@ -883,7 +885,7 @@ pub unsafe extern "C" fn otfcc_dumpBASE(
             b"BASE\0" as *const u8 as *const ::core::ffi::c_char,
             _base,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1001,7 +1003,7 @@ pub unsafe extern "C" fn otfcc_parseBASE(
                 b"BASE\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             base = __caryll_allocate_clean(
                 ::core::mem::size_of::<table_BASE>() as size_t,
@@ -1017,7 +1019,7 @@ pub unsafe extern "C" fn otfcc_parseBASE(
                 b"vertical\0" as *const u8 as *const ::core::ffi::c_char,
                 json_object,
             ));
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -1049,11 +1051,11 @@ pub unsafe extern "C" fn axisToBk(mut axis: *const otl_BaseAxis) -> *mut bk_Bloc
         let mut entry: *mut otl_BaseScriptEntry =
             (*axis).entries.offset(j as isize) as *mut otl_BaseScriptEntry;
         if (*entry).defaultBaselineTag != 0 {
-            let mut found: bool = false_0 != 0;
+            let mut found: bool = false;
             let mut jk: tableid_t = 0 as tableid_t;
             while (jk as ::core::ffi::c_int) < taglist.size as ::core::ffi::c_int {
                 if *taglist.items.offset(jk as isize) == (*entry).defaultBaselineTag {
-                    found = true_0 != 0;
+                    found = true;
                     break;
                 } else {
                     jk = jk.wrapping_add(1);
@@ -1076,11 +1078,11 @@ pub unsafe extern "C" fn axisToBk(mut axis: *const otl_BaseAxis) -> *mut bk_Bloc
         let mut k: tableid_t = 0 as tableid_t;
         while (k as ::core::ffi::c_int) < (*entry).baseValuesCount as ::core::ffi::c_int {
             let mut tag: uint32_t = (*(*entry).baseValues.offset(k as isize)).tag;
-            let mut found_0: bool = false_0 != 0;
+            let mut found_0: bool = false;
             let mut jk_0: tableid_t = 0 as tableid_t;
             while (jk_0 as ::core::ffi::c_int) < taglist.size as ::core::ffi::c_int {
                 if *taglist.items.offset(jk_0 as isize) == tag {
-                    found_0 = true_0 != 0;
+                    found_0 = true;
                     break;
                 } else {
                     jk_0 = jk_0.wrapping_add(1);
@@ -1164,14 +1166,14 @@ pub unsafe extern "C" fn axisToBk(mut axis: *const otl_BaseAxis) -> *mut bk_Bloc
         );
         let mut m_0: size_t = 0 as size_t;
         while m_0 < taglist.size as size_t {
-            let mut found_1: bool = false_0 != 0;
+            let mut found_1: bool = false;
             let mut foundIndex: tableid_t = 0 as tableid_t;
             let mut k_0: tableid_t = 0 as tableid_t;
             while (k_0 as ::core::ffi::c_int) < (*entry_0).baseValuesCount as ::core::ffi::c_int {
                 if (*(*entry_0).baseValues.offset(k_0 as isize)).tag
                     == *taglist.items.offset(m_0 as isize)
                 {
-                    found_1 = true_0 != 0;
+                    found_1 = true;
                     foundIndex = k_0;
                     break;
                 } else {
@@ -1240,7 +1242,7 @@ pub unsafe extern "C" fn axisToBk(mut axis: *const otl_BaseAxis) -> *mut bk_Bloc
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildBASE(
     mut base: *const table_BASE,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if base.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();
@@ -1255,52 +1257,6 @@ pub unsafe extern "C" fn otfcc_buildBASE(
         bkover as ::core::ffi::c_int,
     );
     return bk_build_Block(root);
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn __caryll_reallocate(
-    mut ptr: *mut ::core::ffi::c_void,
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        free(ptr);
-        return NULL;
-    }
-    if ptr.is_null() {
-        return __caryll_allocate_clean(n, line);
-    } else {
-        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
-        if p.is_null() {
-            fprintf(
-                stderr,
-                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-                line,
-                n as ::core::ffi::c_ulong,
-            );
-            exit(EXIT_FAILURE);
-        }
-        return p;
-    };
 }
 #[inline]
 unsafe extern "C" fn json_obj_get(
@@ -1389,29 +1345,6 @@ unsafe extern "C" fn json_new_position(mut z: pos_t) -> *mut json_value {
     } else {
         return json_double_new(z as ::core::ffi::c_double);
     };
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
-unsafe extern "C" fn read_32u(mut src: *const uint8_t) -> uint32_t {
-    let mut b0: uint32_t =
-        (*src.offset(0 as ::core::ffi::c_int as isize) as uint32_t) << 24 as ::core::ffi::c_int;
-    let mut b1: uint32_t =
-        (*src.offset(1 as ::core::ffi::c_int as isize) as uint32_t) << 16 as ::core::ffi::c_int;
-    let mut b2: uint32_t =
-        (*src.offset(2 as ::core::ffi::c_int as isize) as uint32_t) << 8 as ::core::ffi::c_int;
-    let mut b3: uint32_t = *src.offset(3 as ::core::ffi::c_int as isize) as uint32_t;
-    return b0 | b1 | b2 | b3;
-}
-#[inline]
-unsafe extern "C" fn read_16s(mut src: *const uint8_t) -> int16_t {
-    return read_16u(src) as int16_t;
 }
 #[inline]
 unsafe extern "C" fn tag2str(mut tag: uint32_t, mut tags: *mut ::core::ffi::c_char) {

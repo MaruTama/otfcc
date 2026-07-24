@@ -1,7 +1,5 @@
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn qsort(
         __base: *mut ::core::ffi::c_void,
@@ -44,6 +42,11 @@ extern "C" {
         _: *const ::core::ffi::c_char,
     ) -> *mut json_value;
 }
+use crate::src::lib::support::binio::{read_16u, read_32u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -427,7 +430,7 @@ unsafe extern "C" fn tsi_Entry_move(mut dst: *mut tsi_Entry, mut src: *mut tsi_E
     tsi_Entry_init(src);
 }
 #[no_mangle]
-pub static mut tsi_iEntry: __caryll_elementinterface_tsi_Entry = unsafe {
+pub static mut tsi_iEntry: __caryll_elementinterface_tsi_Entry = {
     __caryll_elementinterface_tsi_Entry {
         init: Some(tsi_Entry_init as unsafe extern "C" fn(*mut tsi_Entry) -> ()),
         copy: Some(tsi_Entry_copy as unsafe extern "C" fn(*mut tsi_Entry, *const tsi_Entry) -> ()),
@@ -477,15 +480,16 @@ unsafe extern "C" fn table_TSI_fill(mut arr: *mut table_TSI, mut n: size_t) {
     }
 }
 #[inline]
-unsafe extern "C" fn table_TSI_move(mut dst: *mut table_TSI, mut src: *mut table_TSI) {
-    *dst = *src;
-    table_TSI_init(src);
+unsafe extern "C" fn table_TSI_move(dst: *mut table_TSI, src: *mut table_TSI) {
+    cvec_move(table_TSI_as_cvec(dst), table_TSI_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn table_TSI_init(mut arr: *mut table_TSI) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<tsi_Entry>();
+unsafe fn table_TSI_as_cvec(arr: *mut table_TSI) -> *mut CVecRaw<tsi_Entry> {
+    arr as *mut CVecRaw<tsi_Entry>
+}
+#[inline]
+unsafe extern "C" fn table_TSI_init(arr: *mut table_TSI) {
+    cvec_init(table_TSI_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn table_TSI_filterEnv(
@@ -543,7 +547,7 @@ unsafe extern "C" fn table_TSI_sort(
     );
 }
 #[no_mangle]
-pub static mut table_iTSI: __caryll_vectorinterface_table_TSI = unsafe {
+pub static mut table_iTSI: __caryll_vectorinterface_table_TSI = {
     __caryll_vectorinterface_table_TSI {
         init: Some(table_TSI_init as unsafe extern "C" fn(*mut table_TSI) -> ()),
         copy: Some(table_TSI_copy as unsafe extern "C" fn(*mut table_TSI, *const table_TSI) -> ()),
@@ -589,50 +593,20 @@ pub static mut table_iTSI: __caryll_vectorinterface_table_TSI = unsafe {
     }
 };
 #[inline]
-unsafe extern "C" fn table_TSI_push(mut arr: *mut table_TSI, mut elem: tsi_Entry) {
-    table_TSI_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn table_TSI_push(arr: *mut table_TSI, elem: tsi_Entry) {
+    cvec_push(table_TSI_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn table_TSI_grow(mut arr: *mut table_TSI) {
-    table_TSI_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn table_TSI_grow(arr: *mut table_TSI) {
+    cvec_grow(table_TSI_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn table_TSI_growTo(mut arr: *mut table_TSI, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<tsi_Entry>() as size_t),
-        ) as *mut tsi_Entry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<tsi_Entry>() as size_t,
-        ) as *mut tsi_Entry;
-    };
+unsafe extern "C" fn table_TSI_growTo(arr: *mut table_TSI, target: size_t) {
+    cvec_grow_to(table_TSI_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn table_TSI_pop(mut arr: *mut table_TSI) -> tsi_Entry {
-    let mut t: tsi_Entry = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn table_TSI_pop(arr: *mut table_TSI) -> tsi_Entry {
+    cvec_pop(table_TSI_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn table_TSI_copyReplace(mut dst: *mut table_TSI, src: table_TSI) {
@@ -699,29 +673,8 @@ unsafe extern "C" fn table_TSI_initCapN(mut arr: *mut table_TSI, mut n: size_t) 
     table_TSI_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn table_TSI_growToN(mut arr: *mut table_TSI, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<tsi_Entry>() as size_t),
-        ) as *mut tsi_Entry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<tsi_Entry>() as size_t,
-        ) as *mut tsi_Entry;
-    };
+unsafe extern "C" fn table_TSI_growToN(arr: *mut table_TSI, target: size_t) {
+    cvec_grow_to_n(table_TSI_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn table_TSI_initN(mut arr: *mut table_TSI, mut n: size_t) {
@@ -756,21 +709,8 @@ unsafe extern "C" fn table_TSI_shrinkToFit(mut arr: *mut table_TSI) {
     table_TSI_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn table_TSI_resizeTo(mut arr: *mut table_TSI, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<tsi_Entry>() as size_t),
-        ) as *mut tsi_Entry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<tsi_Entry>() as size_t,
-        ) as *mut tsi_Entry;
-    };
+unsafe extern "C" fn table_TSI_resizeTo(arr: *mut table_TSI, target: size_t) {
+    cvec_resize_to(table_TSI_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn isValidGID(mut gid: uint16_t, mut tagIndex: uint32_t) -> bool {
@@ -784,7 +724,7 @@ unsafe extern "C" fn isValidGID(mut gid: uint16_t, mut tagIndex: uint32_t) -> bo
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readTSI(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
     mut tagIndex: uint32_t,
     mut tagText: uint32_t,
 ) -> *mut table_TSI {
@@ -961,7 +901,7 @@ pub unsafe extern "C" fn otfcc_dumpTSI(
             tag,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _tsi: *mut json_value = json_object_new(2 as size_t);
         let mut _glyphs: *mut json_value = json_object_new((*tsi).length);
@@ -1041,7 +981,7 @@ pub unsafe extern "C" fn otfcc_dumpTSI(
             _extra,
         );
         json_object_push(root, tag, _tsi);
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1070,7 +1010,7 @@ pub unsafe extern "C" fn otfcc_parseTSI(
             tag,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _glyphs: *mut json_value = json_obj_get_type(
             _tsi,
@@ -1173,7 +1113,7 @@ pub unsafe extern "C" fn otfcc_parseTSI(
                 j_0 = j_0.wrapping_add(1);
             }
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1241,7 +1181,7 @@ unsafe extern "C" fn pushTSIEntries(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildTSI(
     mut tsi: *const table_TSI,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> tsi_BuildTarget {
     let mut target: tsi_BuildTarget = tsi_BuildTarget {
         indexPart: ::core::ptr::null_mut::<caryll_Buffer>(),
@@ -1296,25 +1236,6 @@ unsafe extern "C" fn json_obj_get_type(
         return v;
     }
     return ::core::ptr::null_mut::<json_value>();
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
-unsafe extern "C" fn read_32u(mut src: *const uint8_t) -> uint32_t {
-    let mut b0: uint32_t =
-        (*src.offset(0 as ::core::ffi::c_int as isize) as uint32_t) << 24 as ::core::ffi::c_int;
-    let mut b1: uint32_t =
-        (*src.offset(1 as ::core::ffi::c_int as isize) as uint32_t) << 16 as ::core::ffi::c_int;
-    let mut b2: uint32_t =
-        (*src.offset(2 as ::core::ffi::c_int as isize) as uint32_t) << 8 as ::core::ffi::c_int;
-    let mut b3: uint32_t = *src.offset(3 as ::core::ffi::c_int as isize) as uint32_t;
-    return b0 | b1 | b2 | b3;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

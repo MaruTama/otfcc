@@ -1,7 +1,5 @@
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn qsort(
         __base: *mut ::core::ffi::c_void,
@@ -38,6 +36,11 @@ extern "C" {
     fn json_integer_new(_: int64_t) -> *mut json_value;
     fn json_boolean_new(_: ::core::ffi::c_int) -> *mut json_value;
 }
+use crate::src::lib::support::binio::{read_16u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -311,7 +314,7 @@ unsafe extern "C" fn gasp_Record_copy(mut dst: *mut gasp_Record, mut src: *const
     );
 }
 #[inline]
-unsafe extern "C" fn gasp_Record_dispose(mut x: *mut gasp_Record) {}
+unsafe extern "C" fn gasp_Record_dispose(mut _x: *mut gasp_Record) {}
 #[inline]
 unsafe extern "C" fn gasp_Record_replace(mut dst: *mut gasp_Record, src: gasp_Record) {
     gasp_Record_dispose(dst);
@@ -339,7 +342,7 @@ unsafe extern "C" fn gasp_Record_init(mut x: *mut gasp_Record) {
     );
 }
 #[no_mangle]
-pub static mut gasp_iRecord: __caryll_elementinterface_gasp_Record = unsafe {
+pub static mut gasp_iRecord: __caryll_elementinterface_gasp_Record = {
     __caryll_elementinterface_gasp_Record {
         init: Some(gasp_Record_init as unsafe extern "C" fn(*mut gasp_Record) -> ()),
         copy: Some(
@@ -367,60 +370,20 @@ unsafe extern "C" fn gasp_RecordList_shrinkToFit(mut arr: *mut gasp_RecordList) 
     gasp_RecordList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn gasp_RecordList_resizeTo(mut arr: *mut gasp_RecordList, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<gasp_Record>() as size_t),
-        ) as *mut gasp_Record;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<gasp_Record>() as size_t,
-        ) as *mut gasp_Record;
-    };
+unsafe extern "C" fn gasp_RecordList_resizeTo(arr: *mut gasp_RecordList, target: size_t) {
+    cvec_resize_to(gasp_RecordList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn gasp_RecordList_grow(mut arr: *mut gasp_RecordList) {
-    gasp_RecordList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn gasp_RecordList_grow(arr: *mut gasp_RecordList) {
+    cvec_grow(gasp_RecordList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn gasp_RecordList_growTo(mut arr: *mut gasp_RecordList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<gasp_Record>() as size_t),
-        ) as *mut gasp_Record;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<gasp_Record>() as size_t,
-        ) as *mut gasp_Record;
-    };
+unsafe extern "C" fn gasp_RecordList_growTo(arr: *mut gasp_RecordList, target: size_t) {
+    cvec_grow_to(gasp_RecordList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn gasp_RecordList_pop(mut arr: *mut gasp_RecordList) -> gasp_Record {
-    let mut t: gasp_Record = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn gasp_RecordList_pop(arr: *mut gasp_RecordList) -> gasp_Record {
+    cvec_pop(gasp_RecordList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn gasp_RecordList_copyReplace(
@@ -493,29 +456,8 @@ unsafe extern "C" fn gasp_RecordList_initCapN(mut arr: *mut gasp_RecordList, mut
     gasp_RecordList_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn gasp_RecordList_growToN(mut arr: *mut gasp_RecordList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<gasp_Record>() as size_t),
-        ) as *mut gasp_Record;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<gasp_Record>() as size_t,
-        ) as *mut gasp_Record;
-    };
+unsafe extern "C" fn gasp_RecordList_growToN(arr: *mut gasp_RecordList, target: size_t) {
+    cvec_grow_to_n(gasp_RecordList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn gasp_RecordList_initN(mut arr: *mut gasp_RecordList, mut n: size_t) {
@@ -546,18 +488,16 @@ unsafe extern "C" fn gasp_RecordList_create() -> *mut gasp_RecordList {
     return x;
 }
 #[inline]
-unsafe extern "C" fn gasp_RecordList_init(mut arr: *mut gasp_RecordList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<gasp_Record>();
+unsafe fn gasp_RecordList_as_cvec(arr: *mut gasp_RecordList) -> *mut CVecRaw<gasp_Record> {
+    arr as *mut CVecRaw<gasp_Record>
 }
 #[inline]
-unsafe extern "C" fn gasp_RecordList_move(
-    mut dst: *mut gasp_RecordList,
-    mut src: *mut gasp_RecordList,
-) {
-    *dst = *src;
-    gasp_RecordList_init(src);
+unsafe extern "C" fn gasp_RecordList_init(arr: *mut gasp_RecordList) {
+    cvec_init(gasp_RecordList_as_cvec(arr));
+}
+#[inline]
+unsafe extern "C" fn gasp_RecordList_move(dst: *mut gasp_RecordList, src: *mut gasp_RecordList) {
+    cvec_move(gasp_RecordList_as_cvec(dst), gasp_RecordList_as_cvec(src));
 }
 #[inline]
 unsafe extern "C" fn gasp_RecordList_filterEnv(
@@ -589,7 +529,7 @@ unsafe extern "C" fn gasp_RecordList_filterEnv(
     (*arr).length = j;
 }
 #[no_mangle]
-pub static mut gasp_iRecordList: __caryll_vectorinterface_gasp_RecordList = unsafe {
+pub static mut gasp_iRecordList: __caryll_vectorinterface_gasp_RecordList = {
     __caryll_vectorinterface_gasp_RecordList {
         init: Some(gasp_RecordList_init as unsafe extern "C" fn(*mut gasp_RecordList) -> ()),
         copy: Some(
@@ -709,11 +649,8 @@ unsafe extern "C" fn gasp_RecordList_fill(mut arr: *mut gasp_RecordList, mut n: 
     }
 }
 #[inline]
-unsafe extern "C" fn gasp_RecordList_push(mut arr: *mut gasp_RecordList, mut elem: gasp_Record) {
-    gasp_RecordList_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn gasp_RecordList_push(arr: *mut gasp_RecordList, elem: gasp_Record) {
+    cvec_push(gasp_RecordList_as_cvec(arr), elem);
 }
 #[inline]
 unsafe extern "C" fn initGasp(mut gasp: *mut table_gasp) {
@@ -771,7 +708,7 @@ unsafe extern "C" fn table_gasp_copyReplace(mut dst: *mut table_gasp, src: table
     table_gasp_copy(dst, &raw const src);
 }
 #[no_mangle]
-pub static mut table_iGasp: __caryll_elementinterface_table_gasp = unsafe {
+pub static mut table_iGasp: __caryll_elementinterface_table_gasp = {
     __caryll_elementinterface_table_gasp {
         init: Some(table_gasp_init as unsafe extern "C" fn(*mut table_gasp) -> ()),
         copy: Some(
@@ -916,7 +853,7 @@ pub unsafe extern "C" fn otfcc_dumpGasp(
             b"gasp\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut t: *mut json_value = json_array_new((*table).records.length);
         let mut j: uint16_t = 0 as uint16_t;
@@ -967,7 +904,7 @@ pub unsafe extern "C" fn otfcc_dumpGasp(
             b"gasp\0" as *const u8 as *const ::core::ffi::c_char,
             t,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -995,7 +932,7 @@ pub unsafe extern "C" fn otfcc_parseGasp(
                 b"gasp\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             gasp = (
                 table_iGasp.create.expect("non-null function pointer"))();
@@ -1040,7 +977,7 @@ pub unsafe extern "C" fn otfcc_parseGasp(
                 }
                 j = j.wrapping_add(1);
             }
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -1053,7 +990,7 @@ pub unsafe extern "C" fn otfcc_parseGasp(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildGasp(
     mut gasp: *const table_gasp,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if gasp.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();
@@ -1166,7 +1103,7 @@ unsafe extern "C" fn json_obj_getbool(
         || (*obj).type_0 as ::core::ffi::c_uint
             != json_object as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return false_0 != 0;
+        return false;
     }
     let mut _k: uint32_t = 0 as uint32_t;
     while _k < (*obj).u.object.length as uint32_t {
@@ -1183,15 +1120,7 @@ unsafe extern "C" fn json_obj_getbool(
         }
         _k = _k.wrapping_add(1);
     }
-    return false_0 != 0;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
+    return false;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

@@ -9,10 +9,7 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
         __base: *mut ::core::ffi::c_void,
         __nmemb: size_t,
@@ -44,6 +41,12 @@ extern "C" {
     fn bk_newBlockFromBuffer(buf: *mut caryll_Buffer) -> *mut bk_Block;
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_16u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -643,34 +646,6 @@ pub const OTL_BH_GSUB_VERT: otl_BuildHeuristics = 1;
 pub const OTL_BH_NORMAL: otl_BuildHeuristics = 0;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
 unsafe extern "C" fn gss_entry_ctor(mut entry: *mut otl_GsubSingleEntry) {
     (*entry).from = (
         otfcc_iHandle.empty.expect("non-null function pointer"))() as otfcc_GlyphHandle;
@@ -690,7 +665,7 @@ unsafe extern "C" fn gss_entry_dtor(mut entry: *mut otl_GsubSingleEntry) {
     otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).from);
     otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).to);
 }
-static mut gss_typeinfo: __caryll_elementinterface_otl_GsubSingleEntry = unsafe {
+static mut gss_typeinfo: __caryll_elementinterface_otl_GsubSingleEntry = {
     __caryll_elementinterface_otl_GsubSingleEntry {
         init: Some(gss_entry_ctor as unsafe extern "C" fn(*mut otl_GsubSingleEntry) -> ()),
         copy: Some(
@@ -704,10 +679,12 @@ static mut gss_typeinfo: __caryll_elementinterface_otl_GsubSingleEntry = unsafe 
     }
 };
 #[inline]
-unsafe extern "C" fn subtable_gsub_single_init(mut arr: *mut subtable_gsub_single) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_GsubSingleEntry>();
+unsafe fn as_cvec(arr: *mut subtable_gsub_single) -> *mut CVecRaw<otl_GsubSingleEntry> {
+    arr as *mut CVecRaw<otl_GsubSingleEntry>
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_single_init(arr: *mut subtable_gsub_single) {
+    cvec_init(as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_single_filterEnv(
@@ -741,7 +718,7 @@ unsafe extern "C" fn subtable_gsub_single_filterEnv(
     (*arr).length = j;
 }
 #[no_mangle]
-pub static mut iSubtable_gsub_single: __caryll_vectorinterface_subtable_gsub_single = unsafe {
+pub static mut iSubtable_gsub_single: __caryll_vectorinterface_subtable_gsub_single = {
     __caryll_vectorinterface_subtable_gsub_single {
         init: Some(
             subtable_gsub_single_init as unsafe extern "C" fn(*mut subtable_gsub_single) -> (),
@@ -839,24 +816,8 @@ unsafe extern "C" fn subtable_gsub_single_shrinkToFit(mut arr: *mut subtable_gsu
     subtable_gsub_single_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_single_resizeTo(
-    mut arr: *mut subtable_gsub_single,
-    mut target: size_t,
-) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GsubSingleEntry>() as size_t),
-        ) as *mut otl_GsubSingleEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GsubSingleEntry>() as size_t,
-        ) as *mut otl_GsubSingleEntry;
-    };
+unsafe extern "C" fn subtable_gsub_single_resizeTo(arr: *mut subtable_gsub_single, target: size_t) {
+    cvec_resize_to(as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_single_disposeItem(
@@ -923,48 +884,16 @@ unsafe extern "C" fn subtable_gsub_single_fill(mut arr: *mut subtable_gsub_singl
     }
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_single_push(
-    mut arr: *mut subtable_gsub_single,
-    mut elem: otl_GsubSingleEntry,
-) {
-    subtable_gsub_single_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn subtable_gsub_single_push(arr: *mut subtable_gsub_single, elem: otl_GsubSingleEntry) {
+    cvec_push(as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_single_grow(mut arr: *mut subtable_gsub_single) {
-    subtable_gsub_single_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn subtable_gsub_single_grow(arr: *mut subtable_gsub_single) {
+    cvec_grow(as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_single_growTo(
-    mut arr: *mut subtable_gsub_single,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GsubSingleEntry>() as size_t),
-        ) as *mut otl_GsubSingleEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GsubSingleEntry>() as size_t,
-        ) as *mut otl_GsubSingleEntry;
-    };
+unsafe extern "C" fn subtable_gsub_single_growTo(arr: *mut subtable_gsub_single, target: size_t) {
+    cvec_grow_to(as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_single_copyReplace(
@@ -975,14 +904,8 @@ unsafe extern "C" fn subtable_gsub_single_copyReplace(
     subtable_gsub_single_copy(dst, &raw const src);
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_single_pop(
-    mut arr: *mut subtable_gsub_single,
-) -> otl_GsubSingleEntry {
-    let mut t: otl_GsubSingleEntry = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn subtable_gsub_single_pop(arr: *mut subtable_gsub_single) -> otl_GsubSingleEntry {
+    cvec_pop(as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_single_copy(
@@ -1054,32 +977,8 @@ unsafe extern "C" fn subtable_gsub_single_initCapN(
     subtable_gsub_single_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_single_growToN(
-    mut arr: *mut subtable_gsub_single,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GsubSingleEntry>() as size_t),
-        ) as *mut otl_GsubSingleEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GsubSingleEntry>() as size_t,
-        ) as *mut otl_GsubSingleEntry;
-    };
+unsafe extern "C" fn subtable_gsub_single_growToN(arr: *mut subtable_gsub_single, target: size_t) {
+    cvec_grow_to_n(as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_single_initN(mut arr: *mut subtable_gsub_single, mut n: size_t) {
@@ -1113,19 +1012,18 @@ unsafe extern "C" fn subtable_gsub_single_create() -> *mut subtable_gsub_single 
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_single_move(
-    mut dst: *mut subtable_gsub_single,
-    mut src: *mut subtable_gsub_single,
+    dst: *mut subtable_gsub_single,
+    src: *mut subtable_gsub_single,
 ) {
-    *dst = *src;
-    subtable_gsub_single_init(src);
+    cvec_move(as_cvec(dst), as_cvec(src));
 }
 #[no_mangle]
 pub unsafe extern "C" fn otl_read_gsub_single(
     data: font_file_pointer,
     mut tableLength: uint32_t,
     mut subtableOffset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut subtableFormat: uint16_t = 0;
     let mut current_block: u64;
@@ -1279,7 +1177,7 @@ pub unsafe extern "C" fn otl_gsub_dump_single(
 #[no_mangle]
 pub unsafe extern "C" fn otl_gsub_parse_single(
     mut _subtable: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut subtable: *mut subtable_gsub_single =
         (

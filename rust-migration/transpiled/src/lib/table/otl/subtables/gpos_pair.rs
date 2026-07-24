@@ -81,6 +81,8 @@ extern "C" {
     fn gpos_dump_value(value: otl_PositionValue) -> *mut json_value;
     fn gpos_parse_value(pos: *mut json_value) -> otl_PositionValue;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_16u};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -733,26 +735,6 @@ pub const HASH_INITIAL_NUM_BUCKETS_LOG2: ::core::ffi::c_uint = 5 as ::core::ffi:
 pub const HASH_BKT_CAPACITY_THRESH: ::core::ffi::c_uint = 10 as ::core::ffi::c_uint;
 pub const HASH_SIGNATURE: ::core::ffi::c_uint = 0xa0111fe1 as ::core::ffi::c_uint;
 #[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
 unsafe extern "C" fn json_obj_get(
     mut obj: *const json_value,
     mut key: *const ::core::ffi::c_char,
@@ -810,14 +792,6 @@ unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     );
     (*xx).type_0 = json_pre_serialized;
     return xx;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
 }
 #[inline]
 unsafe extern "C" fn initGposPair(mut subtable: *mut subtable_gpos_pair) {
@@ -914,7 +888,7 @@ unsafe extern "C" fn subtable_gpos_pair_init(mut x: *mut subtable_gpos_pair) {
     initGposPair(x);
 }
 #[no_mangle]
-pub static mut iSubtable_gpos_pair: __caryll_elementinterface_subtable_gpos_pair = unsafe {
+pub static mut iSubtable_gpos_pair: __caryll_elementinterface_subtable_gpos_pair = {
     __caryll_elementinterface_subtable_gpos_pair {
         init: Some(subtable_gpos_pair_init as unsafe extern "C" fn(*mut subtable_gpos_pair) -> ()),
         copy: Some(
@@ -953,8 +927,8 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
     data: font_file_pointer,
     mut tableLength: uint32_t,
     mut offset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut subtableFormat: uint16_t = 0;
     let mut current_block: u64;
@@ -1913,7 +1887,7 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
                                                         .log2_num_buckets
                                                         .wrapping_add(1 as ::core::ffi::c_uint))
                                                 .wrapping_add(
-                                                    (if (*(*s).hh.tbl).num_items
+                                                    if (*(*s).hh.tbl).num_items
                                                         & (*(*s).hh.tbl)
                                                             .num_buckets
                                                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1923,7 +1897,7 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
                                                         1 as ::core::ffi::c_uint
                                                     } else {
                                                         0 as ::core::ffi::c_uint
-                                                    }),
+                                                    },
                                                 );
                                                 (*(*s).hh.tbl).nonideal_items =
                                                     0 as ::core::ffi::c_uint;
@@ -2845,7 +2819,7 @@ pub unsafe extern "C" fn otl_gpos_dump_pair(mut _subtable: *const otl_Subtable) 
 #[no_mangle]
 pub unsafe extern "C" fn otl_gpos_parse_pair(
     mut _subtable: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut class1Count: glyphclass_t = 0;
     let mut class2Count: glyphclass_t = 0;
@@ -3043,7 +3017,7 @@ pub unsafe extern "C" fn otfcc_build_gpos_pair_individual(
         j_0 = j_0.wrapping_add(1);
     }
     let mut cov: *mut otl_Coverage = covFromCD((*subtable).first);
-    otl_iCoverage.shrink.expect("non-null function pointer")(cov, true_0 != 0);
+    otl_iCoverage.shrink.expect("non-null function pointer")(cov, true);
     let mut root: *mut bk_Block = bk_new_Block(
         b16 as ::core::ffi::c_int,
         1 as ::core::ffi::c_int,
@@ -3228,7 +3202,7 @@ pub unsafe extern "C" fn otfcc_build_gpos_pair_classes(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_build_gpos_pair(
     mut _subtable: *const otl_Subtable,
-    mut heuristics: otl_BuildHeuristics,
+    mut _heuristics: otl_BuildHeuristics,
 ) -> *mut caryll_Buffer {
     let mut format1: *mut bk_Block = otfcc_build_gpos_pair_individual(_subtable);
     let mut format2: *mut bk_Block = otfcc_build_gpos_pair_classes(_subtable);

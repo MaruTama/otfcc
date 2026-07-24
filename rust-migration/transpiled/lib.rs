@@ -80,6 +80,9 @@ pub mod src {
             pub mod aglfn {
                 pub mod aglfn;
             } // mod aglfn
+            pub mod alloc;
+            pub mod binio;
+            pub mod cvec;
             pub mod base64 {
                 pub mod base64;
             } // mod base64

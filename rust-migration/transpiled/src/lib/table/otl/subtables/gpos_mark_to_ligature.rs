@@ -9,10 +9,7 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
         __base: *mut ::core::ffi::c_void,
         __nmemb: size_t,
@@ -99,6 +96,12 @@ extern "C" {
         options: *const otfcc_Options,
     );
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_16u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -890,26 +893,6 @@ unsafe extern "C" fn sdslen(s: sds) -> size_t {
     return 0 as size_t;
 }
 #[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
 unsafe extern "C" fn json_obj_get(
     mut obj: *const json_value,
     mut key: *const ::core::ffi::c_char,
@@ -960,14 +943,6 @@ unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     (*xx).type_0 = json_pre_serialized;
     return xx;
 }
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
 unsafe extern "C" fn deleteLigArrayItem(mut entry: *mut otl_LigatureBaseRecord) {
     otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).glyph);
     if !(*entry).anchors.is_null() {
@@ -982,7 +957,7 @@ unsafe extern "C" fn deleteLigArrayItem(mut entry: *mut otl_LigatureBaseRecord) 
         (*entry).anchors = ::core::ptr::null_mut::<*mut otl_Anchor>();
     }
 }
-static mut la_typeinfo: __caryll_elementinterface_otl_LigatureBaseRecord = unsafe {
+static mut la_typeinfo: __caryll_elementinterface_otl_LigatureBaseRecord = {
     __caryll_elementinterface_otl_LigatureBaseRecord {
         init: None,
         copy: None,
@@ -995,83 +970,24 @@ static mut la_typeinfo: __caryll_elementinterface_otl_LigatureBaseRecord = unsaf
     }
 };
 #[inline]
-unsafe extern "C" fn otl_LigatureArray_growToN(
-    mut arr: *mut otl_LigatureArray,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LigatureBaseRecord>() as size_t),
-        ) as *mut otl_LigatureBaseRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LigatureBaseRecord>() as size_t,
-        ) as *mut otl_LigatureBaseRecord;
-    };
+unsafe extern "C" fn otl_LigatureArray_growToN(arr: *mut otl_LigatureArray, target: size_t) {
+    cvec_grow_to_n(otl_LigatureArray_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_LigatureArray_push(
-    mut arr: *mut otl_LigatureArray,
-    mut elem: otl_LigatureBaseRecord,
-) {
-    otl_LigatureArray_grow(arr);
-    let fresh1 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh1 as isize) = elem;
+unsafe extern "C" fn otl_LigatureArray_push(arr: *mut otl_LigatureArray, elem: otl_LigatureBaseRecord) {
+    cvec_push(otl_LigatureArray_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn otl_LigatureArray_grow(mut arr: *mut otl_LigatureArray) {
-    otl_LigatureArray_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn otl_LigatureArray_grow(arr: *mut otl_LigatureArray) {
+    cvec_grow(otl_LigatureArray_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn otl_LigatureArray_growTo(mut arr: *mut otl_LigatureArray, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LigatureBaseRecord>() as size_t),
-        ) as *mut otl_LigatureBaseRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LigatureBaseRecord>() as size_t,
-        ) as *mut otl_LigatureBaseRecord;
-    };
+unsafe extern "C" fn otl_LigatureArray_growTo(arr: *mut otl_LigatureArray, target: size_t) {
+    cvec_grow_to(otl_LigatureArray_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_LigatureArray_pop(
-    mut arr: *mut otl_LigatureArray,
-) -> otl_LigatureBaseRecord {
-    let mut t: otl_LigatureBaseRecord = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn otl_LigatureArray_pop(arr: *mut otl_LigatureArray) -> otl_LigatureBaseRecord {
+    cvec_pop(otl_LigatureArray_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn otl_LigatureArray_copyReplace(
@@ -1148,10 +1064,12 @@ unsafe extern "C" fn otl_LigatureArray_initCapN(mut arr: *mut otl_LigatureArray,
     otl_LigatureArray_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn otl_LigatureArray_init(mut arr: *mut otl_LigatureArray) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_LigatureBaseRecord>();
+unsafe fn otl_LigatureArray_as_cvec(arr: *mut otl_LigatureArray) -> *mut CVecRaw<otl_LigatureBaseRecord> {
+    arr as *mut CVecRaw<otl_LigatureBaseRecord>
+}
+#[inline]
+unsafe extern "C" fn otl_LigatureArray_init(arr: *mut otl_LigatureArray) {
+    cvec_init(otl_LigatureArray_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn otl_LigatureArray_initN(mut arr: *mut otl_LigatureArray, mut n: size_t) {
@@ -1213,7 +1131,7 @@ unsafe extern "C" fn otl_LigatureArray_filterEnv(
     (*arr).length = j;
 }
 #[no_mangle]
-pub static mut otl_iLigatureArray: __caryll_vectorinterface_otl_LigatureArray = unsafe {
+pub static mut otl_iLigatureArray: __caryll_vectorinterface_otl_LigatureArray = {
     __caryll_vectorinterface_otl_LigatureArray {
         init: Some(otl_LigatureArray_init as unsafe extern "C" fn(*mut otl_LigatureArray) -> ()),
         copy: Some(
@@ -1300,32 +1218,12 @@ unsafe extern "C" fn otl_LigatureArray_shrinkToFit(mut arr: *mut otl_LigatureArr
     otl_LigatureArray_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn otl_LigatureArray_resizeTo(
-    mut arr: *mut otl_LigatureArray,
-    mut target: size_t,
-) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LigatureBaseRecord>() as size_t),
-        ) as *mut otl_LigatureBaseRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LigatureBaseRecord>() as size_t,
-        ) as *mut otl_LigatureBaseRecord;
-    };
+unsafe extern "C" fn otl_LigatureArray_resizeTo(arr: *mut otl_LigatureArray, target: size_t) {
+    cvec_resize_to(otl_LigatureArray_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_LigatureArray_move(
-    mut dst: *mut otl_LigatureArray,
-    mut src: *mut otl_LigatureArray,
-) {
-    *dst = *src;
-    otl_LigatureArray_init(src);
+unsafe extern "C" fn otl_LigatureArray_move(dst: *mut otl_LigatureArray, src: *mut otl_LigatureArray) {
+    cvec_move(otl_LigatureArray_as_cvec(dst), otl_LigatureArray_as_cvec(src));
 }
 #[inline]
 unsafe extern "C" fn otl_LigatureArray_disposeItem(mut arr: *mut otl_LigatureArray, mut n: size_t) {
@@ -1446,7 +1344,7 @@ unsafe extern "C" fn subtable_gpos_markToLigature_move(
 }
 #[no_mangle]
 pub static mut iSubtable_gpos_markToLigature:
-    __caryll_elementinterface_subtable_gpos_markToLigature = unsafe {
+    __caryll_elementinterface_subtable_gpos_markToLigature = {
     __caryll_elementinterface_subtable_gpos_markToLigature {
         init: Some(
             subtable_gpos_markToLigature_init
@@ -1518,8 +1416,8 @@ pub unsafe extern "C" fn otl_read_gpos_markToLigature(
     data: font_file_pointer,
     mut tableLength: uint32_t,
     mut offset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut markArrayOffset: uint32_t = 0;
     let mut ligArrayOffset: uint32_t = 0;
@@ -2350,7 +2248,7 @@ pub unsafe extern "C" fn otl_gpos_parse_markToLigature(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_build_gpos_markToLigature(
     mut _subtable: *const otl_Subtable,
-    mut heuristics: otl_BuildHeuristics,
+    mut _heuristics: otl_BuildHeuristics,
 ) -> *mut caryll_Buffer {
     let mut subtable: *const subtable_gpos_markToLigature =
         &raw const (*_subtable).gpos_markToLigature;

@@ -1628,12 +1628,12 @@ unsafe fn main_0(
     mut argc: ::core::ffi::c_int,
     mut argv: *mut *mut ::core::ffi::c_char,
 ) -> ::core::ffi::c_int {
-    let mut show_help: bool = false_0 != 0;
-    let mut show_version: bool = false_0 != 0;
-    let mut show_pretty: bool = false_0 != 0;
-    let mut show_ugly: bool = false_0 != 0;
-    let mut add_bom: bool = false_0 != 0;
-    let mut no_bom: bool = false_0 != 0;
+    let mut show_help: bool = false;
+    let mut show_version: bool = false;
+    let mut show_pretty: bool = false;
+    let mut show_ugly: bool = false;
+    let mut add_bom: bool = false;
+    let mut _no_bom: bool = false;
     let mut ttcindex: uint32_t = 0 as uint32_t;
     let mut longopts: [option; 21] = [
         option {
@@ -1771,7 +1771,7 @@ unsafe fn main_0(
         (*options).logger as *mut otfcc_ILogger,
         b"otfccdump\0" as *const u8 as *const ::core::ffi::c_char,
     );
-    (*options).decimal_cmap = true_0 != 0;
+    (*options).decimal_cmap = true;
     let mut option_index: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut c: ::core::ffi::c_int = 0;
     let mut outputPath: sds = ::core::ptr::null_mut::<::core::ffi::c_char>();
@@ -1795,7 +1795,7 @@ unsafe fn main_0(
                         b"ugly\0" as *const u8 as *const ::core::ffi::c_char,
                     ) == 0 as ::core::ffi::c_int
                     {
-                        show_ugly = true_0 != 0;
+                        show_ugly = true;
                     } else if !(strcmp(
                         longopts[option_index as usize].name,
                         b"time\0" as *const u8 as *const ::core::ffi::c_char,
@@ -1806,67 +1806,67 @@ unsafe fn main_0(
                             b"add-bom\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            add_bom = true_0 != 0;
+                            add_bom = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"no-bom\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            no_bom = true_0 != 0;
+                            _no_bom = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"ignore-glyph-order\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).ignore_glyph_order = true_0 != 0;
+                            (*options).ignore_glyph_order = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"verbose\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).verbose = true_0 != 0;
+                            (*options).verbose = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"quiet\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).quiet = true_0 != 0;
+                            (*options).quiet = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"ignore-hints\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).ignore_hints = true_0 != 0;
+                            (*options).ignore_hints = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"decimal-cmap\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).decimal_cmap = true_0 != 0;
+                            (*options).decimal_cmap = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"hex-cmap\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).decimal_cmap = false_0 != 0;
+                            (*options).decimal_cmap = false;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"name-by-hash\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).name_glyphs_by_hash = true_0 != 0;
+                            (*options).name_glyphs_by_hash = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"name-by-gid\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).name_glyphs_by_gid = true_0 != 0;
+                            (*options).name_glyphs_by_gid = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"instr-as-bytes\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).instr_as_bytes = true_0 != 0;
+                            (*options).instr_as_bytes = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"glyph-name-prefix\0" as *const u8 as *const ::core::ffi::c_char,
@@ -1878,28 +1878,28 @@ unsafe fn main_0(
                             b"debug-wait-on-start\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).debug_wait_on_start = true_0 != 0;
+                            (*options).debug_wait_on_start = true;
                         }
                     }
                 }
             }
             118 => {
-                show_version = true_0 != 0;
+                show_version = true;
             }
             105 => {
-                (*options).ignore_glyph_order = true_0 != 0;
+                (*options).ignore_glyph_order = true;
             }
             104 => {
-                show_help = true_0 != 0;
+                show_help = true;
             }
             112 => {
-                show_pretty = true_0 != 0;
+                show_pretty = true;
             }
             111 => {
                 outputPath = sdsnew(optarg);
             }
             113 => {
-                (*options).quiet = true_0 != 0;
+                (*options).quiet = true;
             }
             110 => {
                 ttcindex = atoi(optarg) as uint32_t;
@@ -1965,7 +1965,7 @@ unsafe fn main_0(
             b"Read SFNT\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         (*(*options).logger)
             .logSDS
@@ -2026,7 +2026,7 @@ unsafe fn main_0(
             log_type_progress,
             push_stopwatch(&raw mut begin),
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -2041,7 +2041,7 @@ unsafe fn main_0(
             b"Read Font\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_0: bool = true_0 != 0;
+    let mut ___loggedstep_v_0: bool = true;
     while ___loggedstep_v_0 {
         let mut reader: *mut otfcc_IFontBuilder = otfcc_newOTFReader();
         font = (*reader).read.expect("non-null function pointer")(
@@ -2077,7 +2077,7 @@ unsafe fn main_0(
             log_type_progress,
             push_stopwatch(&raw mut begin),
         );
-        ___loggedstep_v_0 = false_0 != 0;
+        ___loggedstep_v_0 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -2091,7 +2091,7 @@ unsafe fn main_0(
             b"Consolidate\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_1: bool = true_0 != 0;
+    let mut ___loggedstep_v_1: bool = true;
     while ___loggedstep_v_1 {
         otfcc_iFont.consolidate.expect("non-null function pointer")(font, options);
         (*(*options).logger)
@@ -2102,7 +2102,7 @@ unsafe fn main_0(
             log_type_progress,
             push_stopwatch(&raw mut begin),
         );
-        ___loggedstep_v_1 = false_0 != 0;
+        ___loggedstep_v_1 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -2117,7 +2117,7 @@ unsafe fn main_0(
             b"Dump\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_2: bool = true_0 != 0;
+    let mut ___loggedstep_v_2: bool = true;
     while ___loggedstep_v_2 {
         let mut dumper: *mut otfcc_IFontSerializer = otfcc_newJsonWriter();
         root = (*dumper).serialize.expect("non-null function pointer")(font, options)
@@ -2147,7 +2147,7 @@ unsafe fn main_0(
             push_stopwatch(&raw mut begin),
         );
         (*dumper).free.expect("non-null function pointer")(dumper as *mut otfcc_IFontSerializer);
-        ___loggedstep_v_2 = false_0 != 0;
+        ___loggedstep_v_2 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -2163,7 +2163,7 @@ unsafe fn main_0(
             b"Serialize to JSON\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_3: bool = true_0 != 0;
+    let mut ___loggedstep_v_3: bool = true;
     while ___loggedstep_v_3 {
         let mut jsonOptions: json_serialize_opts = json_serialize_opts {
             mode: 0,
@@ -2192,7 +2192,7 @@ unsafe fn main_0(
             log_type_progress,
             push_stopwatch(&raw mut begin),
         );
-        ___loggedstep_v_3 = false_0 != 0;
+        ___loggedstep_v_3 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -2206,7 +2206,7 @@ unsafe fn main_0(
             b"Output\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_4: bool = true_0 != 0;
+    let mut ___loggedstep_v_4: bool = true;
     while ___loggedstep_v_4 {
         if !outputPath.is_null() {
             let mut outputFile: *mut FILE = fopen(
@@ -2261,7 +2261,7 @@ unsafe fn main_0(
             log_type_progress,
             push_stopwatch(&raw mut begin),
         );
-        ___loggedstep_v_4 = false_0 != 0;
+        ___loggedstep_v_4 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -2275,7 +2275,7 @@ unsafe fn main_0(
             b"Finalize\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_5: bool = true_0 != 0;
+    let mut ___loggedstep_v_5: bool = true;
     while ___loggedstep_v_5 {
         free(buf as *mut ::core::ffi::c_void);
         if !font.is_null() {
@@ -2298,7 +2298,7 @@ unsafe fn main_0(
             log_type_progress,
             push_stopwatch(&raw mut begin),
         );
-        ___loggedstep_v_5 = false_0 != 0;
+        ___loggedstep_v_5 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

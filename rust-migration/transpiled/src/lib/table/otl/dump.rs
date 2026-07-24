@@ -748,7 +748,7 @@ pub unsafe extern "C" fn otfcc_dumpOtl(
             tag,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut otl: *mut json_value = json_object_new(3 as size_t);
         (*(*options).logger)
@@ -760,7 +760,7 @@ pub unsafe extern "C" fn otfcc_dumpOtl(
                 b"Languages\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v_0: bool = true_0 != 0;
+        let mut ___loggedstep_v_0: bool = true;
         while ___loggedstep_v_0 {
             let mut languages: *mut json_value = json_object_new((*table).languages.length);
             let mut j: tableid_t = 0 as tableid_t;
@@ -804,7 +804,7 @@ pub unsafe extern "C" fn otfcc_dumpOtl(
                 b"languages\0" as *const u8 as *const ::core::ffi::c_char,
                 languages,
             );
-            ___loggedstep_v_0 = false_0 != 0;
+            ___loggedstep_v_0 = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -820,7 +820,7 @@ pub unsafe extern "C" fn otfcc_dumpOtl(
                 b"Features\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v_1: bool = true_0 != 0;
+        let mut ___loggedstep_v_1: bool = true;
         while ___loggedstep_v_1 {
             let mut features_0: *mut json_value = json_object_new((*table).features.length);
             let mut j_0: tableid_t = 0 as tableid_t;
@@ -853,7 +853,7 @@ pub unsafe extern "C" fn otfcc_dumpOtl(
                 b"features\0" as *const u8 as *const ::core::ffi::c_char,
                 features_0,
             );
-            ___loggedstep_v_1 = false_0 != 0;
+            ___loggedstep_v_1 = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -869,7 +869,7 @@ pub unsafe extern "C" fn otfcc_dumpOtl(
                 b"Lookups\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v_2: bool = true_0 != 0;
+        let mut ___loggedstep_v_2: bool = true;
         while ___loggedstep_v_2 {
             let mut lookups: *mut json_value = json_object_new((*table).lookups.length);
             let mut lookupOrder: *mut json_value = json_array_new((*table).lookups.length);
@@ -900,7 +900,7 @@ pub unsafe extern "C" fn otfcc_dumpOtl(
                 b"lookupOrder\0" as *const u8 as *const ::core::ffi::c_char,
                 lookupOrder,
             );
-            ___loggedstep_v_2 = false_0 != 0;
+            ___loggedstep_v_2 = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -908,7 +908,7 @@ pub unsafe extern "C" fn otfcc_dumpOtl(
             );
         }
         json_object_push(root, tag, otl);
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

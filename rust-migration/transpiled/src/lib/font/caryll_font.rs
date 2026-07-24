@@ -1920,7 +1920,7 @@ pub struct __caryll_elementinterface_otfcc_Font {
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 unsafe extern "C" fn createFontTable(
-    mut font: *mut otfcc_Font,
+    mut _font: *mut otfcc_Font,
     tag: uint32_t,
 ) -> *mut ::core::ffi::c_void {
     match tag {
@@ -2242,7 +2242,7 @@ unsafe extern "C" fn otfcc_Font_move(mut dst: *mut otfcc_Font, mut src: *mut otf
     otfcc_Font_init(src);
 }
 #[no_mangle]
-pub static mut otfcc_iFont: __caryll_elementinterface_otfcc_Font = unsafe {
+pub static mut otfcc_iFont: __caryll_elementinterface_otfcc_Font = {
     __caryll_elementinterface_otfcc_Font {
         init: Some(otfcc_Font_init as unsafe extern "C" fn(*mut otfcc_Font) -> ()),
         copy: Some(

@@ -3,8 +3,6 @@ extern "C" {
     pub type _IO_codecvt;
     pub type _IO_marker;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn qsort(
         __base: *mut ::core::ffi::c_void,
@@ -32,6 +30,10 @@ extern "C" {
     fn vq_compareRegion(a: *const vq_Region, b: *const vq_Region) -> ::core::ffi::c_int;
     fn vq_showRegion(r: *const vq_Region);
 }
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type size_t = usize;
 pub type __uint16_t = u16;
 pub type __off_t = ::core::ffi::c_long;
@@ -317,7 +319,7 @@ unsafe extern "C" fn pos_t_init(mut x: *mut pos_t) {
     );
 }
 #[no_mangle]
-pub static mut vq_iPosT: __caryll_elementinterface_pos_t = unsafe {
+pub static mut vq_iPosT: __caryll_elementinterface_pos_t = {
     __caryll_elementinterface_pos_t {
         init: Some(pos_t_init as unsafe extern "C" fn(*mut pos_t) -> ()),
         copy: Some(pos_t_copy as unsafe extern "C" fn(*mut pos_t, *const pos_t) -> ()),
@@ -335,7 +337,7 @@ unsafe extern "C" fn pos_t_copyReplace(mut dst: *mut pos_t, src: pos_t) {
     pos_t_copy(dst, &raw const src);
 }
 #[inline]
-unsafe extern "C" fn pos_t_dispose(mut x: *mut pos_t) {}
+unsafe extern "C" fn pos_t_dispose(mut _x: *mut pos_t) {}
 #[inline]
 unsafe extern "C" fn VV_createN(mut n: size_t) -> *mut VV {
     let mut t: *mut VV = malloc(::core::mem::size_of::<VV>() as size_t) as *mut VV;
@@ -343,40 +345,20 @@ unsafe extern "C" fn VV_createN(mut n: size_t) -> *mut VV {
     return t;
 }
 #[inline]
-unsafe extern "C" fn VV_move(mut dst: *mut VV, mut src: *mut VV) {
-    *dst = *src;
-    VV_init(src);
+unsafe extern "C" fn VV_move(dst: *mut VV, src: *mut VV) {
+    cvec_move(VV_as_cvec(dst), VV_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn VV_init(mut arr: *mut VV) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<pos_t>();
+unsafe fn VV_as_cvec(arr: *mut VV) -> *mut CVecRaw<pos_t> {
+    arr as *mut CVecRaw<pos_t>
 }
 #[inline]
-unsafe extern "C" fn VV_growTo(mut arr: *mut VV, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<pos_t>() as size_t),
-        ) as *mut pos_t;
-    } else {
-        (*arr).items =
-            calloc((*arr).capacity, ::core::mem::size_of::<pos_t>() as size_t) as *mut pos_t;
-    };
+unsafe extern "C" fn VV_init(arr: *mut VV) {
+    cvec_init(VV_as_cvec(arr));
+}
+#[inline]
+unsafe extern "C" fn VV_growTo(arr: *mut VV, target: size_t) {
+    cvec_grow_to(VV_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn VV_filterEnv(
@@ -448,23 +430,16 @@ unsafe extern "C" fn VV_fill(mut arr: *mut VV, mut n: size_t) {
     }
 }
 #[inline]
-unsafe extern "C" fn VV_push(mut arr: *mut VV, mut elem: pos_t) {
-    VV_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn VV_push(arr: *mut VV, elem: pos_t) {
+    cvec_push(VV_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn VV_grow(mut arr: *mut VV) {
-    VV_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn VV_grow(arr: *mut VV) {
+    cvec_grow(VV_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn VV_pop(mut arr: *mut VV) -> pos_t {
-    let mut t: pos_t = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn VV_pop(arr: *mut VV) -> pos_t {
+    cvec_pop(VV_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn VV_copy(mut dst: *mut VV, mut src: *const VV) {
@@ -531,27 +506,8 @@ unsafe extern "C" fn VV_initCapN(mut arr: *mut VV, mut n: size_t) {
     VV_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn VV_growToN(mut arr: *mut VV, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<pos_t>() as size_t),
-        ) as *mut pos_t;
-    } else {
-        (*arr).items =
-            calloc((*arr).capacity, ::core::mem::size_of::<pos_t>() as size_t) as *mut pos_t;
-    };
+unsafe extern "C" fn VV_growToN(arr: *mut VV, target: size_t) {
+    cvec_grow_to_n(VV_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn VV_initN(mut arr: *mut VV, mut n: size_t) {
@@ -578,19 +534,8 @@ unsafe extern "C" fn VV_create() -> *mut VV {
     return x;
 }
 #[inline]
-unsafe extern "C" fn VV_resizeTo(mut arr: *mut VV, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<pos_t>() as size_t),
-        ) as *mut pos_t;
-    } else {
-        (*arr).items =
-            calloc((*arr).capacity, ::core::mem::size_of::<pos_t>() as size_t) as *mut pos_t;
-    };
+unsafe extern "C" fn VV_resizeTo(arr: *mut VV, target: size_t) {
+    cvec_resize_to(VV_as_cvec(arr), target);
 }
 unsafe extern "C" fn createNeutralVV(mut dimensions: tableid_t) -> VV {
     let mut vv: VV = VV {
@@ -607,7 +552,7 @@ unsafe extern "C" fn createNeutralVV(mut dimensions: tableid_t) -> VV {
     return vv;
 }
 #[no_mangle]
-pub static mut iVV: __caryll_vectorinterface_VV = unsafe {
+pub static mut iVV: __caryll_vectorinterface_VV = {
     __caryll_vectorinterface_VV {
         init: Some(VV_init as unsafe extern "C" fn(*mut VV) -> ()),
         copy: Some(VV_copy as unsafe extern "C" fn(*mut VV, *const VV) -> ()),
@@ -826,7 +771,7 @@ unsafe extern "C" fn vq_Segment_show(a: vq_Segment) {
     return showVQS(a);
 }
 #[no_mangle]
-pub static mut vq_iSegment: __caryll_elementinterface_vq_Segment = unsafe {
+pub static mut vq_iSegment: __caryll_elementinterface_vq_Segment = {
     __caryll_elementinterface_vq_Segment {
         init: Some(vq_Segment_init as unsafe extern "C" fn(*mut vq_Segment) -> ()),
         copy: Some(
@@ -871,32 +816,20 @@ unsafe extern "C" fn vq_SegList_shrinkToFit(mut arr: *mut vq_SegList) {
     vq_SegList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn vq_SegList_resizeTo(mut arr: *mut vq_SegList, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vq_Segment>() as size_t),
-        ) as *mut vq_Segment;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<vq_Segment>() as size_t,
-        ) as *mut vq_Segment;
-    };
+unsafe extern "C" fn vq_SegList_resizeTo(arr: *mut vq_SegList, target: size_t) {
+    cvec_resize_to(vq_SegList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn vq_SegList_move(mut dst: *mut vq_SegList, mut src: *mut vq_SegList) {
-    *dst = *src;
-    vq_SegList_init(src);
+unsafe extern "C" fn vq_SegList_move(dst: *mut vq_SegList, src: *mut vq_SegList) {
+    cvec_move(vq_SegList_as_cvec(dst), vq_SegList_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn vq_SegList_init(mut arr: *mut vq_SegList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<vq_Segment>();
+unsafe fn vq_SegList_as_cvec(arr: *mut vq_SegList) -> *mut CVecRaw<vq_Segment> {
+    arr as *mut CVecRaw<vq_Segment>
+}
+#[inline]
+unsafe extern "C" fn vq_SegList_init(arr: *mut vq_SegList) {
+    cvec_init(vq_SegList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn vq_SegList_filterEnv(
@@ -975,50 +908,20 @@ unsafe extern "C" fn vq_SegList_fill(mut arr: *mut vq_SegList, mut n: size_t) {
     }
 }
 #[inline]
-unsafe extern "C" fn vq_SegList_push(mut arr: *mut vq_SegList, mut elem: vq_Segment) {
-    vq_SegList_grow(arr);
-    let fresh2 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh2 as isize) = elem;
+unsafe extern "C" fn vq_SegList_push(arr: *mut vq_SegList, elem: vq_Segment) {
+    cvec_push(vq_SegList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn vq_SegList_grow(mut arr: *mut vq_SegList) {
-    vq_SegList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn vq_SegList_grow(arr: *mut vq_SegList) {
+    cvec_grow(vq_SegList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn vq_SegList_growTo(mut arr: *mut vq_SegList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vq_Segment>() as size_t),
-        ) as *mut vq_Segment;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<vq_Segment>() as size_t,
-        ) as *mut vq_Segment;
-    };
+unsafe extern "C" fn vq_SegList_growTo(arr: *mut vq_SegList, target: size_t) {
+    cvec_grow_to(vq_SegList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn vq_SegList_pop(mut arr: *mut vq_SegList) -> vq_Segment {
-    let mut t: vq_Segment = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn vq_SegList_pop(arr: *mut vq_SegList) -> vq_Segment {
+    cvec_pop(vq_SegList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn vq_SegList_copyReplace(mut dst: *mut vq_SegList, src: vq_SegList) {
@@ -1085,32 +988,11 @@ unsafe extern "C" fn vq_SegList_initCapN(mut arr: *mut vq_SegList, mut n: size_t
     vq_SegList_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn vq_SegList_growToN(mut arr: *mut vq_SegList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vq_Segment>() as size_t),
-        ) as *mut vq_Segment;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<vq_Segment>() as size_t,
-        ) as *mut vq_Segment;
-    };
+unsafe extern "C" fn vq_SegList_growToN(arr: *mut vq_SegList, target: size_t) {
+    cvec_grow_to_n(vq_SegList_as_cvec(arr), target);
 }
 #[no_mangle]
-pub static mut vq_iSegList: __caryll_vectorinterface_vq_SegList = unsafe {
+pub static mut vq_iSegList: __caryll_vectorinterface_vq_SegList = {
     __caryll_vectorinterface_vq_SegList {
         init: Some(vq_SegList_init as unsafe extern "C" fn(*mut vq_SegList) -> ()),
         copy: Some(
@@ -1269,10 +1151,10 @@ unsafe extern "C" fn vqNeutral() -> VQ {
 }
 unsafe extern "C" fn vqsCompatible(a: vq_Segment, b: vq_Segment) -> bool {
     if a.type_0 as ::core::ffi::c_uint != b.type_0 as ::core::ffi::c_uint {
-        return false_0 != 0;
+        return false;
     }
     match a.type_0 as ::core::ffi::c_uint {
-        0 => return true_0 != 0,
+        0 => return true,
         1 => {
             return 0 as ::core::ffi::c_int
                 == vq_compareRegion(a.val.delta.region, b.val.delta.region);
@@ -1513,11 +1395,11 @@ unsafe extern "C" fn vqIsStill(v: VQ) -> bool {
     while j < v.shift.length {
         match (*v.shift.items.offset(j as isize)).type_0 as ::core::ffi::c_uint {
             0 => {}
-            _ => return false_0 != 0,
+            _ => return false,
         }
         j = j.wrapping_add(1);
     }
-    return true_0 != 0;
+    return true;
 }
 unsafe extern "C" fn vqIsZero(v: VQ, err: pos_t) -> bool {
     return vqIsStill(v) as ::core::ffi::c_int != 0
@@ -1549,7 +1431,7 @@ unsafe extern "C" fn vqPointLinearTfm(ax: VQ, mut a: pos_t, x: VQ, mut b: pos_t,
     return targetX;
 }
 #[no_mangle]
-pub static mut iVQ: __caryll_vectorinterface_VQ = unsafe {
+pub static mut iVQ: __caryll_vectorinterface_VQ = {
     __caryll_vectorinterface_VQ {
         init: Some(VQ_init as unsafe extern "C" fn(*mut VQ) -> ()),
         copy: Some(VQ_copy as unsafe extern "C" fn(*mut VQ, *const VQ) -> ()),

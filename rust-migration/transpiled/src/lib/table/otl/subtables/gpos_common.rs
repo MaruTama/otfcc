@@ -9,8 +9,6 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
@@ -63,6 +61,12 @@ extern "C" {
     fn bk_new_Block(type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
     fn bk_push(b: *mut bk_Block, type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_16u, read_16s};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
 pub type __uint16_t = u16;
@@ -465,26 +469,6 @@ pub const HASH_INITIAL_NUM_BUCKETS_LOG2: ::core::ffi::c_uint = 5 as ::core::ffi:
 pub const HASH_BKT_CAPACITY_THRESH: ::core::ffi::c_uint = 10 as ::core::ffi::c_uint;
 pub const HASH_SIGNATURE: ::core::ffi::c_uint = 0xa0111fe1 as ::core::ffi::c_uint;
 #[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
 unsafe extern "C" fn json_obj_get(
     mut obj: *const json_value,
     mut key: *const ::core::ffi::c_char,
@@ -612,22 +596,10 @@ unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     (*xx).type_0 = json_pre_serialized;
     return xx;
 }
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
-unsafe extern "C" fn read_16s(mut src: *const uint8_t) -> int16_t {
-    return read_16u(src) as int16_t;
-}
 unsafe extern "C" fn deleteMarkArrayItem(mut entry: *mut otl_MarkRecord) {
     otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).glyph);
 }
-static mut gss_typeinfo: __caryll_elementinterface_otl_MarkRecord = unsafe {
+static mut gss_typeinfo: __caryll_elementinterface_otl_MarkRecord = {
     __caryll_elementinterface_otl_MarkRecord {
         init: None,
         copy: None,
@@ -647,39 +619,12 @@ unsafe extern "C" fn otl_MarkArray_disposeItem(mut arr: *mut otl_MarkArray, mut 
     };
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_growTo(mut arr: *mut otl_MarkArray, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_MarkRecord>() as size_t),
-        ) as *mut otl_MarkRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_MarkRecord>() as size_t,
-        ) as *mut otl_MarkRecord;
-    };
+unsafe extern "C" fn otl_MarkArray_growTo(arr: *mut otl_MarkArray, target: size_t) {
+    cvec_grow_to(otl_MarkArray_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_pop(mut arr: *mut otl_MarkArray) -> otl_MarkRecord {
-    let mut t: otl_MarkRecord = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn otl_MarkArray_pop(arr: *mut otl_MarkArray) -> otl_MarkRecord {
+    cvec_pop(otl_MarkArray_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn otl_MarkArray_copyReplace(mut dst: *mut otl_MarkArray, src: otl_MarkArray) {
@@ -749,29 +694,8 @@ unsafe extern "C" fn otl_MarkArray_initCapN(mut arr: *mut otl_MarkArray, mut n: 
     otl_MarkArray_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_growToN(mut arr: *mut otl_MarkArray, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_MarkRecord>() as size_t),
-        ) as *mut otl_MarkRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_MarkRecord>() as size_t,
-        ) as *mut otl_MarkRecord;
-    };
+unsafe extern "C" fn otl_MarkArray_growToN(arr: *mut otl_MarkArray, target: size_t) {
+    cvec_grow_to_n(otl_MarkArray_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_MarkArray_initN(mut arr: *mut otl_MarkArray, mut n: size_t) {
@@ -802,15 +726,16 @@ unsafe extern "C" fn otl_MarkArray_create() -> *mut otl_MarkArray {
     return x;
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_move(mut dst: *mut otl_MarkArray, mut src: *mut otl_MarkArray) {
-    *dst = *src;
-    otl_MarkArray_init(src);
+unsafe extern "C" fn otl_MarkArray_move(dst: *mut otl_MarkArray, src: *mut otl_MarkArray) {
+    cvec_move(otl_MarkArray_as_cvec(dst), otl_MarkArray_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_init(mut arr: *mut otl_MarkArray) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_MarkRecord>();
+unsafe fn otl_MarkArray_as_cvec(arr: *mut otl_MarkArray) -> *mut CVecRaw<otl_MarkRecord> {
+    arr as *mut CVecRaw<otl_MarkRecord>
+}
+#[inline]
+unsafe extern "C" fn otl_MarkArray_init(arr: *mut otl_MarkArray) {
+    cvec_init(otl_MarkArray_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn otl_MarkArray_filterEnv(
@@ -842,7 +767,7 @@ unsafe extern "C" fn otl_MarkArray_filterEnv(
     (*arr).length = j;
 }
 #[no_mangle]
-pub static mut otl_iMarkArray: __caryll_vectorinterface_otl_MarkArray = unsafe {
+pub static mut otl_iMarkArray: __caryll_vectorinterface_otl_MarkArray = {
     __caryll_vectorinterface_otl_MarkArray {
         init: Some(otl_MarkArray_init as unsafe extern "C" fn(*mut otl_MarkArray) -> ()),
         copy: Some(
@@ -912,21 +837,8 @@ unsafe extern "C" fn otl_MarkArray_shrinkToFit(mut arr: *mut otl_MarkArray) {
     otl_MarkArray_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_resizeTo(mut arr: *mut otl_MarkArray, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_MarkRecord>() as size_t),
-        ) as *mut otl_MarkRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_MarkRecord>() as size_t,
-        ) as *mut otl_MarkRecord;
-    };
+unsafe extern "C" fn otl_MarkArray_resizeTo(arr: *mut otl_MarkArray, target: size_t) {
+    cvec_resize_to(otl_MarkArray_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_MarkArray_sort(
@@ -979,15 +891,12 @@ unsafe extern "C" fn otl_MarkArray_fill(mut arr: *mut otl_MarkArray, mut n: size
     }
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_push(mut arr: *mut otl_MarkArray, mut elem: otl_MarkRecord) {
-    otl_MarkArray_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn otl_MarkArray_push(arr: *mut otl_MarkArray, elem: otl_MarkRecord) {
+    cvec_push(otl_MarkArray_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_grow(mut arr: *mut otl_MarkArray) {
-    otl_MarkArray_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn otl_MarkArray_grow(arr: *mut otl_MarkArray) {
+    cvec_grow(otl_MarkArray_as_cvec(arr));
 }
 #[no_mangle]
 pub unsafe extern "C" fn otl_readMarkArray(
@@ -1059,7 +968,7 @@ pub unsafe extern "C" fn otl_parseMarkArray(
     mut _marks: *mut json_value,
     mut array: *mut otl_MarkArray,
     mut h: *mut *mut otl_ClassnameHash,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) {
     let mut j: glyphid_t = 0 as glyphid_t;
     while (j as ::core::ffi::c_uint) < (*_marks).u.object.length {
@@ -1831,7 +1740,7 @@ pub unsafe extern "C" fn otl_parseMarkArray(
                                     .log2_num_buckets
                                     .wrapping_add(1 as ::core::ffi::c_uint))
                             .wrapping_add(
-                                (if (*(*s).hh.tbl).num_items
+                                if (*(*s).hh.tbl).num_items
                                     & (*(*s).hh.tbl)
                                         .num_buckets
                                         .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1841,7 +1750,7 @@ pub unsafe extern "C" fn otl_parseMarkArray(
                                     1 as ::core::ffi::c_uint
                                 } else {
                                     0 as ::core::ffi::c_uint
-                                }),
+                                },
                             );
                             (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                             _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -1902,7 +1811,7 @@ pub unsafe extern "C" fn otl_parseMarkArray(
                     sdsfree(className);
                 }
                 mark.markClass = (*s).classID;
-                mark.anchor.present = true_0 != 0;
+                mark.anchor.present = true;
                 mark.anchor.x = json_obj_getnum(
                     anchorRecord,
                     b"x\0" as *const u8 as *const ::core::ffi::c_char,
@@ -2409,7 +2318,7 @@ pub unsafe extern "C" fn otl_parseMarkArray(
 #[no_mangle]
 pub unsafe extern "C" fn otl_anchor_absent() -> otl_Anchor {
     let mut anchor: otl_Anchor = otl_Anchor {
-        present: false_0 != 0,
+        present: false,
         x: 0 as ::core::ffi::c_int as pos_t,
         y: 0 as ::core::ffi::c_int as pos_t,
     };
@@ -2422,17 +2331,17 @@ pub unsafe extern "C" fn otl_read_anchor(
     mut offset: uint32_t,
 ) -> otl_Anchor {
     let mut anchor: otl_Anchor = otl_Anchor {
-        present: false_0 != 0,
+        present: false,
         x: 0 as ::core::ffi::c_int as pos_t,
         y: 0 as ::core::ffi::c_int as pos_t,
     };
     if tableLength < offset.wrapping_add(6 as uint32_t) {
-        anchor.present = false_0 != 0;
+        anchor.present = false;
         anchor.x = 0 as ::core::ffi::c_int as pos_t;
         anchor.y = 0 as ::core::ffi::c_int as pos_t;
         return anchor;
     } else {
-        anchor.present = true_0 != 0;
+        anchor.present = true;
         anchor.x = read_16s(
             data.offset(offset as isize)
                 .offset(2 as ::core::ffi::c_int as isize) as *const uint8_t,
@@ -2466,7 +2375,7 @@ pub unsafe extern "C" fn otl_dump_anchor(mut a: otl_Anchor) -> *mut json_value {
 #[no_mangle]
 pub unsafe extern "C" fn otl_parse_anchor(mut v: *mut json_value) -> otl_Anchor {
     let mut anchor: otl_Anchor = otl_Anchor {
-        present: false_0 != 0,
+        present: false,
         x: 0 as ::core::ffi::c_int as pos_t,
         y: 0 as ::core::ffi::c_int as pos_t,
     };
@@ -2476,7 +2385,7 @@ pub unsafe extern "C" fn otl_parse_anchor(mut v: *mut json_value) -> otl_Anchor 
     {
         return anchor;
     }
-    anchor.present = true_0 != 0;
+    anchor.present = true;
     anchor.x = json_obj_getnum_fallback(
         v,
         b"x\0" as *const u8 as *const ::core::ffi::c_char,

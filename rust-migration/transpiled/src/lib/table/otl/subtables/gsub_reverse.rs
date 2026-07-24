@@ -37,6 +37,8 @@ extern "C" {
     fn bk_newBlockFromBuffer(buf: *mut caryll_Buffer) -> *mut bk_Block;
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_16u};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -587,26 +589,6 @@ pub const OTL_BH_NORMAL: otl_BuildHeuristics = 0;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
 unsafe extern "C" fn json_obj_get(
     mut obj: *const json_value,
     mut key: *const ::core::ffi::c_char,
@@ -675,14 +657,6 @@ unsafe extern "C" fn json_obj_getnum_fallback(
     return fallback;
 }
 #[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
 unsafe extern "C" fn initGsubReverse(mut subtable: *mut subtable_gsub_reverse) {
     (*subtable).match_0 = ::core::ptr::null_mut::<*mut otl_Coverage>();
     (*subtable).to = ::core::ptr::null_mut::<otl_Coverage>();
@@ -715,7 +689,7 @@ unsafe extern "C" fn subtable_gsub_reverse_free(mut x: *mut subtable_gsub_revers
     free(x as *mut ::core::ffi::c_void);
 }
 #[no_mangle]
-pub static mut iSubtable_gsub_reverse: __caryll_elementinterface_subtable_gsub_reverse = unsafe {
+pub static mut iSubtable_gsub_reverse: __caryll_elementinterface_subtable_gsub_reverse = {
     __caryll_elementinterface_subtable_gsub_reverse {
         init: Some(
             subtable_gsub_reverse_init as unsafe extern "C" fn(*mut subtable_gsub_reverse) -> (),
@@ -830,8 +804,8 @@ pub unsafe extern "C" fn otl_read_gsub_reverse(
     data: font_file_pointer,
     mut tableLength: uint32_t,
     mut offset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut nBacktrack: tableid_t = 0;
     let mut nForward: tableid_t = 0;
@@ -1031,7 +1005,7 @@ pub unsafe extern "C" fn otl_gsub_dump_reverse(
 #[no_mangle]
 pub unsafe extern "C" fn otl_gsub_parse_reverse(
     mut _subtable: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut _match: *mut json_value = json_obj_get_type(
         _subtable,
@@ -1076,7 +1050,7 @@ pub unsafe extern "C" fn otl_gsub_parse_reverse(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_build_gsub_reverse(
     mut _subtable: *const otl_Subtable,
-    mut heuristics: otl_BuildHeuristics,
+    mut _heuristics: otl_BuildHeuristics,
 ) -> *mut caryll_Buffer {
     let mut subtable: *const subtable_gsub_reverse = &raw const (*_subtable).gsub_reverse;
     reverseBacktracks((*subtable).match_0, (*subtable).inputIndex);

@@ -55,6 +55,7 @@ extern "C" {
         options: *const otfcc_Options,
     ) -> *mut json_value;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -354,7 +355,7 @@ unsafe extern "C" fn table_fpgm_prep_dispose(mut x: *mut table_fpgm_prep) {
     disposeFpgmPrep(x);
 }
 #[no_mangle]
-pub static mut table_iFpgm_prep: __caryll_elementinterface_table_fpgm_prep = unsafe {
+pub static mut table_iFpgm_prep: __caryll_elementinterface_table_fpgm_prep = {
     __caryll_elementinterface_table_fpgm_prep {
         init: Some(table_fpgm_prep_init as unsafe extern "C" fn(*mut table_fpgm_prep) -> ()),
         copy: Some(
@@ -381,7 +382,7 @@ pub static mut table_iFpgm_prep: __caryll_elementinterface_table_fpgm_prep = uns
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readFpgmPrep(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
     mut tag: uint32_t,
 ) -> *mut table_fpgm_prep {
     let mut t: *mut table_fpgm_prep = ::core::ptr::null_mut::<table_fpgm_prep>();
@@ -450,14 +451,14 @@ pub unsafe extern "C" fn table_dumpTableFpgmPrep(
             tag,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         json_object_push(
             root,
             tag,
             dump_ttinstr((*table).bytes, (*table).length, options),
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -476,8 +477,8 @@ pub unsafe extern "C" fn makeFpgmPrepInstr(
 #[no_mangle]
 pub unsafe extern "C" fn wrongFpgmPrepInstr(
     mut _t: *mut ::core::ffi::c_void,
-    mut reason: *mut ::core::ffi::c_char,
-    mut pos: ::core::ffi::c_int,
+    mut _reason: *mut ::core::ffi::c_char,
+    mut _pos: ::core::ffi::c_int,
 ) {
 }
 #[no_mangle]
@@ -500,7 +501,7 @@ pub unsafe extern "C" fn otfcc_parseFpgmPrep(
                 tag,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             t = (
                 table_iFpgm_prep.create.expect("non-null function pointer"))();
@@ -525,7 +526,7 @@ pub unsafe extern "C" fn otfcc_parseFpgmPrep(
                         ) -> (),
                 ),
             );
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -538,7 +539,7 @@ pub unsafe extern "C" fn otfcc_parseFpgmPrep(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildFpgmPrep(
     mut table: *const table_fpgm_prep,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if table.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();
@@ -546,26 +547,6 @@ pub unsafe extern "C" fn otfcc_buildFpgmPrep(
     let mut buf: *mut caryll_Buffer = bufnew();
     bufwrite_bytes(buf, (*table).length as size_t, (*table).bytes);
     return buf;
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
 }
 #[inline]
 unsafe extern "C" fn json_obj_get(

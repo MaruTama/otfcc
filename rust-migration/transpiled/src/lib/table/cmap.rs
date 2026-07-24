@@ -67,6 +67,8 @@ extern "C" {
     fn bk_newBlockFromBufferCopy(buf: *const caryll_Buffer) -> *mut bk_Block;
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::binio::{read_8u, read_16u, read_24u, read_32u};
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
 pub type __uint16_t = u16;
@@ -1401,7 +1403,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapByIndex(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hh.tbl).num_items
+                    if (*(*s).hh.tbl).num_items
                         & (*(*s).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1411,7 +1413,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapByIndex(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -1465,9 +1467,9 @@ pub unsafe extern "C" fn otfcc_encodeCmapByIndex(
                 }
             }
         }
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -2153,7 +2155,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapByName(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hh.tbl).num_items
+                    if (*(*s).hh.tbl).num_items
                         & (*(*s).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2163,7 +2165,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapByName(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2217,9 +2219,9 @@ pub unsafe extern "C" fn otfcc_encodeCmapByName(
                 }
             }
         }
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -2585,9 +2587,9 @@ pub unsafe extern "C" fn otfcc_unmapCmap(
         }
         free(s as *mut ::core::ffi::c_void);
         s = ::core::ptr::null_mut::<cmap_Entry>();
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -3580,7 +3582,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByIndex(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hh.tbl).num_items
+                    if (*(*s).hh.tbl).num_items
                         & (*(*s).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -3590,7 +3592,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByIndex(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -3644,9 +3646,9 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByIndex(
                 }
             }
         }
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -4324,7 +4326,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByName(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hh.tbl).num_items
+                    if (*(*s).hh.tbl).num_items
                         & (*(*s).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -4334,7 +4336,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByName(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -4388,9 +4390,9 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByName(
                 }
             }
         }
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -4748,9 +4750,9 @@ pub unsafe extern "C" fn otfcc_unmapCmapUVS(
         }
         free(s as *mut ::core::ffi::c_void);
         s = ::core::ptr::null_mut::<cmap_Entry>();
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -5064,7 +5066,7 @@ pub unsafe extern "C" fn otfcc_cmapLookupUVS(
     };
 }
 #[no_mangle]
-pub static mut table_iCmap: __caryll_elementinterface_table_cmap = unsafe {
+pub static mut table_iCmap: __caryll_elementinterface_table_cmap = {
     __caryll_elementinterface_table_cmap {
         init: Some(table_cmap_init as unsafe extern "C" fn(*mut table_cmap) -> ()),
         copy: Some(
@@ -5918,7 +5920,7 @@ pub unsafe extern "C" fn otfcc_dumpCmap(
             b"cmap\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         if !(*table).unicodes.is_null() {
             let mut cmap: *mut json_value = json_object_new(
@@ -6006,7 +6008,7 @@ pub unsafe extern "C" fn otfcc_dumpCmap(
                 uvs,
             );
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -6174,7 +6176,7 @@ pub unsafe extern "C" fn otfcc_parseCmap(
             b"cmap\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         parseCmapUnicodes(
             cmap,
@@ -6185,7 +6187,7 @@ pub unsafe extern "C" fn otfcc_parseCmap(
             ),
             options,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -6199,7 +6201,7 @@ pub unsafe extern "C" fn otfcc_parseCmap(
             b"cmap_uvs\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_0: bool = true_0 != 0;
+    let mut ___loggedstep_v_0: bool = true;
     while ___loggedstep_v_0 {
         parseCmapUVS(
             cmap,
@@ -6210,7 +6212,7 @@ pub unsafe extern "C" fn otfcc_parseCmap(
             ),
             options,
         );
-        ___loggedstep_v_0 = false_0 != 0;
+        ___loggedstep_v_0 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -6494,25 +6496,25 @@ unsafe extern "C" fn otfcc_buildCmap_format4(mut cmap: *const table_cmap) -> *mu
     let mut idDelta: *mut caryll_Buffer = bufnew();
     let mut idRangeOffset: *mut caryll_Buffer = bufnew();
     let mut glyphIdArray: *mut caryll_Buffer = bufnew();
-    let mut started: bool = false_0 != 0;
+    let mut started: bool = false;
     let mut lastUnicodeStart: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastUnicodeEnd: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastGIDStart: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastGIDEnd: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastGlyphIdArrayOffset: size_t = 0 as size_t;
-    let mut isSequencial: bool = true_0 != 0;
+    let mut isSequencial: bool = true;
     let mut segmentsCount: uint16_t = 0 as uint16_t;
     let mut item: *mut cmap_Entry = ::core::ptr::null_mut::<cmap_Entry>();
     item = (*cmap).unicodes;
     while !item.is_null() {
         if (*item).unicode <= 0xffff as ::core::ffi::c_int {
             if !started {
-                started = true_0 != 0;
+                started = true;
                 lastUnicodeEnd = (*item).unicode;
                 lastUnicodeStart = lastUnicodeEnd;
                 lastGIDEnd = (*item).glyph.index as ::core::ffi::c_int;
                 lastGIDStart = lastGIDEnd;
-                isSequencial = true_0 != 0;
+                isSequencial = true;
             } else if (*item).unicode == lastUnicodeEnd + 1 as ::core::ffi::c_int
                 && !((*item).glyph.index as ::core::ffi::c_int
                     != lastGIDEnd + 1 as ::core::ffi::c_int
@@ -6557,7 +6559,7 @@ unsafe extern "C" fn otfcc_buildCmap_format4(mut cmap: *const table_cmap) -> *mu
                 lastUnicodeStart = lastUnicodeEnd;
                 lastGIDEnd = (*item).glyph.index as ::core::ffi::c_int;
                 lastGIDStart = lastGIDEnd;
-                isSequencial = true_0 != 0;
+                isSequencial = true;
             }
         }
         item = (*item).hh.next as *mut cmap_Entry;
@@ -6653,7 +6655,7 @@ unsafe extern "C" fn otfcc_buildCmap_format12(mut cmap: *const table_cmap) -> *m
     bufwrite32b(buf, 0 as uint32_t);
     bufwrite32b(buf, 0 as uint32_t);
     let mut nGroups: uint32_t = 0 as uint32_t;
-    let mut started: bool = false_0 != 0;
+    let mut started: bool = false;
     let mut lastUnicodeStart: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastUnicodeEnd: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastGIDStart: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
@@ -6662,7 +6664,7 @@ unsafe extern "C" fn otfcc_buildCmap_format12(mut cmap: *const table_cmap) -> *m
     item = (*cmap).unicodes;
     while !item.is_null() {
         if !started {
-            started = true_0 != 0;
+            started = true;
             lastUnicodeEnd = (*item).unicode;
             lastUnicodeStart = lastUnicodeEnd;
             lastGIDEnd = (*item).glyph.index as ::core::ffi::c_int;
@@ -6827,7 +6829,7 @@ unsafe extern "C" fn otfcc_buildCmap_format14(mut cmap: *const table_cmap) -> *m
     item = (*cmap).uvs;
     while !item.is_null() {
         if (*item).key.selector < MAX_UNICODE as uint32_t {
-            *validSelectors.offset((*item).key.selector as isize) = true_0 != 0;
+            *validSelectors.offset((*item).key.selector as isize) = true;
         }
         item = (*item).hh.next as *mut cmap_UVS_Entry;
     }
@@ -6893,7 +6895,7 @@ pub unsafe extern "C" fn otfcc_buildCmap(
         return ::core::ptr::null_mut::<caryll_Buffer>();
     }
     let mut entry: *mut cmap_Entry = ::core::ptr::null_mut::<cmap_Entry>();
-    let mut requiresFormat12: bool = false_0 != 0;
+    let mut requiresFormat12: bool = false;
     let mut hasUVS: bool = !(*cmap).uvs.is_null()
         && (if !(*cmap).uvs.is_null() {
             (*(*(*cmap).uvs).hh.tbl).num_items
@@ -6903,7 +6905,7 @@ pub unsafe extern "C" fn otfcc_buildCmap(
     entry = (*cmap).unicodes;
     while !entry.is_null() {
         if (*entry).unicode > 0xffff as ::core::ffi::c_int {
-            requiresFormat12 = true_0 != 0;
+            requiresFormat12 = true;
         }
         entry = (*entry).hh.next as *mut cmap_Entry;
     }
@@ -6911,7 +6913,7 @@ pub unsafe extern "C" fn otfcc_buildCmap(
     if !requiresFormat12 || !(*options).stub_cmap4 {
         format4 = otfcc_tryBuildCmap_format4(cmap);
         if format4.is_null() {
-            requiresFormat12 = true_0 != 0;
+            requiresFormat12 = true;
         }
     }
     let mut nTables: uint8_t = (if requiresFormat12 as ::core::ffi::c_int != 0 {
@@ -7011,26 +7013,6 @@ pub unsafe extern "C" fn otfcc_buildCmap(
     return bk_build_Block(root);
 }
 #[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL_0;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
-#[inline]
 unsafe extern "C" fn json_obj_get(
     mut obj: *const json_value,
     mut key: *const ::core::ffi::c_char,
@@ -7062,38 +7044,6 @@ unsafe extern "C" fn json_obj_get_type(
         return v;
     }
     return ::core::ptr::null_mut::<json_value>();
-}
-#[inline]
-unsafe extern "C" fn read_8u(mut src: *const uint8_t) -> uint8_t {
-    return *src.offset(0 as ::core::ffi::c_int as isize);
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
-#[inline]
-unsafe extern "C" fn read_24u(mut src: *const uint8_t) -> uint32_t {
-    let mut b0: uint32_t =
-        (*src.offset(0 as ::core::ffi::c_int as isize) as uint32_t) << 16 as ::core::ffi::c_int;
-    let mut b1: uint32_t =
-        (*src.offset(1 as ::core::ffi::c_int as isize) as uint32_t) << 8 as ::core::ffi::c_int;
-    let mut b2: uint32_t = *src.offset(2 as ::core::ffi::c_int as isize) as uint32_t;
-    return b0 | b1 | b2;
-}
-#[inline]
-unsafe extern "C" fn read_32u(mut src: *const uint8_t) -> uint32_t {
-    let mut b0: uint32_t =
-        (*src.offset(0 as ::core::ffi::c_int as isize) as uint32_t) << 24 as ::core::ffi::c_int;
-    let mut b1: uint32_t =
-        (*src.offset(1 as ::core::ffi::c_int as isize) as uint32_t) << 16 as ::core::ffi::c_int;
-    let mut b2: uint32_t =
-        (*src.offset(2 as ::core::ffi::c_int as isize) as uint32_t) << 8 as ::core::ffi::c_int;
-    let mut b3: uint32_t = *src.offset(3 as ::core::ffi::c_int as isize) as uint32_t;
-    return b0 | b1 | b2 | b3;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
