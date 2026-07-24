@@ -25,6 +25,7 @@ extern "C" {
     fn otfcc_chainingLookupIsContextualLookup(lookup: *const otl_Lookup) -> bool;
 }
 
+use crate::src::lib::table::otl::classdef::{otl_ClassDef_create, pushClassDef, otl_ClassDef};
 use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromConsolidated, handle_fromIndex, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
@@ -147,15 +148,6 @@ pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
 pub type tableid_t = uint16_t;
 pub type pos_t = ::core::ffi::c_double;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct __otfcc_IClassDef {
@@ -3802,8 +3794,7 @@ unsafe extern "C" fn buildRule(
     return newRule;
 }
 unsafe extern "C" fn toClass(mut h: *mut *mut classifier_hash) -> *mut otl_ClassDef {
-    let mut cd: *mut otl_ClassDef = (
-        otl_iClassDef.create.expect("non-null function pointer"))();
+    let mut cd: *mut otl_ClassDef = otl_ClassDef_create();
     let mut item: *mut classifier_hash = ::core::ptr::null_mut::<classifier_hash>();
     let mut _hs_i: ::core::ffi::c_uint = 0;
     let mut _hs_looping: ::core::ffi::c_uint = 0;
@@ -3940,7 +3931,7 @@ unsafe extern "C" fn toClass(mut h: *mut *mut classifier_hash) -> *mut otl_Class
     }
     item = *h;
     while !item.is_null() {
-        otl_iClassDef.push.expect("non-null function pointer")(
+        pushClassDef(
             cd,
             handle_fromConsolidated(
                 (*item).gid as glyphid_t, (*item).gname

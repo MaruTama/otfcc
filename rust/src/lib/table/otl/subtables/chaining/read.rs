@@ -14,6 +14,7 @@ extern "C" {
     static iSubtable_chaining: __caryll_elementinterface_subtable_chaining;
 }
 
+use crate::src::lib::table::otl::classdef::{otl_ClassDef_free, readClassDef, otl_ClassDef};
 use crate::src::lib::table::otl::coverage::{otl_Coverage_free, readCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromIndex, otfcc_Handle_dispose, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
@@ -193,15 +194,6 @@ pub struct __otfcc_ICoverage {
         Option<unsafe extern "C" fn(*const otl_Coverage, uint16_t) -> *mut caryll_Buffer>,
     pub shrink: Option<unsafe extern "C" fn(*mut otl_Coverage, bool) -> ()>,
     pub push: Option<unsafe extern "C" fn(*mut otl_Coverage, otfcc_GlyphHandle) -> ()>,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -947,7 +939,7 @@ unsafe extern "C" fn readContextualFormat2(
             172 as ::core::ffi::c_ulong,
         ) as *mut classdefs;
         (*cds).bc = ::core::ptr::null_mut::<otl_ClassDef>();
-        (*cds).ic = otl_iClassDef.read.expect("non-null function pointer")(
+        (*cds).ic = readClassDef(
             data as *const uint8_t,
             tableLength,
             offset.wrapping_add(read_16u(
@@ -1050,13 +1042,13 @@ unsafe extern "C" fn readContextualFormat2(
             }
             if !cds.is_null() {
                 if !(*cds).bc.is_null() {
-                    otl_iClassDef.free.expect("non-null function pointer")((*cds).bc);
+                    otl_ClassDef_free((*cds).bc);
                 }
                 if !(*cds).ic.is_null() {
-                    otl_iClassDef.free.expect("non-null function pointer")((*cds).ic);
+                    otl_ClassDef_free((*cds).ic);
                 }
                 if !(*cds).fc.is_null() {
-                    otl_iClassDef.free.expect("non-null function pointer")((*cds).fc);
+                    otl_ClassDef_free((*cds).fc);
                 }
                 free(cds as *mut ::core::ffi::c_void);
                 cds = ::core::ptr::null_mut::<classdefs>();
@@ -1583,7 +1575,7 @@ unsafe extern "C" fn readChainingFormat2(
             ::core::mem::size_of::<classdefs>() as size_t,
             349 as ::core::ffi::c_ulong,
         ) as *mut classdefs;
-        (*cds).bc = otl_iClassDef.read.expect("non-null function pointer")(
+        (*cds).bc = readClassDef(
             data as *const uint8_t,
             tableLength,
             offset.wrapping_add(read_16u(
@@ -1591,7 +1583,7 @@ unsafe extern "C" fn readChainingFormat2(
                     .offset(4 as ::core::ffi::c_int as isize) as *const uint8_t,
             ) as uint32_t),
         );
-        (*cds).ic = otl_iClassDef.read.expect("non-null function pointer")(
+        (*cds).ic = readClassDef(
             data as *const uint8_t,
             tableLength,
             offset.wrapping_add(read_16u(
@@ -1599,7 +1591,7 @@ unsafe extern "C" fn readChainingFormat2(
                     .offset(6 as ::core::ffi::c_int as isize) as *const uint8_t,
             ) as uint32_t),
         );
-        (*cds).fc = otl_iClassDef.read.expect("non-null function pointer")(
+        (*cds).fc = readClassDef(
             data as *const uint8_t,
             tableLength,
             offset.wrapping_add(read_16u(
@@ -1700,13 +1692,13 @@ unsafe extern "C" fn readChainingFormat2(
             }
             if !cds.is_null() {
                 if !(*cds).bc.is_null() {
-                    otl_iClassDef.free.expect("non-null function pointer")((*cds).bc);
+                    otl_ClassDef_free((*cds).bc);
                 }
                 if !(*cds).ic.is_null() {
-                    otl_iClassDef.free.expect("non-null function pointer")((*cds).ic);
+                    otl_ClassDef_free((*cds).ic);
                 }
                 if !(*cds).fc.is_null() {
-                    otl_iClassDef.free.expect("non-null function pointer")((*cds).fc);
+                    otl_ClassDef_free((*cds).fc);
                 }
                 free(cds as *mut ::core::ffi::c_void);
                 cds = ::core::ptr::null_mut::<classdefs>();

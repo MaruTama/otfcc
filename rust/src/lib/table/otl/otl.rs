@@ -35,6 +35,7 @@ extern "C" {
     static iSubtable_gpos_markToLigature: __caryll_elementinterface_subtable_gpos_markToLigature;
 }
 
+use crate::src::lib::table::otl::classdef::{otl_ClassDef};
 use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
@@ -59,15 +60,6 @@ pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
 pub type tableid_t = uint16_t;
 pub type pos_t = ::core::ffi::c_double;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
-}
 pub type otl_LookupType = ::core::ffi::c_uint;
 pub const otl_type_gpos_extend: otl_LookupType = 41;
 pub const otl_type_gpos_chaining: otl_LookupType = 40;

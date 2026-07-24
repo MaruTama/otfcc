@@ -50,6 +50,7 @@ extern "C" {
     fn otl_parse_anchor(v: *mut json_value) -> otl_Anchor;
     fn bkFromAnchor(a: otl_Anchor) -> *mut bk_Block;
 }
+use crate::src::lib::table::otl::classdef::{otl_ClassDef};
 use crate::src::lib::table::otl::coverage::{otl_Coverage_create, otl_Coverage_free, pushToCoverage, readCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromName, otfcc_Handle_dispose, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle, HANDLE_STATE_EMPTY};
 use crate::src::lib::support::binio::{read_16u};
@@ -238,15 +239,6 @@ pub struct __otfcc_ICoverage {
         Option<unsafe extern "C" fn(*const otl_Coverage, uint16_t) -> *mut caryll_Buffer>,
     pub shrink: Option<unsafe extern "C" fn(*mut otl_Coverage, bool) -> ()>,
     pub push: Option<unsafe extern "C" fn(*mut otl_Coverage, otfcc_GlyphHandle) -> ()>,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]

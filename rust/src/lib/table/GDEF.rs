@@ -47,6 +47,7 @@ extern "C" {
     fn bk_newBlockFromBuffer(buf: *mut caryll_Buffer) -> *mut bk_Block;
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
+use crate::src::lib::table::otl::classdef::{otl_ClassDef_free, readClassDef, otl_ClassDef};
 use crate::src::lib::table::otl::coverage::{otl_Coverage_create, otl_Coverage_free, pushToCoverage, readCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromName, otfcc_Handle_dispose, otfcc_Handle_dup, otfcc_Handle_empty, otfcc_Handle, otfcc_GlyphHandle, HANDLE_STATE_EMPTY};
 use crate::src::lib::support::binio::{read_16u};
@@ -252,15 +253,6 @@ pub struct __otfcc_ICoverage {
         Option<unsafe extern "C" fn(*const otl_Coverage, uint16_t) -> *mut caryll_Buffer>,
     pub shrink: Option<unsafe extern "C" fn(*mut otl_Coverage, bool) -> ()>,
     pub push: Option<unsafe extern "C" fn(*mut otl_Coverage, otfcc_GlyphHandle) -> ()>,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -1164,10 +1156,10 @@ unsafe extern "C" fn disposeGDEF(mut gdef: *mut table_GDEF) {
         return;
     }
     if !(*gdef).glyphClassDef.is_null() {
-        otl_iClassDef.free.expect("non-null function pointer")((*gdef).glyphClassDef);
+        otl_ClassDef_free((*gdef).glyphClassDef);
     }
     if !(*gdef).markAttachClassDef.is_null() {
-        otl_iClassDef.free.expect("non-null function pointer")((*gdef).markAttachClassDef);
+        otl_ClassDef_free((*gdef).markAttachClassDef);
     }
     otl_iLigCaretTable
         .dispose
@@ -1359,7 +1351,7 @@ pub unsafe extern "C" fn otfcc_readGDEF(
                         );
                         if classdefOffset != 0 {
                             (*gdef).glyphClassDef =
-                                otl_iClassDef.read.expect("non-null function pointer")(
+                                readClassDef(
                                     data as *const uint8_t,
                                     tableLength,
                                     classdefOffset as uint32_t,
@@ -1458,7 +1450,7 @@ pub unsafe extern "C" fn otfcc_readGDEF(
                                         as *const uint8_t);
                                 if markAttachDefOffset != 0 {
                                     (*gdef).markAttachClassDef =
-                                        otl_iClassDef.read.expect("non-null function pointer")(
+                                        readClassDef(
                                             data as *const uint8_t,
                                             tableLength,
                                             markAttachDefOffset as uint32_t,

@@ -77,6 +77,7 @@ extern "C" {
     fn gpos_parse_value(pos: *mut json_value) -> otl_PositionValue;
 }
 
+use crate::src::lib::table::otl::classdef::{expandClassDef, otl_ClassDef_free, readClassDef, otl_ClassDef};
 use crate::src::lib::table::otl::coverage::{otl_Coverage_free, readCoverage, shrinkCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromIndex, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
@@ -298,15 +299,6 @@ pub struct __otfcc_ICoverage {
         Option<unsafe extern "C" fn(*const otl_Coverage, uint16_t) -> *mut caryll_Buffer>,
     pub shrink: Option<unsafe extern "C" fn(*mut otl_Coverage, bool) -> ()>,
     pub push: Option<unsafe extern "C" fn(*mut otl_Coverage, otfcc_GlyphHandle) -> ()>,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -749,9 +741,9 @@ unsafe extern "C" fn disposeGposPair(mut subtable: *mut subtable_gpos_pair) {
         free((*subtable).secondValues as *mut ::core::ffi::c_void);
         (*subtable).secondValues = ::core::ptr::null_mut::<*mut otl_PositionValue>();
     }
-    otl_iClassDef.free.expect("non-null function pointer")((*subtable).first);
+    otl_ClassDef_free((*subtable).first);
     (*subtable).first = ::core::ptr::null_mut::<otl_ClassDef>();
-    otl_iClassDef.free.expect("non-null function pointer")((*subtable).second);
+    otl_ClassDef_free((*subtable).second);
     (*subtable).second = ::core::ptr::null_mut::<otl_ClassDef>();
 }
 #[inline]
@@ -2528,7 +2520,7 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
                                 as *const uint8_t,
                         ) as uint32_t),
                     );
-                (*subtable).first = otl_iClassDef.read.expect("non-null function pointer")(
+                (*subtable).first = readClassDef(
                     data as *const uint8_t,
                     tableLength,
                     offset.wrapping_add(read_16u(
@@ -2537,13 +2529,13 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
                             as *const uint8_t,
                     ) as uint32_t),
                 );
-                (*subtable).first = otl_iClassDef.expand.expect("non-null function pointer")(
+                (*subtable).first = expandClassDef(
                     cov_0,
                     (*subtable).first,
                 );
                 otl_Coverage_free(cov_0);
                 cov_0 = ::core::ptr::null_mut::<otl_Coverage>();
-                (*subtable).second = otl_iClassDef.read.expect("non-null function pointer")(
+                (*subtable).second = readClassDef(
                     data as *const uint8_t,
                     tableLength,
                     offset.wrapping_add(read_16u(

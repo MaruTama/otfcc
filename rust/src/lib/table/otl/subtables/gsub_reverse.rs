@@ -33,6 +33,7 @@ extern "C" {
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
 
+use crate::src::lib::table::otl::classdef::{otl_ClassDef};
 use crate::src::lib::table::otl::coverage::{otl_Coverage_free, readCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromIndex, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
@@ -206,15 +207,6 @@ pub struct __otfcc_ICoverage {
         Option<unsafe extern "C" fn(*const otl_Coverage, uint16_t) -> *mut caryll_Buffer>,
     pub shrink: Option<unsafe extern "C" fn(*mut otl_Coverage, bool) -> ()>,
     pub push: Option<unsafe extern "C" fn(*mut otl_Coverage, otfcc_GlyphHandle) -> ()>,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]

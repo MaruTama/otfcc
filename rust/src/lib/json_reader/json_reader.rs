@@ -78,6 +78,7 @@ extern "C" {
     fn otfcc_parseTSI5(root: *const json_value, options: *const otfcc_Options) -> *mut table_TSI5;
 }
 
+use crate::src::lib::table::otl::classdef::{otl_ClassDef};
 use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
@@ -407,15 +408,6 @@ pub struct vq_SegList {
 pub struct VQ {
     pub kernel: pos_t,
     pub shift: vq_SegList,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]

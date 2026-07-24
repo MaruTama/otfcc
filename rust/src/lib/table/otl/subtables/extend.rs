@@ -17,6 +17,7 @@ extern "C" {
     ) -> *mut otl_Subtable;
 }
 
+use crate::src::lib::table::otl::classdef::{otl_ClassDef};
 use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
@@ -99,15 +100,6 @@ pub struct otfcc_Options {
     pub logger: *mut otfcc_ILogger,
 }
 pub type font_file_pointer = *mut uint8_t;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
-}
 pub type otl_LookupType = ::core::ffi::c_uint;
 pub const otl_type_gpos_extend: otl_LookupType = 41;
 pub const otl_type_gpos_chaining: otl_LookupType = 40;

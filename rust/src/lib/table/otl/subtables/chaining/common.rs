@@ -14,6 +14,7 @@ extern "C" {
     static otl_iCoverage: __otfcc_ICoverage;
     static otl_iClassDef: __otfcc_IClassDef;
 }
+use crate::src::lib::table::otl::classdef::{otl_ClassDef_free, otl_ClassDef};
 use crate::src::lib::table::otl::coverage::{otl_Coverage_free, otl_Coverage};
 use crate::src::lib::support::handle::{otfcc_Handle_dispose, otfcc_GlyphHandle, otfcc_LookupHandle};
 pub type __uint8_t = u8;
@@ -121,15 +122,6 @@ pub struct __otfcc_ICoverage {
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
 pub struct __otfcc_IClassDef {
     pub init: Option<unsafe extern "C" fn(*mut otl_ClassDef) -> ()>,
     pub copy: Option<unsafe extern "C" fn(*mut otl_ClassDef, *const otl_ClassDef) -> ()>,
@@ -233,17 +225,17 @@ pub unsafe extern "C" fn otl_dispose_chaining(mut subtable: *mut subtable_chaini
                 ::core::ptr::null_mut::<*mut otl_ChainingRule>();
         }
         if !(*subtable).c2rust_unnamed.c2rust_unnamed.bc.is_null() {
-            otl_iClassDef.free.expect("non-null function pointer")(
+            otl_ClassDef_free(
                 (*subtable).c2rust_unnamed.c2rust_unnamed.bc,
             );
         }
         if !(*subtable).c2rust_unnamed.c2rust_unnamed.ic.is_null() {
-            otl_iClassDef.free.expect("non-null function pointer")(
+            otl_ClassDef_free(
                 (*subtable).c2rust_unnamed.c2rust_unnamed.ic,
             );
         }
         if !(*subtable).c2rust_unnamed.c2rust_unnamed.fc.is_null() {
-            otl_iClassDef.free.expect("non-null function pointer")(
+            otl_ClassDef_free(
                 (*subtable).c2rust_unnamed.c2rust_unnamed.fc,
             );
         }
