@@ -381,7 +381,7 @@ pub static mut table_iFpgm_prep: __caryll_elementinterface_table_fpgm_prep = uns
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readFpgmPrep(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
     mut tag: uint32_t,
 ) -> *mut table_fpgm_prep {
     let mut t: *mut table_fpgm_prep = ::core::ptr::null_mut::<table_fpgm_prep>();
@@ -476,8 +476,8 @@ pub unsafe extern "C" fn makeFpgmPrepInstr(
 #[no_mangle]
 pub unsafe extern "C" fn wrongFpgmPrepInstr(
     mut _t: *mut ::core::ffi::c_void,
-    mut reason: *mut ::core::ffi::c_char,
-    mut pos: ::core::ffi::c_int,
+    mut _reason: *mut ::core::ffi::c_char,
+    mut _pos: ::core::ffi::c_int,
 ) {
 }
 #[no_mangle]
@@ -538,7 +538,7 @@ pub unsafe extern "C" fn otfcc_parseFpgmPrep(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildFpgmPrep(
     mut table: *const table_fpgm_prep,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if table.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

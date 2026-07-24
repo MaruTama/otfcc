@@ -303,7 +303,7 @@ unsafe extern "C" fn initHead(mut head: *mut table_head) {
     (*head).unitsPerEm = 1000 as uint16_t;
 }
 #[inline]
-unsafe extern "C" fn disposeHead(mut head: *mut table_head) {}
+unsafe extern "C" fn disposeHead(mut _head: *mut table_head) {}
 #[inline]
 unsafe extern "C" fn table_head_replace(mut dst: *mut table_head, src: table_head) {
     table_head_dispose(dst);
@@ -734,7 +734,7 @@ pub unsafe extern "C" fn otfcc_parseHead(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildHead(
     mut head: *const table_head,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if head.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

@@ -1915,7 +1915,7 @@ unsafe extern "C" fn classCompatible(
                                 .log2_num_buckets
                                 .wrapping_add(1 as ::core::ffi::c_uint))
                         .wrapping_add(
-                            (if (*(*rss).hh.tbl).num_items
+                            if (*(*rss).hh.tbl).num_items
                                 & (*(*rss).hh.tbl)
                                     .num_buckets
                                     .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1925,7 +1925,7 @@ unsafe extern "C" fn classCompatible(
                                 1 as ::core::ffi::c_uint
                             } else {
                                 0 as ::core::ffi::c_uint
-                            }),
+                            },
                         );
                         (*(*rss).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                         _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -3431,7 +3431,7 @@ unsafe extern "C" fn classCompatible(
                                 .log2_num_buckets
                                 .wrapping_add(1 as ::core::ffi::c_uint))
                         .wrapping_add(
-                            (if (*(*s_0).hh.tbl).num_items
+                            if (*(*s_0).hh.tbl).num_items
                                 & (*(*s_0).hh.tbl)
                                     .num_buckets
                                     .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -3441,7 +3441,7 @@ unsafe extern "C" fn classCompatible(
                                 1 as ::core::ffi::c_uint
                             } else {
                                 0 as ::core::ffi::c_uint
-                            }),
+                            },
                         );
                         (*(*s_0).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                         _he_bkt_i_0 = 0 as ::core::ffi::c_uint;

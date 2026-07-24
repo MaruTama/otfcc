@@ -1445,8 +1445,8 @@ pub unsafe extern "C" fn otl_read_gpos_markToSingle(
     data: font_file_pointer,
     mut tableLength: uint32_t,
     mut subtableOffset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut markArrayOffset: uint32_t = 0;
     let mut baseArrayOffset: uint32_t = 0;
@@ -2186,7 +2186,7 @@ pub unsafe extern "C" fn otl_gpos_parse_markToSingle(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_build_gpos_markToSingle(
     mut _subtable: *const otl_Subtable,
-    mut heuristics: otl_BuildHeuristics,
+    mut _heuristics: otl_BuildHeuristics,
 ) -> *mut caryll_Buffer {
     let mut subtable: *const subtable_gpos_markToSingle = &raw const (*_subtable).gpos_markToSingle;
     let mut marks: *mut otl_Coverage = (

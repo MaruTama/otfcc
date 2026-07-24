@@ -245,7 +245,7 @@ unsafe extern "C" fn initMaxp(mut maxp: *mut table_maxp) {
     (*maxp).version = 0x10000 as ::core::ffi::c_int as f16dot16;
 }
 #[inline]
-unsafe extern "C" fn disposeMaxp(mut maxp: *mut table_maxp) {}
+unsafe extern "C" fn disposeMaxp(mut _maxp: *mut table_maxp) {}
 #[inline]
 unsafe extern "C" fn table_maxp_replace(mut dst: *mut table_maxp, src: table_maxp) {
     table_maxp_dispose(dst);
@@ -606,7 +606,7 @@ pub unsafe extern "C" fn otfcc_parseMaxp(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildMaxp(
     mut maxp: *const table_maxp,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if maxp.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

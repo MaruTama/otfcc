@@ -2060,7 +2060,7 @@ pub static mut otl_iLookupList: __caryll_vectorinterface_otl_LookupList = unsafe
     }
 };
 #[inline]
-unsafe extern "C" fn otl_LookupRef_dispose(mut x: *mut otl_LookupRef) {}
+unsafe extern "C" fn otl_LookupRef_dispose(mut _x: *mut otl_LookupRef) {}
 #[inline]
 unsafe extern "C" fn otl_LookupRef_copyReplace(mut dst: *mut otl_LookupRef, src: otl_LookupRef) {
     otl_LookupRef_dispose(dst);
@@ -2991,7 +2991,7 @@ unsafe extern "C" fn otl_FeatureRef_copy(
     );
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureRef_dispose(mut x: *mut otl_FeatureRef) {}
+unsafe extern "C" fn otl_FeatureRef_dispose(mut _x: *mut otl_FeatureRef) {}
 #[inline]
 unsafe extern "C" fn otl_FeatureRef_replace(mut dst: *mut otl_FeatureRef, src: otl_FeatureRef) {
     otl_FeatureRef_dispose(dst);

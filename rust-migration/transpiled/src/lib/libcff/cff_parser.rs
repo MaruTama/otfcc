@@ -1177,44 +1177,44 @@ unsafe extern "C" fn reverseStack(
     }
 }
 unsafe extern "C" fn callback_nopSetWidth(
-    mut context: *mut ::core::ffi::c_void,
-    mut width: ::core::ffi::c_double,
+    mut _context: *mut ::core::ffi::c_void,
+    mut _width: ::core::ffi::c_double,
 ) {
 }
-unsafe extern "C" fn callback_nopNewContour(mut context: *mut ::core::ffi::c_void) {}
+unsafe extern "C" fn callback_nopNewContour(mut _context: *mut ::core::ffi::c_void) {}
 unsafe extern "C" fn callback_nopLineTo(
-    mut context: *mut ::core::ffi::c_void,
-    mut x1: ::core::ffi::c_double,
-    mut y1: ::core::ffi::c_double,
+    mut _context: *mut ::core::ffi::c_void,
+    mut _x1: ::core::ffi::c_double,
+    mut _y1: ::core::ffi::c_double,
 ) {
 }
 unsafe extern "C" fn callback_nopCurveTo(
-    mut context: *mut ::core::ffi::c_void,
-    mut x1: ::core::ffi::c_double,
-    mut y1: ::core::ffi::c_double,
-    mut x2: ::core::ffi::c_double,
-    mut y2: ::core::ffi::c_double,
-    mut x3: ::core::ffi::c_double,
-    mut y3: ::core::ffi::c_double,
+    mut _context: *mut ::core::ffi::c_void,
+    mut _x1: ::core::ffi::c_double,
+    mut _y1: ::core::ffi::c_double,
+    mut _x2: ::core::ffi::c_double,
+    mut _y2: ::core::ffi::c_double,
+    mut _x3: ::core::ffi::c_double,
+    mut _y3: ::core::ffi::c_double,
 ) {
 }
 unsafe extern "C" fn callback_nopsetHint(
-    mut context: *mut ::core::ffi::c_void,
-    mut isVertical: bool,
-    mut position: ::core::ffi::c_double,
-    mut width: ::core::ffi::c_double,
+    mut _context: *mut ::core::ffi::c_void,
+    mut _isVertical: bool,
+    mut _position: ::core::ffi::c_double,
+    mut _width: ::core::ffi::c_double,
 ) {
 }
 unsafe extern "C" fn callback_nopsetMask(
-    mut context: *mut ::core::ffi::c_void,
-    mut isContourMask: bool,
+    mut _context: *mut ::core::ffi::c_void,
+    mut _isContourMask: bool,
     mut mask: *mut bool,
 ) {
     free(mask as *mut ::core::ffi::c_void);
     mask = ::core::ptr::null_mut::<bool>();
 }
 unsafe extern "C" fn callback_nopgetrand(
-    mut context: *mut ::core::ffi::c_void,
+    mut _context: *mut ::core::ffi::c_void,
 ) -> ::core::ffi::c_double {
     return 0 as ::core::ffi::c_int as ::core::ffi::c_double;
 }

@@ -742,7 +742,7 @@ pub static mut iTable_post: __caryll_elementinterface_table_post = unsafe {
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readPost(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut table_post {
     let mut __fortable_keep: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
     let mut __fortable_count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -1026,7 +1026,7 @@ pub unsafe extern "C" fn otfcc_parsePost(
 pub unsafe extern "C" fn otfcc_buildPost(
     mut post: *const table_post,
     mut glyphorder: *mut otfcc_GlyphOrder,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if post.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

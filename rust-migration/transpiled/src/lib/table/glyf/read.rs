@@ -832,7 +832,7 @@ unsafe extern "C" fn next_point(
 unsafe extern "C" fn otfcc_read_simple_glyph(
     mut start: font_file_pointer,
     mut numberOfContours: shapeid_t,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut glyf_Glyph {
     let mut g: *mut glyf_Glyph = otfcc_newGlyf_glyph();
     let mut contours: *mut glyf_ContourList = &raw mut (*g).contours;
@@ -1701,11 +1701,11 @@ unsafe extern "C" fn createRegionFromTuples(
 }
 #[inline]
 unsafe extern "C" fn polymorphizeGlyph(
-    mut gid: glyphid_t,
+    mut _gid: glyphid_t,
     mut glyph: glyf_GlyphPtr,
     mut ctx: *const TuplePolymorphizerCtx,
     mut gvd: *mut GlyphVariationData,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) {
     let mut totalPoints: shapeid_t = 0 as shapeid_t;
     let mut __caryll_index: size_t = 0 as size_t;

@@ -733,7 +733,7 @@ unsafe extern "C" fn strnmatch(
         let fresh21 = str2;
         str2 = str2.offset(1);
         ch2 = *fresh21 as ::core::ffi::c_int;
-        ch1 = ({
+        ch1 = {
             let mut __res: ::core::ffi::c_int = 0;
             if ::core::mem::size_of::<::core::ffi::c_int>() as usize > 1 as usize {
                 if 0 != 0 {
@@ -751,8 +751,8 @@ unsafe extern "C" fn strnmatch(
                 __res = *(*__ctype_tolower_loc()).offset(ch1 as isize) as ::core::ffi::c_int;
             }
             __res
-        });
-        ch2 = ({
+        };
+        ch2 = {
             let mut __res: ::core::ffi::c_int = 0;
             if ::core::mem::size_of::<::core::ffi::c_int>() as usize > 1 as usize {
                 if 0 != 0 {
@@ -770,7 +770,7 @@ unsafe extern "C" fn strnmatch(
                 __res = *(*__ctype_tolower_loc()).offset(ch2 as isize) as ::core::ffi::c_int;
             }
             __res
-        });
+        };
         if ch1 != ch2 || ch1 == '\0' as i32 {
             return ch1 - ch2;
         }

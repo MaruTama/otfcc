@@ -2411,7 +2411,7 @@ pub unsafe extern "C" fn consolidate_GDEF(
                                         .log2_num_buckets
                                         .wrapping_add(1 as ::core::ffi::c_uint))
                                 .wrapping_add(
-                                    (if (*(*s).hh.tbl).num_items
+                                    if (*(*s).hh.tbl).num_items
                                         & (*(*s).hh.tbl)
                                             .num_buckets
                                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2421,7 +2421,7 @@ pub unsafe extern "C" fn consolidate_GDEF(
                                         1 as ::core::ffi::c_uint
                                     } else {
                                         0 as ::core::ffi::c_uint
-                                    }),
+                                    },
                                 );
                                 (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                                 _he_bkt_i = 0 as ::core::ffi::c_uint;

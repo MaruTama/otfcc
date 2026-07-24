@@ -343,7 +343,7 @@ pub static mut table_iCvt: __caryll_elementinterface_table_cvt = unsafe {
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readCvt(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
     mut tag: uint32_t,
 ) -> *mut table_cvt {
     let mut t: *mut table_cvt = ::core::ptr::null_mut::<table_cvt>();
@@ -534,7 +534,7 @@ pub unsafe extern "C" fn otfcc_parseCvt(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildCvt(
     mut table: *const table_cvt,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if table.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

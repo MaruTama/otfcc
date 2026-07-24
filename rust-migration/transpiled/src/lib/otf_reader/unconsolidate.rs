@@ -2059,9 +2059,9 @@ unsafe extern "C" fn nameGlyphs(mut font: *mut otfcc_Font, mut gord: *mut otfcc_
     }
 }
 unsafe extern "C" fn unconsolidate_chaining(
-    mut font: *mut otfcc_Font,
+    mut _font: *mut otfcc_Font,
     mut lookup: *mut otl_Lookup,
-    mut table: *mut table_OTL,
+    mut _table: *mut table_OTL,
 ) {
     let mut totalRules: tableid_t = 0 as tableid_t;
     let mut j: tableid_t = 0 as tableid_t;

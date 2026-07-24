@@ -1920,7 +1920,7 @@ pub struct __caryll_elementinterface_otfcc_Font {
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 unsafe extern "C" fn createFontTable(
-    mut font: *mut otfcc_Font,
+    mut _font: *mut otfcc_Font,
     tag: uint32_t,
 ) -> *mut ::core::ffi::c_void {
     match tag {

@@ -1262,7 +1262,7 @@ unsafe extern "C" fn writeOTLLookups(
                     otl_type_gpos_unknown as ::core::ffi::c_int as ::core::ffi::c_uint,
                 )
             } else {
-                (if (*lookup_0).type_0 as ::core::ffi::c_uint
+                if (*lookup_0).type_0 as ::core::ffi::c_uint
                     > otl_type_gsub_unknown as ::core::ffi::c_int as ::core::ffi::c_uint
                 {
                     ((*lookup_0).type_0 as ::core::ffi::c_uint).wrapping_sub(
@@ -1270,7 +1270,7 @@ unsafe extern "C" fn writeOTLLookups(
                     )
                 } else {
                     0 as ::core::ffi::c_uint
-                })
+                }
             })
             .wrapping_sub(
                 (if canBeContextual as ::core::ffi::c_int != 0 {
@@ -1302,7 +1302,7 @@ unsafe extern "C" fn writeOTLLookups(
                         otl_type_gpos_unknown as ::core::ffi::c_int as ::core::ffi::c_uint,
                     )
                 } else {
-                    (if (*lookup_0).type_0 as ::core::ffi::c_uint
+                    if (*lookup_0).type_0 as ::core::ffi::c_uint
                         > otl_type_gsub_unknown as ::core::ffi::c_int as ::core::ffi::c_uint
                     {
                         ((*lookup_0).type_0 as ::core::ffi::c_uint).wrapping_sub(
@@ -1310,7 +1310,7 @@ unsafe extern "C" fn writeOTLLookups(
                         )
                     } else {
                         0 as ::core::ffi::c_uint
-                    })
+                    }
                 })
                 .wrapping_sub(
                     (if canBeContextual as ::core::ffi::c_int != 0 {
@@ -1371,7 +1371,7 @@ unsafe extern "C" fn writeOTLLookups(
 }
 unsafe extern "C" fn writeOTLFeatures(
     mut table: *const table_OTL,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut bk_Block {
     let mut root: *mut bk_Block = bk_new_Block(
         b16 as ::core::ffi::c_int,
@@ -1506,7 +1506,7 @@ unsafe extern "C" fn writeScript(
 }
 unsafe extern "C" fn writeOTLScriptAndLanguages(
     mut table: *const table_OTL,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut bk_Block {
     let mut h: *mut script_stat_hash = ::core::ptr::null_mut::<script_stat_hash>();
     let mut j: tableid_t = 0 as tableid_t;
@@ -2239,7 +2239,7 @@ unsafe extern "C" fn writeOTLScriptAndLanguages(
                             .log2_num_buckets
                             .wrapping_add(1 as ::core::ffi::c_uint))
                     .wrapping_add(
-                        (if (*(*s).hh.tbl).num_items
+                        if (*(*s).hh.tbl).num_items
                             & (*(*s).hh.tbl)
                                 .num_buckets
                                 .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2249,7 +2249,7 @@ unsafe extern "C" fn writeOTLScriptAndLanguages(
                             1 as ::core::ffi::c_uint
                         } else {
                             0 as ::core::ffi::c_uint
-                        }),
+                        },
                     );
                     (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                     _he_bkt_i = 0 as ::core::ffi::c_uint;

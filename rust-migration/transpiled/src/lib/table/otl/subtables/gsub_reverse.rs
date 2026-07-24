@@ -830,8 +830,8 @@ pub unsafe extern "C" fn otl_read_gsub_reverse(
     data: font_file_pointer,
     mut tableLength: uint32_t,
     mut offset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut nBacktrack: tableid_t = 0;
     let mut nForward: tableid_t = 0;
@@ -1031,7 +1031,7 @@ pub unsafe extern "C" fn otl_gsub_dump_reverse(
 #[no_mangle]
 pub unsafe extern "C" fn otl_gsub_parse_reverse(
     mut _subtable: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut _match: *mut json_value = json_obj_get_type(
         _subtable,
@@ -1076,7 +1076,7 @@ pub unsafe extern "C" fn otl_gsub_parse_reverse(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_build_gsub_reverse(
     mut _subtable: *const otl_Subtable,
-    mut heuristics: otl_BuildHeuristics,
+    mut _heuristics: otl_BuildHeuristics,
 ) -> *mut caryll_Buffer {
     let mut subtable: *const subtable_gsub_reverse = &raw const (*_subtable).gsub_reverse;
     reverseBacktracks((*subtable).match_0, (*subtable).inputIndex);

@@ -1819,7 +1819,7 @@ pub unsafe extern "C" fn statMaxp(mut font: *mut otfcc_Font) {
     (*(*font).maxp).maxComponentElements = nComponents;
     (*(*font).maxp).maxSizeOfInstructions = instSize;
 }
-unsafe extern "C" fn statHmtx(mut font: *mut otfcc_Font, mut options: *const otfcc_Options) {
+unsafe extern "C" fn statHmtx(mut font: *mut otfcc_Font, mut _options: *const otfcc_Options) {
     if (*font).glyf.is_null() {
         return;
     }
@@ -2598,7 +2598,7 @@ unsafe extern "C" fn statMaxContextOTL(mut table: *const table_OTL) -> uint16_t 
     }
     return maxc;
 }
-unsafe extern "C" fn statMaxContext(mut font: *mut otfcc_Font, mut options: *const otfcc_Options) {
+unsafe extern "C" fn statMaxContext(mut font: *mut otfcc_Font, mut _options: *const otfcc_Options) {
     let mut maxc: uint16_t = 1 as uint16_t;
     if !(*font).GSUB.is_null() {
         let mut maxc_gsub: uint16_t = statMaxContextOTL((*font).GSUB);
@@ -2936,7 +2936,7 @@ pub unsafe extern "C" fn otfcc_statFont(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_unstatFont(
     mut font: *mut otfcc_Font,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) {
     otfcc_iFont.deleteTable.expect("non-null function pointer")(font, 1751412088i32 as uint32_t);
     otfcc_iFont.deleteTable.expect("non-null function pointer")(font, 1752003704i32 as uint32_t);

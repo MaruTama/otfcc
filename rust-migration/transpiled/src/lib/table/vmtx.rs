@@ -452,7 +452,7 @@ pub unsafe extern "C" fn otfcc_buildVmtx(
     mut vmtx: *const table_vmtx,
     mut count_a: glyphid_t,
     mut count_k: glyphid_t,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if vmtx.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

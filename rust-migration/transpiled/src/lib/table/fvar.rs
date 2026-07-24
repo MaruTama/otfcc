@@ -1583,11 +1583,11 @@ unsafe extern "C" fn fvar_registerRegion(
             47 as ::core::ffi::c_ulong,
         ) as *mut fvar_Master;
         let mut sMasterID: sds = sdsfromlonglong((1 as ::core::ffi::c_uint).wrapping_add(
-            (if !(*fvar).masters.is_null() {
+            if !(*fvar).masters.is_null() {
                 (*(*(*fvar).masters).hh.tbl).num_items
             } else {
                 0 as ::core::ffi::c_uint
-            }),
+            },
         ) as ::core::ffi::c_longlong);
         (*m).name = sdscatsds(
             sdsnew(b"m\0" as *const u8 as *const ::core::ffi::c_char),
@@ -1969,7 +1969,7 @@ unsafe extern "C" fn fvar_registerRegion(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*m).hh.tbl).num_items
+                    if (*(*m).hh.tbl).num_items
                         & (*(*m).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1979,7 +1979,7 @@ unsafe extern "C" fn fvar_registerRegion(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*m).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2975,7 +2975,7 @@ pub unsafe extern "C" fn json_new_VVp(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn json_vqOf(mut cv: *const json_value, mut fvar: *const table_fvar) -> VQ {
+pub unsafe extern "C" fn json_vqOf(mut cv: *const json_value, mut _fvar: *const table_fvar) -> VQ {
     return iVQ.createStill.expect("non-null function pointer")(json_numof(cv) as pos_t);
 }
 #[no_mangle]

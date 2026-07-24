@@ -2180,7 +2180,7 @@ unsafe extern "C" fn _declareLookupParser(
                     .log2_num_buckets
                     .wrapping_add(1 as ::core::ffi::c_uint))
             .wrapping_add(
-                (if (*(*item).hh.tbl).num_items
+                if (*(*item).hh.tbl).num_items
                     & (*(*item).hh.tbl)
                         .num_buckets
                         .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2190,7 +2190,7 @@ unsafe extern "C" fn _declareLookupParser(
                     1 as ::core::ffi::c_uint
                 } else {
                     0 as ::core::ffi::c_uint
-                }),
+                },
             );
             (*(*item).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
             _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2992,7 +2992,7 @@ unsafe extern "C" fn figureOutLookupsFromJSON(
                                 .log2_num_buckets
                                 .wrapping_add(1 as ::core::ffi::c_uint))
                         .wrapping_add(
-                            (if (*(*dup).hh.tbl).num_items
+                            if (*(*dup).hh.tbl).num_items
                                 & (*(*dup).hh.tbl)
                                     .num_buckets
                                     .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -3002,7 +3002,7 @@ unsafe extern "C" fn figureOutLookupsFromJSON(
                                 1 as ::core::ffi::c_uint
                             } else {
                                 0 as ::core::ffi::c_uint
-                            }),
+                            },
                         );
                         (*(*dup).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                         _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -4235,7 +4235,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                                     .log2_num_buckets
                                     .wrapping_add(1 as ::core::ffi::c_uint))
                             .wrapping_add(
-                                (if (*(*s).hh.tbl).num_items
+                                if (*(*s).hh.tbl).num_items
                                     & (*(*s).hh.tbl)
                                         .num_buckets
                                         .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -4245,7 +4245,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                                     1 as ::core::ffi::c_uint
                                 } else {
                                     0 as ::core::ffi::c_uint
-                                }),
+                                },
                             );
                             (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                             _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -5057,7 +5057,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                                 .log2_num_buckets
                                 .wrapping_add(1 as ::core::ffi::c_uint))
                         .wrapping_add(
-                            (if (*(*dup).hh.tbl).num_items
+                            if (*(*dup).hh.tbl).num_items
                                 & (*(*dup).hh.tbl)
                                     .num_buckets
                                     .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -5067,7 +5067,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                                 1 as ::core::ffi::c_uint
                             } else {
                                 0 as ::core::ffi::c_uint
-                            }),
+                            },
                         );
                         (*(*dup).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                         _he_bkt_i_0 = 0 as ::core::ffi::c_uint;
@@ -6574,7 +6574,7 @@ unsafe extern "C" fn figureOutLanguagesFromJson(
                                     .log2_num_buckets
                                     .wrapping_add(1 as ::core::ffi::c_uint))
                             .wrapping_add(
-                                (if (*(*s).hh.tbl).num_items
+                                if (*(*s).hh.tbl).num_items
                                     & (*(*s).hh.tbl)
                                         .num_buckets
                                         .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -6584,7 +6584,7 @@ unsafe extern "C" fn figureOutLanguagesFromJson(
                                     1 as ::core::ffi::c_uint
                                 } else {
                                     0 as ::core::ffi::c_uint
-                                }),
+                                },
                             );
                             (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                             _he_bkt_i = 0 as ::core::ffi::c_uint;

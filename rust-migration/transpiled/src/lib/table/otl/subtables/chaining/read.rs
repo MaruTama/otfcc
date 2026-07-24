@@ -595,13 +595,13 @@ unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
 }
 #[no_mangle]
 pub unsafe extern "C" fn singleCoverage(
-    mut data: font_file_pointer,
-    mut tableLength: uint32_t,
+    mut _data: font_file_pointer,
+    mut _tableLength: uint32_t,
     mut gid: uint16_t,
     mut _offset: uint32_t,
-    mut kind: uint16_t,
-    maxGlyphs: glyphid_t,
-    mut userdata: *mut ::core::ffi::c_void,
+    mut _kind: uint16_t,
+    _maxGlyphs: glyphid_t,
+    mut _userdata: *mut ::core::ffi::c_void,
 ) -> *mut otl_Coverage {
     let mut cov: *mut otl_Coverage = ::core::ptr::null_mut::<otl_Coverage>();
     cov = __caryll_allocate_clean(
@@ -619,8 +619,8 @@ pub unsafe extern "C" fn singleCoverage(
 }
 #[no_mangle]
 pub unsafe extern "C" fn classCoverage(
-    mut data: font_file_pointer,
-    mut tableLength: uint32_t,
+    mut _data: font_file_pointer,
+    mut _tableLength: uint32_t,
     mut cls: uint16_t,
     mut _offset: uint32_t,
     mut kind: uint16_t,
@@ -734,9 +734,9 @@ pub unsafe extern "C" fn format3Coverage(
     mut tableLength: uint32_t,
     mut shift: uint16_t,
     mut _offset: uint32_t,
-    mut kind: uint16_t,
-    maxGlyphs: glyphid_t,
-    mut userdata: *mut ::core::ffi::c_void,
+    mut _kind: uint16_t,
+    _maxGlyphs: glyphid_t,
+    mut _userdata: *mut ::core::ffi::c_void,
 ) -> *mut otl_Coverage {
     return otl_iCoverage.read.expect("non-null function pointer")(
         data as *const uint8_t,

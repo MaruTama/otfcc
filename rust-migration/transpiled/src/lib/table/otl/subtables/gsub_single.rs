@@ -1124,8 +1124,8 @@ pub unsafe extern "C" fn otl_read_gsub_single(
     data: font_file_pointer,
     mut tableLength: uint32_t,
     mut subtableOffset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut subtableFormat: uint16_t = 0;
     let mut current_block: u64;
@@ -1279,7 +1279,7 @@ pub unsafe extern "C" fn otl_gsub_dump_single(
 #[no_mangle]
 pub unsafe extern "C" fn otl_gsub_parse_single(
     mut _subtable: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut subtable: *mut subtable_gsub_single =
         (

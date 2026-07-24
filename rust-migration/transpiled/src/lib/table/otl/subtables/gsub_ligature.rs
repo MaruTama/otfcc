@@ -1317,8 +1317,8 @@ pub unsafe extern "C" fn otl_read_gsub_ligature(
     data: font_file_pointer,
     mut tableLength: uint32_t,
     mut offset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut startCoverage: *mut otl_Coverage = ::core::ptr::null_mut::<otl_Coverage>();
     let mut setCount: glyphid_t = 0;
@@ -1556,7 +1556,7 @@ pub unsafe extern "C" fn otl_gsub_dump_ligature(
 #[no_mangle]
 pub unsafe extern "C" fn otl_gsub_parse_ligature(
     mut _subtable: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     if !json_obj_get_type(
         _subtable,
@@ -1651,7 +1651,7 @@ unsafe extern "C" fn by_gid(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_build_gsub_ligature_subtable(
     mut _subtable: *const otl_Subtable,
-    mut heuristics: otl_BuildHeuristics,
+    mut _heuristics: otl_BuildHeuristics,
 ) -> *mut caryll_Buffer {
     let mut subtable: *const subtable_gsub_ligature = &raw const (*_subtable).gsub_ligature;
     let mut h: *mut ligature_aggerator = ::core::ptr::null_mut::<ligature_aggerator>();
@@ -2344,7 +2344,7 @@ pub unsafe extern "C" fn otfcc_build_gsub_ligature_subtable(
                             .log2_num_buckets
                             .wrapping_add(1 as ::core::ffi::c_uint))
                     .wrapping_add(
-                        (if (*(*s).hh.tbl).num_items
+                        if (*(*s).hh.tbl).num_items
                             & (*(*s).hh.tbl)
                                 .num_buckets
                                 .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2354,7 +2354,7 @@ pub unsafe extern "C" fn otfcc_build_gsub_ligature_subtable(
                             1 as ::core::ffi::c_uint
                         } else {
                             0 as ::core::ffi::c_uint
-                        }),
+                        },
                     );
                     (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                     _he_bkt_i = 0 as ::core::ffi::c_uint;

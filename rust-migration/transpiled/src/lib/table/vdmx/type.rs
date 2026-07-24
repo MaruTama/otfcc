@@ -218,7 +218,7 @@ unsafe extern "C" fn vdmx_Record_replace(mut dst: *mut vdmx_Record, src: vdmx_Re
     );
 }
 #[inline]
-unsafe extern "C" fn vdmx_Record_dispose(mut x: *mut vdmx_Record) {}
+unsafe extern "C" fn vdmx_Record_dispose(mut _x: *mut vdmx_Record) {}
 #[inline]
 unsafe extern "C" fn vdmx_Record_move(mut dst: *mut vdmx_Record, mut src: *mut vdmx_Record) {
     memcpy(

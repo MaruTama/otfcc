@@ -295,7 +295,7 @@ unsafe extern "C" fn initHhea(mut hhea: *mut table_hhea) {
     (*hhea).version = 0x10000 as ::core::ffi::c_int as f16dot16;
 }
 #[inline]
-unsafe extern "C" fn disposeHhea(mut hhea: *mut table_hhea) {}
+unsafe extern "C" fn disposeHhea(mut _hhea: *mut table_hhea) {}
 #[inline]
 unsafe extern "C" fn table_hhea_free(mut x: *mut table_hhea) {
     if x.is_null() {
@@ -655,7 +655,7 @@ pub unsafe extern "C" fn otfcc_parseHhea(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildHhea(
     mut hhea: *const table_hhea,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if hhea.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

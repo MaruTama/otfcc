@@ -1451,7 +1451,7 @@ unsafe extern "C" fn by_from_id(
 #[no_mangle]
 pub unsafe extern "C" fn consolidate_gsub_reverse(
     mut font: *mut otfcc_Font,
-    mut table: *mut table_OTL,
+    mut _table: *mut table_OTL,
     mut _subtable: *mut otl_Subtable,
     mut options: *const otfcc_Options,
 ) -> bool {
@@ -2175,7 +2175,7 @@ pub unsafe extern "C" fn consolidate_gsub_reverse(
                             .log2_num_buckets
                             .wrapping_add(1 as ::core::ffi::c_uint))
                     .wrapping_add(
-                        (if (*(*s).hh.tbl).num_items
+                        if (*(*s).hh.tbl).num_items
                             & (*(*s).hh.tbl)
                                 .num_buckets
                                 .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2185,7 +2185,7 @@ pub unsafe extern "C" fn consolidate_gsub_reverse(
                             1 as ::core::ffi::c_uint
                         } else {
                             0 as ::core::ffi::c_uint
-                        }),
+                        },
                     );
                     (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                     _he_bkt_i = 0 as ::core::ffi::c_uint;

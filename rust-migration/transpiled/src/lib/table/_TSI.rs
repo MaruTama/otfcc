@@ -784,7 +784,7 @@ unsafe extern "C" fn isValidGID(mut gid: uint16_t, mut tagIndex: uint32_t) -> bo
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readTSI(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
     mut tagIndex: uint32_t,
     mut tagText: uint32_t,
 ) -> *mut table_TSI {
@@ -1241,7 +1241,7 @@ unsafe extern "C" fn pushTSIEntries(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildTSI(
     mut tsi: *const table_TSI,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> tsi_BuildTarget {
     let mut target: tsi_BuildTarget = tsi_BuildTarget {
         indexPart: ::core::ptr::null_mut::<caryll_Buffer>(),

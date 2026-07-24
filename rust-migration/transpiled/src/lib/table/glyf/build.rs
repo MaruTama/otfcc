@@ -707,7 +707,7 @@ unsafe extern "C" fn glyf_build_composite(mut g: *const glyf_Glyph, mut gbuf: *m
 pub unsafe extern "C" fn otfcc_buildGlyf(
     mut table: *const table_glyf,
     mut head: *mut table_head,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> table_GlyfAndLocaBuffers {
     let mut bufglyf: *mut caryll_Buffer = bufnew();
     let mut bufloca: *mut caryll_Buffer = bufnew();

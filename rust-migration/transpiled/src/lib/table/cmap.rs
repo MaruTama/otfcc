@@ -1401,7 +1401,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapByIndex(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hh.tbl).num_items
+                    if (*(*s).hh.tbl).num_items
                         & (*(*s).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1411,7 +1411,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapByIndex(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2153,7 +2153,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapByName(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hh.tbl).num_items
+                    if (*(*s).hh.tbl).num_items
                         & (*(*s).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2163,7 +2163,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapByName(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -3580,7 +3580,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByIndex(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hh.tbl).num_items
+                    if (*(*s).hh.tbl).num_items
                         & (*(*s).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -3590,7 +3590,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByIndex(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -4324,7 +4324,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByName(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hh.tbl).num_items
+                    if (*(*s).hh.tbl).num_items
                         & (*(*s).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -4334,7 +4334,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByName(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;

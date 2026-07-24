@@ -2573,7 +2573,7 @@ unsafe extern "C" fn glyf_PostscriptStemDef_copy(
     );
 }
 #[inline]
-unsafe extern "C" fn glyf_PostscriptStemDef_dispose(mut x: *mut glyf_PostscriptStemDef) {}
+unsafe extern "C" fn glyf_PostscriptStemDef_dispose(mut _x: *mut glyf_PostscriptStemDef) {}
 #[inline]
 unsafe extern "C" fn glyf_PostscriptStemDef_init(mut x: *mut glyf_PostscriptStemDef) {
     memset(
@@ -3031,7 +3031,7 @@ unsafe extern "C" fn glyf_PostscriptHintMask_copy(
     );
 }
 #[inline]
-unsafe extern "C" fn glyf_PostscriptHintMask_dispose(mut x: *mut glyf_PostscriptHintMask) {}
+unsafe extern "C" fn glyf_PostscriptHintMask_dispose(mut _x: *mut glyf_PostscriptHintMask) {}
 #[inline]
 unsafe extern "C" fn glyf_PostscriptHintMask_replace(
     mut dst: *mut glyf_PostscriptHintMask,

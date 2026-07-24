@@ -953,8 +953,8 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
     data: font_file_pointer,
     mut tableLength: uint32_t,
     mut offset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut subtableFormat: uint16_t = 0;
     let mut current_block: u64;
@@ -1913,7 +1913,7 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
                                                         .log2_num_buckets
                                                         .wrapping_add(1 as ::core::ffi::c_uint))
                                                 .wrapping_add(
-                                                    (if (*(*s).hh.tbl).num_items
+                                                    if (*(*s).hh.tbl).num_items
                                                         & (*(*s).hh.tbl)
                                                             .num_buckets
                                                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1923,7 +1923,7 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
                                                         1 as ::core::ffi::c_uint
                                                     } else {
                                                         0 as ::core::ffi::c_uint
-                                                    }),
+                                                    },
                                                 );
                                                 (*(*s).hh.tbl).nonideal_items =
                                                     0 as ::core::ffi::c_uint;
@@ -2845,7 +2845,7 @@ pub unsafe extern "C" fn otl_gpos_dump_pair(mut _subtable: *const otl_Subtable) 
 #[no_mangle]
 pub unsafe extern "C" fn otl_gpos_parse_pair(
     mut _subtable: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut class1Count: glyphclass_t = 0;
     let mut class2Count: glyphclass_t = 0;
@@ -3228,7 +3228,7 @@ pub unsafe extern "C" fn otfcc_build_gpos_pair_classes(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_build_gpos_pair(
     mut _subtable: *const otl_Subtable,
-    mut heuristics: otl_BuildHeuristics,
+    mut _heuristics: otl_BuildHeuristics,
 ) -> *mut caryll_Buffer {
     let mut format1: *mut bk_Block = otfcc_build_gpos_pair_individual(_subtable);
     let mut format2: *mut bk_Block = otfcc_build_gpos_pair_classes(_subtable);

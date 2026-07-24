@@ -377,7 +377,7 @@ pub unsafe extern "C" fn otfcc_readVORG(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildVORG(
     mut table: *const table_VORG,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if table.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

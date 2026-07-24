@@ -335,7 +335,7 @@ unsafe extern "C" fn pos_t_copyReplace(mut dst: *mut pos_t, src: pos_t) {
     pos_t_copy(dst, &raw const src);
 }
 #[inline]
-unsafe extern "C" fn pos_t_dispose(mut x: *mut pos_t) {}
+unsafe extern "C" fn pos_t_dispose(mut _x: *mut pos_t) {}
 #[inline]
 unsafe extern "C" fn VV_createN(mut n: size_t) -> *mut VV {
     let mut t: *mut VV = malloc(::core::mem::size_of::<VV>() as size_t) as *mut VV;

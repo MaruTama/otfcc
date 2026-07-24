@@ -771,7 +771,7 @@ pub unsafe extern "C" fn otfcc_parseVDMX(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildVDMX(
     mut vdmx: *const table_VDMX,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if vdmx.is_null() || (*vdmx).ratios.length == 0 {
         return ::core::ptr::null_mut::<caryll_Buffer>();

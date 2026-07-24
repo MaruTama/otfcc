@@ -1506,7 +1506,7 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 #[no_mangle]
 pub unsafe extern "C" fn consolidate_gsub_ligature(
     mut font: *mut otfcc_Font,
-    mut table: *mut table_OTL,
+    mut _table: *mut table_OTL,
     mut _subtable: *mut otl_Subtable,
     mut options: *const otfcc_Options,
 ) -> bool {

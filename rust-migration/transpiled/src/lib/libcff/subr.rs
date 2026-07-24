@@ -2160,7 +2160,7 @@ unsafe extern "C" fn addDoublet(mut g: *mut cff_SubrGraph, mut n: *mut cff_SubrN
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*di).hh.tbl).num_items
+                    if (*(*di).hh.tbl).num_items
                         & (*(*di).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2170,7 +2170,7 @@ unsafe extern "C" fn addDoublet(mut g: *mut cff_SubrGraph, mut n: *mut cff_SubrN
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*di).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2906,7 +2906,7 @@ unsafe extern "C" fn addSinglet(mut g: *mut cff_SubrGraph, mut n: *mut cff_SubrN
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*di).hh.tbl).num_items
+                    if (*(*di).hh.tbl).num_items
                         & (*(*di).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2916,7 +2916,7 @@ unsafe extern "C" fn addSinglet(mut g: *mut cff_SubrGraph, mut n: *mut cff_SubrN
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*di).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -3815,7 +3815,7 @@ unsafe extern "C" fn checkDoubletMatch(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*di).hh.tbl).num_items
+                    if (*(*di).hh.tbl).num_items
                         & (*(*di).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -3825,7 +3825,7 @@ unsafe extern "C" fn checkDoubletMatch(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*di).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -4573,7 +4573,7 @@ unsafe extern "C" fn checkSingletMatch(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*di).hh.tbl).num_items
+                    if (*(*di).hh.tbl).num_items
                         & (*(*di).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -4583,7 +4583,7 @@ unsafe extern "C" fn checkSingletMatch(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*di).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;

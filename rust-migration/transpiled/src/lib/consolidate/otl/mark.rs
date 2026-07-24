@@ -1618,7 +1618,7 @@ unsafe extern "C" fn lig_by_gid(mut a: *mut lig_hash, mut b: *mut lig_hash) -> :
 }
 unsafe extern "C" fn consolidateMarkArray(
     mut font: *mut otfcc_Font,
-    mut table: *mut table_OTL,
+    mut _table: *mut table_OTL,
     mut options: *const otfcc_Options,
     mut markArray: *mut otl_MarkArray,
     mut classCount: glyphclass_t,
@@ -2355,7 +2355,7 @@ unsafe extern "C" fn consolidateMarkArray(
                                 .log2_num_buckets
                                 .wrapping_add(1 as ::core::ffi::c_uint))
                         .wrapping_add(
-                            (if (*(*s).hh.tbl).num_items
+                            if (*(*s).hh.tbl).num_items
                                 & (*(*s).hh.tbl)
                                     .num_buckets
                                     .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2365,7 +2365,7 @@ unsafe extern "C" fn consolidateMarkArray(
                                 1 as ::core::ffi::c_uint
                             } else {
                                 0 as ::core::ffi::c_uint
-                            }),
+                            },
                         );
                         (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                         _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2646,7 +2646,7 @@ unsafe extern "C" fn consolidateMarkArray(
 }
 unsafe extern "C" fn consolidateBaseArray(
     mut font: *mut otfcc_Font,
-    mut table: *mut table_OTL,
+    mut _table: *mut table_OTL,
     mut options: *const otfcc_Options,
     mut baseArray: *mut otl_BaseArray,
 ) {
@@ -3378,7 +3378,7 @@ unsafe extern "C" fn consolidateBaseArray(
                                 .log2_num_buckets
                                 .wrapping_add(1 as ::core::ffi::c_uint))
                         .wrapping_add(
-                            (if (*(*s).hh.tbl).num_items
+                            if (*(*s).hh.tbl).num_items
                                 & (*(*s).hh.tbl)
                                     .num_buckets
                                     .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -3388,7 +3388,7 @@ unsafe extern "C" fn consolidateBaseArray(
                                 1 as ::core::ffi::c_uint
                             } else {
                                 0 as ::core::ffi::c_uint
-                            }),
+                            },
                         );
                         (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                         _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -3666,7 +3666,7 @@ unsafe extern "C" fn consolidateBaseArray(
 }
 unsafe extern "C" fn consolidateLigArray(
     mut font: *mut otfcc_Font,
-    mut table: *mut table_OTL,
+    mut _table: *mut table_OTL,
     mut options: *const otfcc_Options,
     mut ligArray: *mut otl_LigatureArray,
 ) {
@@ -4399,7 +4399,7 @@ unsafe extern "C" fn consolidateLigArray(
                                 .log2_num_buckets
                                 .wrapping_add(1 as ::core::ffi::c_uint))
                         .wrapping_add(
-                            (if (*(*s).hh.tbl).num_items
+                            if (*(*s).hh.tbl).num_items
                                 & (*(*s).hh.tbl)
                                     .num_buckets
                                     .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -4409,7 +4409,7 @@ unsafe extern "C" fn consolidateLigArray(
                                 1 as ::core::ffi::c_uint
                             } else {
                                 0 as ::core::ffi::c_uint
-                            }),
+                            },
                         );
                         (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                         _he_bkt_i = 0 as ::core::ffi::c_uint;

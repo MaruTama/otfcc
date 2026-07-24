@@ -616,7 +616,7 @@ unsafe extern "C" fn try_untabgle_block(
     mut f: *mut bk_Graph,
     mut b: *mut bk_Block,
     mut offsets: *mut size_t,
-    mut passes: uint16_t,
+    mut _passes: uint16_t,
 ) -> bool {
     let mut didCopy: bool = false_0 != 0;
     let mut j: uint32_t = 0 as uint32_t;

@@ -311,7 +311,7 @@ unsafe extern "C" fn gasp_Record_copy(mut dst: *mut gasp_Record, mut src: *const
     );
 }
 #[inline]
-unsafe extern "C" fn gasp_Record_dispose(mut x: *mut gasp_Record) {}
+unsafe extern "C" fn gasp_Record_dispose(mut _x: *mut gasp_Record) {}
 #[inline]
 unsafe extern "C" fn gasp_Record_replace(mut dst: *mut gasp_Record, src: gasp_Record) {
     gasp_Record_dispose(dst);
@@ -1053,7 +1053,7 @@ pub unsafe extern "C" fn otfcc_parseGasp(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildGasp(
     mut gasp: *const table_gasp,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if gasp.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

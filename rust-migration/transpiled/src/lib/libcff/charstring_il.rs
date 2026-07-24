@@ -1381,7 +1381,7 @@ unsafe extern "C" fn nextstop(mut il: *mut cff_CharstringIL, mut j: uint32_t) ->
 unsafe extern "C" fn decideAdvance(
     mut il: *mut cff_CharstringIL,
     mut j: uint32_t,
-    mut optimizeLevel: uint8_t,
+    mut _optimizeLevel: uint8_t,
 ) -> uint8_t {
     let mut r: uint8_t = 0 as uint8_t;
     r = zroll(

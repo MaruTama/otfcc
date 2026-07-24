@@ -1228,7 +1228,7 @@ unsafe extern "C" fn readClassDef(
                                     .log2_num_buckets
                                     .wrapping_add(1 as ::core::ffi::c_uint))
                             .wrapping_add(
-                                (if (*(*item).hh.tbl).num_items
+                                if (*(*item).hh.tbl).num_items
                                     & (*(*item).hh.tbl)
                                         .num_buckets
                                         .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1238,7 +1238,7 @@ unsafe extern "C" fn readClassDef(
                                     1 as ::core::ffi::c_uint
                                 } else {
                                     0 as ::core::ffi::c_uint
-                                }),
+                                },
                             );
                             (*(*item).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                             _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2202,7 +2202,7 @@ unsafe extern "C" fn expandClassDef(
                             .log2_num_buckets
                             .wrapping_add(1 as ::core::ffi::c_uint))
                     .wrapping_add(
-                        (if (*(*item).hh.tbl).num_items
+                        if (*(*item).hh.tbl).num_items
                             & (*(*item).hh.tbl)
                                 .num_buckets
                                 .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2212,7 +2212,7 @@ unsafe extern "C" fn expandClassDef(
                             1 as ::core::ffi::c_uint
                         } else {
                             0 as ::core::ffi::c_uint
-                        }),
+                        },
                     );
                     (*(*item).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                     _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2969,7 +2969,7 @@ unsafe extern "C" fn expandClassDef(
                             .log2_num_buckets
                             .wrapping_add(1 as ::core::ffi::c_uint))
                     .wrapping_add(
-                        (if (*(*item_0).hh.tbl).num_items
+                        if (*(*item_0).hh.tbl).num_items
                             & (*(*item_0).hh.tbl)
                                 .num_buckets
                                 .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2979,7 +2979,7 @@ unsafe extern "C" fn expandClassDef(
                             1 as ::core::ffi::c_uint
                         } else {
                             0 as ::core::ffi::c_uint
-                        }),
+                        },
                     );
                     (*(*item_0).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                     _he_bkt_i_0 = 0 as ::core::ffi::c_uint;

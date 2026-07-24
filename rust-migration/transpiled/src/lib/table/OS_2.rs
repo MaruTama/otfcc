@@ -272,7 +272,7 @@ unsafe extern "C" fn initOS2(mut table: *mut table_OS_2) {
     (*table).version = 4 as uint16_t;
 }
 #[inline]
-unsafe extern "C" fn disposeOS2(mut table: *mut table_OS_2) {}
+unsafe extern "C" fn disposeOS2(mut _table: *mut table_OS_2) {}
 #[inline]
 unsafe extern "C" fn table_OS_2_dispose(mut x: *mut table_OS_2) {
     disposeOS2(x);
@@ -1355,7 +1355,7 @@ pub unsafe extern "C" fn otfcc_parseOS_2(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildOS_2(
     mut os_2: *const table_OS_2,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if os_2.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

@@ -1088,7 +1088,7 @@ pub unsafe extern "C" fn otfcc_SFNTBuilder_pushTable(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*item).hh.tbl).num_items
+                    if (*(*item).hh.tbl).num_items
                         & (*(*item).hh.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1098,7 +1098,7 @@ pub unsafe extern "C" fn otfcc_SFNTBuilder_pushTable(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*item).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -1196,15 +1196,15 @@ pub unsafe extern "C" fn otfcc_SFNTBuilder_serialize(
     {
         8 as ::core::ffi::c_int
     } else {
-        (if (nTables as ::core::ffi::c_int) < 32 as ::core::ffi::c_int {
+        if (nTables as ::core::ffi::c_int) < 32 as ::core::ffi::c_int {
             16 as ::core::ffi::c_int
         } else {
-            (if (nTables as ::core::ffi::c_int) < 64 as ::core::ffi::c_int {
+            if (nTables as ::core::ffi::c_int) < 64 as ::core::ffi::c_int {
                 32 as ::core::ffi::c_int
             } else {
                 64 as ::core::ffi::c_int
-            })
-        })
+            }
+        }
     }) * 16 as ::core::ffi::c_int) as uint16_t;
     bufwrite32b(buffer, (*builder).header);
     bufwrite16b(buffer, nTables);

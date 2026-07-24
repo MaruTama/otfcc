@@ -1117,8 +1117,8 @@ pub unsafe extern "C" fn otl_read_gsub_multi(
     mut data: font_file_pointer,
     mut tableLength: uint32_t,
     mut offset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut seqCount: glyphid_t = 0;
     let mut subtable: *mut subtable_gsub_multi =
@@ -1224,7 +1224,7 @@ pub unsafe extern "C" fn otl_gsub_dump_multi(
 #[no_mangle]
 pub unsafe extern "C" fn otl_gsub_parse_multi(
     mut _subtable: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut st: *mut subtable_gsub_multi =
         (
@@ -1320,7 +1320,7 @@ pub const GSUB_MULTI_SUBTABLE_SIZE_LIMIT: ::core::ffi::c_int = 0xff00 as ::core:
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_build_gsub_multi_subtable_split(
     mut _subtable: *const otl_Subtable,
-    mut heuristics: otl_BuildHeuristics,
+    mut _heuristics: otl_BuildHeuristics,
     mut count: *mut tableid_t,
 ) -> *mut *mut caryll_Buffer {
     let mut subtable: *const subtable_gsub_multi = &raw const (*_subtable).gsub_multi;
@@ -1373,7 +1373,7 @@ pub unsafe extern "C" fn otfcc_build_gsub_multi_subtable_split(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_build_gsub_multi_subtable(
     mut _subtable: *const otl_Subtable,
-    mut heuristics: otl_BuildHeuristics,
+    mut _heuristics: otl_BuildHeuristics,
 ) -> *mut caryll_Buffer {
     let mut subtable: *const subtable_gsub_multi = &raw const (*_subtable).gsub_multi;
     return buildGsubMultiSubtableRange(subtable, 0 as glyphid_t, (*subtable).length as glyphid_t);

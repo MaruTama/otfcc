@@ -1247,7 +1247,7 @@ pub unsafe extern "C" fn otfcc_parseName(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildName(
     mut name: *const table_name,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if name.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

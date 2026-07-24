@@ -448,7 +448,7 @@ pub unsafe extern "C" fn otfcc_buildHmtx(
     mut hmtx: *const table_hmtx,
     mut count_a: glyphid_t,
     mut count_k: glyphid_t,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     let mut buf: *mut caryll_Buffer = bufnew();
     if hmtx.is_null() {

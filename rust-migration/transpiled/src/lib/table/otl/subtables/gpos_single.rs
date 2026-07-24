@@ -1047,8 +1047,8 @@ pub unsafe extern "C" fn otl_read_gpos_single(
     data: font_file_pointer,
     mut tableLength: uint32_t,
     mut offset: uint32_t,
-    maxGlyphs: glyphid_t,
-    mut options: *const otfcc_Options,
+    _maxGlyphs: glyphid_t,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut subtableFormat: uint16_t = 0;
     let mut current_block: u64;
@@ -1188,7 +1188,7 @@ pub unsafe extern "C" fn otl_gpos_dump_single(
 #[no_mangle]
 pub unsafe extern "C" fn otl_gpos_parse_single(
     mut _subtable: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut subtable: *mut subtable_gpos_single =
         (
@@ -1229,7 +1229,7 @@ pub unsafe extern "C" fn otl_gpos_parse_single(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_build_gpos_single(
     mut _subtable: *const otl_Subtable,
-    mut heuristics: otl_BuildHeuristics,
+    mut _heuristics: otl_BuildHeuristics,
 ) -> *mut caryll_Buffer {
     let mut subtable: *const subtable_gpos_single = &raw const (*_subtable).gpos_single;
     let mut isConst: bool = (*subtable).length > 0 as size_t;

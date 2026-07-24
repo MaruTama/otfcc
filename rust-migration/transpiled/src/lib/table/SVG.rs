@@ -836,7 +836,7 @@ unsafe extern "C" fn table_SVG_resizeTo(mut arr: *mut table_SVG, mut target: siz
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readSVG(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut table_SVG {
     let mut offsetToSVGDocIndex: uint32_t = 0;
     let mut numEntries: uint16_t = 0;
@@ -1131,7 +1131,7 @@ unsafe extern "C" fn byStartGID(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildSVG(
     mut _svg: *const table_SVG,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if _svg.is_null() || (*_svg).length == 0 {
         return ::core::ptr::null_mut::<caryll_Buffer>();

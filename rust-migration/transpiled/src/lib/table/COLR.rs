@@ -1702,7 +1702,7 @@ unsafe extern "C" fn byGID(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildCOLR(
     mut _colr: *const table_COLR,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if _colr.is_null() || (*_colr).length == 0 {
         return ::core::ptr::null_mut::<caryll_Buffer>();

@@ -1518,7 +1518,7 @@ unsafe extern "C" fn readLigCaretRecord(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readGDEF(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut table_GDEF {
     let mut classdefOffset: uint16_t = 0;
     let mut ligCaretOffset: uint16_t = 0;
@@ -1979,7 +1979,7 @@ unsafe extern "C" fn writeLigCarets(mut lc: *const otl_LigCaretTable) -> *mut bk
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildGDEF(
     mut gdef: *const table_GDEF,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if gdef.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

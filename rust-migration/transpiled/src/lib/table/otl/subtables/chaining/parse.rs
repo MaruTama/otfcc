@@ -645,7 +645,7 @@ unsafe extern "C" fn json_obj_getnum_fallback(
 #[no_mangle]
 pub unsafe extern "C" fn otl_parse_chaining(
     mut _subtable: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut _match: *mut json_value = json_obj_get_type(
         _subtable,

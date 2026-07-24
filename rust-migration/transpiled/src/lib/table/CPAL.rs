@@ -513,7 +513,7 @@ unsafe extern "C" fn cpal_Color_copy(mut dst: *mut cpal_Color, mut src: *const c
     );
 }
 #[inline]
-unsafe extern "C" fn cpal_Color_dispose(mut x: *mut cpal_Color) {}
+unsafe extern "C" fn cpal_Color_dispose(mut _x: *mut cpal_Color) {}
 #[inline]
 unsafe extern "C" fn cpal_ColorSet_disposeItem(mut arr: *mut cpal_ColorSet, mut n: size_t) {
     if cpal_iColor.dispose.is_some() {
@@ -1377,7 +1377,7 @@ pub static mut white: cpal_Color = cpal_Color {
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readCPAL(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut table_CPAL {
     let mut version: uint16_t = 0;
     let mut tableHeaderLength: uint32_t = 0;
@@ -2034,7 +2034,7 @@ unsafe extern "C" fn buildPaletteEntryLabel(mut cpal: *const table_CPAL) -> *mut
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildCPAL(
     mut cpal: *const table_CPAL,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if cpal.is_null() || (*cpal).palettes.length == 0 {
         return ::core::ptr::null_mut::<caryll_Buffer>();

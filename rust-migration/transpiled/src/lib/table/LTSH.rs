@@ -274,7 +274,7 @@ unsafe extern "C" fn table_LTSH_replace(mut dst: *mut table_LTSH, src: table_LTS
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readLTSH(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut table_LTSH {
     let mut __fortable_keep: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
     let mut __fortable_count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -321,7 +321,7 @@ pub unsafe extern "C" fn otfcc_readLTSH(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildLTSH(
     mut ltsh: *const table_LTSH,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if ltsh.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

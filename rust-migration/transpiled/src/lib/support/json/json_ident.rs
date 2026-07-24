@@ -890,7 +890,7 @@ unsafe extern "C" fn compare_json_objects(
                             .log2_num_buckets
                             .wrapping_add(1 as ::core::ffi::c_uint))
                     .wrapping_add(
-                        (if (*(*e).hh.tbl).num_items
+                        if (*(*e).hh.tbl).num_items
                             & (*(*e).hh.tbl)
                                 .num_buckets
                                 .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -900,7 +900,7 @@ unsafe extern "C" fn compare_json_objects(
                             1 as ::core::ffi::c_uint
                         } else {
                             0 as ::core::ffi::c_uint
-                        }),
+                        },
                     );
                     (*(*e).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                     _he_bkt_i = 0 as ::core::ffi::c_uint;

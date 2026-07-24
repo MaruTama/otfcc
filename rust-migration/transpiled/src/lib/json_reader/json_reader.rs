@@ -2390,7 +2390,7 @@ unsafe extern "C" fn setOrderByName(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hhName.tbl).num_items
+                    if (*(*s).hhName.tbl).num_items
                         & (*(*s).hhName.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2400,7 +2400,7 @@ unsafe extern "C" fn setOrderByName(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hhName.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -2982,7 +2982,7 @@ unsafe extern "C" fn orderGlyphs(mut go: *mut otfcc_GlyphOrder) {
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*current).hhID.tbl).num_items
+                    if (*(*current).hhID.tbl).num_items
                         & (*(*current).hhID.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2992,7 +2992,7 @@ unsafe extern "C" fn orderGlyphs(mut go: *mut otfcc_GlyphOrder) {
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*current).hhID.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -3551,7 +3551,7 @@ unsafe extern "C" fn parseGlyphOrder(
 }
 unsafe extern "C" fn readJson(
     mut _root: *mut ::core::ffi::c_void,
-    mut index: uint32_t,
+    mut _index: uint32_t,
     mut options: *const otfcc_Options,
 ) -> *mut otfcc_Font {
     let mut root: *const json_value = _root as *mut json_value;

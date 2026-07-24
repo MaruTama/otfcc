@@ -298,7 +298,7 @@ pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readTSI5(
     packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut table_TSI5 {
     let mut __fortable_keep: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
     let mut __fortable_count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -343,7 +343,7 @@ pub unsafe extern "C" fn otfcc_readTSI5(
 pub unsafe extern "C" fn otfcc_dumpTSI5(
     mut table: *const table_TSI5,
     mut root: *mut json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) {
     if table.is_null() {
         return;
@@ -357,7 +357,7 @@ pub unsafe extern "C" fn otfcc_dumpTSI5(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_parseTSI5(
     mut root: *const json_value,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut table_TSI5 {
     let mut _tsi: *mut json_value = ::core::ptr::null_mut::<json_value>();
     _tsi = json_obj_get_type(
@@ -373,7 +373,7 @@ pub unsafe extern "C" fn otfcc_parseTSI5(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildTSI5(
     mut tsi5: *const table_TSI5,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
     mut numGlyphs: glyphid_t,
 ) -> *mut caryll_Buffer {
     if tsi5.is_null() {

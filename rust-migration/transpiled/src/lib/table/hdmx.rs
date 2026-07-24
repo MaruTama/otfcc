@@ -302,7 +302,7 @@ unsafe extern "C" fn table_hdmx_init(mut x: *mut table_hdmx) {
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readHdmx(
     mut packet: otfcc_Packet,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
     mut maxp: *mut table_maxp,
 ) -> *mut table_hdmx {
     let mut __fortable_keep: ::core::ffi::c_int = 1 as ::core::ffi::c_int;

@@ -1240,7 +1240,7 @@ pub unsafe extern "C" fn axisToBk(mut axis: *const otl_BaseAxis) -> *mut bk_Bloc
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildBASE(
     mut base: *const table_BASE,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if base.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

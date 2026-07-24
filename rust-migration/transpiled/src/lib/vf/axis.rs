@@ -141,7 +141,7 @@ unsafe extern "C" fn vf_Axis_replace(mut dst: *mut vf_Axis, src: vf_Axis) {
     );
 }
 #[inline]
-unsafe extern "C" fn vf_Axis_dispose(mut x: *mut vf_Axis) {}
+unsafe extern "C" fn vf_Axis_dispose(mut _x: *mut vf_Axis) {}
 #[inline]
 unsafe extern "C" fn vf_Axis_move(mut dst: *mut vf_Axis, mut src: *mut vf_Axis) {
     memcpy(

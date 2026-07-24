@@ -1059,7 +1059,7 @@ pub unsafe extern "C" fn otl_parseMarkArray(
     mut _marks: *mut json_value,
     mut array: *mut otl_MarkArray,
     mut h: *mut *mut otl_ClassnameHash,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) {
     let mut j: glyphid_t = 0 as glyphid_t;
     while (j as ::core::ffi::c_uint) < (*_marks).u.object.length {
@@ -1831,7 +1831,7 @@ pub unsafe extern "C" fn otl_parseMarkArray(
                                     .log2_num_buckets
                                     .wrapping_add(1 as ::core::ffi::c_uint))
                             .wrapping_add(
-                                (if (*(*s).hh.tbl).num_items
+                                if (*(*s).hh.tbl).num_items
                                     & (*(*s).hh.tbl)
                                         .num_buckets
                                         .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1841,7 +1841,7 @@ pub unsafe extern "C" fn otl_parseMarkArray(
                                     1 as ::core::ffi::c_uint
                                 } else {
                                     0 as ::core::ffi::c_uint
-                                }),
+                                },
                             );
                             (*(*s).hh.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                             _he_bkt_i = 0 as ::core::ffi::c_uint;

@@ -206,4 +206,4 @@ pub unsafe extern "C" fn vqRegionGetWeight(mut r: *const vq_Region, mut v: *cons
     return w;
 }
 #[no_mangle]
-pub unsafe extern "C" fn vq_showRegion(mut r: *const vq_Region) {}
+pub unsafe extern "C" fn vq_showRegion(mut _r: *const vq_Region) {}

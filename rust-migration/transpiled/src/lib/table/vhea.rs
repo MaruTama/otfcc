@@ -298,7 +298,7 @@ unsafe extern "C" fn initVhea(mut vhea: *mut table_vhea) {
     (*vhea).version = 0x10000 as ::core::ffi::c_int as f16dot16;
 }
 #[inline]
-unsafe extern "C" fn disposeVhea(mut vhea: *mut table_vhea) {}
+unsafe extern "C" fn disposeVhea(mut _vhea: *mut table_vhea) {}
 #[inline]
 unsafe extern "C" fn table_vhea_dispose(mut x: *mut table_vhea) {
     disposeVhea(x);
@@ -647,7 +647,7 @@ pub unsafe extern "C" fn otfcc_parseVhea(
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_buildVhea(
     mut vhea: *const table_vhea,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) -> *mut caryll_Buffer {
     if vhea.is_null() {
         return ::core::ptr::null_mut::<caryll_Buffer>();

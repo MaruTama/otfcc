@@ -1449,7 +1449,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByGID(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hhID.tbl).num_items
+                    if (*(*s).hhID.tbl).num_items
                         & (*(*s).hhID.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1459,7 +1459,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByGID(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hhID.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -1880,7 +1880,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByGID(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hhName.tbl).num_items
+                    if (*(*s).hhName.tbl).num_items
                         & (*(*s).hhName.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -1890,7 +1890,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByGID(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hhName.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i_0 = 0 as ::core::ffi::c_uint;
@@ -2625,7 +2625,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hhID.tbl).num_items
+                    if (*(*s).hhID.tbl).num_items
                         & (*(*s).hhID.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -2635,7 +2635,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hhID.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i = 0 as ::core::ffi::c_uint;
@@ -3056,7 +3056,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
                         .log2_num_buckets
                         .wrapping_add(1 as ::core::ffi::c_uint))
                 .wrapping_add(
-                    (if (*(*s).hhName.tbl).num_items
+                    if (*(*s).hhName.tbl).num_items
                         & (*(*s).hhName.tbl)
                             .num_buckets
                             .wrapping_mul(2 as ::core::ffi::c_uint)
@@ -3066,7 +3066,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
                         1 as ::core::ffi::c_uint
                     } else {
                         0 as ::core::ffi::c_uint
-                    }),
+                    },
                 );
                 (*(*s).hhName.tbl).nonideal_items = 0 as ::core::ffi::c_uint;
                 _he_bkt_i_0 = 0 as ::core::ffi::c_uint;

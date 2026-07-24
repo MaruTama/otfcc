@@ -2496,7 +2496,7 @@ unsafe extern "C" fn consolidateGlyphReferences(
 }
 unsafe extern "C" fn consolidateGlyphHints(
     mut g: *mut glyf_Glyph,
-    mut options: *const otfcc_Options,
+    mut _options: *const otfcc_Options,
 ) {
     if (*g).stemH.length != 0 {
         let mut j: shapeid_t = 0 as shapeid_t;
@@ -3463,25 +3463,25 @@ pub unsafe extern "C" fn otfcc_consolidate_lookup(
 }
 unsafe extern "C" fn lookupRefIsNotEmpty(
     mut rLut: *const otl_LookupRef,
-    mut env: *mut ::core::ffi::c_void,
+    mut _env: *mut ::core::ffi::c_void,
 ) -> bool {
     return !rLut.is_null() && !(*rLut).is_null() && (**rLut).subtables.length > 0 as size_t;
 }
 unsafe extern "C" fn featureRefIsNotEmpty(
     mut rFeat: *const otl_FeatureRef,
-    mut env: *mut ::core::ffi::c_void,
+    mut _env: *mut ::core::ffi::c_void,
 ) -> bool {
     return !rFeat.is_null() && !(*rFeat).is_null() && (**rFeat).lookups.length > 0 as size_t;
 }
 unsafe extern "C" fn lookupIsNotEmpty(
     mut rLut: *const otl_LookupPtr,
-    mut env: *mut ::core::ffi::c_void,
+    mut _env: *mut ::core::ffi::c_void,
 ) -> bool {
     return !rLut.is_null() && !(*rLut).is_null() && (**rLut).subtables.length > 0 as size_t;
 }
 unsafe extern "C" fn featureIsNotEmpty(
     mut rFeat: *const otl_FeaturePtr,
-    mut env: *mut ::core::ffi::c_void,
+    mut _env: *mut ::core::ffi::c_void,
 ) -> bool {
     return !rFeat.is_null() && !(*rFeat).is_null() && (**rFeat).lookups.length > 0 as size_t;
 }
