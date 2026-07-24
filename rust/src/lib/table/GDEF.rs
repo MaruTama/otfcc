@@ -47,6 +47,7 @@ extern "C" {
     fn bk_newBlockFromBuffer(buf: *mut caryll_Buffer) -> *mut bk_Block;
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
+use crate::src::lib::table::otl::coverage::{otl_Coverage_create, otl_Coverage_free, pushToCoverage, readCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromName, otfcc_Handle_dispose, otfcc_Handle_dup, otfcc_Handle_empty, otfcc_Handle, otfcc_GlyphHandle, HANDLE_STATE_EMPTY};
 use crate::src::lib::support::binio::{read_16u};
 use crate::src::lib::support::cvec::{
@@ -230,13 +231,6 @@ pub struct otfcc_Packet {
     pub entrySelector: uint16_t,
     pub rangeShift: uint16_t,
     pub pieces: *mut otfcc_PacketPiece,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -1382,7 +1376,7 @@ pub unsafe extern "C" fn otfcc_readGDEF(
                                 current_block = 10802812094495641425;
                             } else {
                                 let mut cov: *mut otl_Coverage =
-                                    otl_iCoverage.read.expect("non-null function pointer")(
+                                    readCoverage(
                                         data as *const uint8_t,
                                         tableLength,
                                         (ligCaretOffset as ::core::ffi::c_int
@@ -1449,7 +1443,7 @@ pub unsafe extern "C" fn otfcc_readGDEF(
                                         );
                                         j = j.wrapping_add(1);
                                     }
-                                    otl_iCoverage.free.expect("non-null function pointer")(cov);
+                                    otl_Coverage_free(cov);
                                     current_block = 11307063007268554308;
                                 }
                             }
@@ -1762,11 +1756,10 @@ unsafe extern "C" fn writeLigCaretRec(mut cr: *mut otl_CaretValueRecord) -> *mut
     return bcr;
 }
 unsafe extern "C" fn writeLigCarets(mut lc: *const otl_LigCaretTable) -> *mut bk_Block {
-    let mut cov: *mut otl_Coverage = (
-        otl_iCoverage.create.expect("non-null function pointer"))();
+    let mut cov: *mut otl_Coverage = otl_Coverage_create();
     let mut j: glyphid_t = 0 as glyphid_t;
     while (j as size_t) < (*lc).length {
-        otl_iCoverage.push.expect("non-null function pointer")(
+        pushToCoverage(
             cov,
             otfcc_Handle_dup(
                 (*(*lc).items.offset(j as isize)).glyph as otfcc_Handle,
@@ -1791,7 +1784,7 @@ unsafe extern "C" fn writeLigCarets(mut lc: *const otl_LigCaretTable) -> *mut bk
         );
         j_0 = j_0.wrapping_add(1);
     }
-    otl_iCoverage.free.expect("non-null function pointer")(cov);
+    otl_Coverage_free(cov);
     return lct;
 }
 #[no_mangle]

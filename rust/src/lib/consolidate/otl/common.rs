@@ -3,6 +3,7 @@ extern "C" {
     fn sdscatprintf(s: sds, fmt: *const ::core::ffi::c_char, ...) -> sds;
     static otfcc_pkgGlyphOrder: otfcc_GlyphOrderPackage;
 }
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{otfcc_Handle_dispose, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
@@ -505,13 +506,6 @@ pub struct subtable_gsub_reverse {
     pub inputIndex: tableid_t,
     pub match_0: *mut *mut otl_Coverage,
     pub to: *mut otl_Coverage,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]

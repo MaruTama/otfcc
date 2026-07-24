@@ -12,6 +12,7 @@ extern "C" {
         options: *const otfcc_Options,
     );
 }
+use crate::src::lib::table::otl::coverage::{shrinkCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{handle_consolidateTo, otfcc_Handle_dispose, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle, HANDLE_STATE_INDEX};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
@@ -514,13 +515,6 @@ pub struct subtable_gsub_reverse {
     pub inputIndex: tableid_t,
     pub match_0: *mut *mut otl_Coverage,
     pub to: *mut otl_Coverage,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -1433,7 +1427,7 @@ pub unsafe extern "C" fn consolidate_chaining(
     let mut j: tableid_t = 0 as tableid_t;
     while (j as ::core::ffi::c_int) < (*rule).matchCount as ::core::ffi::c_int {
         fontop_consolidateCoverage(font, *(*rule).match_0.offset(j as isize), options);
-        otl_iCoverage.shrink.expect("non-null function pointer")(
+        shrinkCoverage(
             *(*rule).match_0.offset(j as isize),
             true,
         );

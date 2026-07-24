@@ -40,6 +40,7 @@ extern "C" {
     static table_iCvt: __caryll_elementinterface_table_cvt;
     fn otfcc_consolidateFont(font: *mut otfcc_Font, options: *const otfcc_Options);
 }
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
@@ -326,13 +327,6 @@ pub struct vq_SegList {
 pub struct VQ {
     pub kernel: pos_t,
     pub shift: vq_SegList,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]

@@ -14,6 +14,7 @@ extern "C" {
     static iSubtable_chaining: __caryll_elementinterface_subtable_chaining;
 }
 
+use crate::src::lib::table::otl::coverage::{otl_Coverage_free, readCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromIndex, otfcc_Handle_dispose, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
@@ -172,13 +173,6 @@ pub struct otfcc_Options {
     pub logger: *mut otfcc_ILogger,
 }
 pub type font_file_pointer = *mut uint8_t;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct __otfcc_ICoverage {
@@ -643,7 +637,7 @@ pub unsafe extern "C" fn format3Coverage(
     _maxGlyphs: glyphid_t,
     mut _userdata: *mut ::core::ffi::c_void,
 ) -> *mut otl_Coverage {
-    return otl_iCoverage.read.expect("non-null function pointer")(
+    return readCoverage(
         data as *const uint8_t,
         tableLength,
         _offset
@@ -802,7 +796,7 @@ unsafe extern "C" fn readContextualFormat1(
             data.offset(offset as isize)
                 .offset(2 as ::core::ffi::c_int as isize) as *const uint8_t,
         ) as uint32_t) as uint16_t;
-        firstCoverage = otl_iCoverage.read.expect("non-null function pointer")(
+        firstCoverage = readCoverage(
             data as *const uint8_t,
             tableLength,
             covOffset as uint32_t,
@@ -925,7 +919,7 @@ unsafe extern "C" fn readContextualFormat1(
                             }
                             j_0 = j_0.wrapping_add(1);
                         }
-                        otl_iCoverage.free.expect("non-null function pointer")(firstCoverage);
+                        otl_Coverage_free(firstCoverage);
                         return subtable;
                     }
                 }
@@ -1439,7 +1433,7 @@ unsafe extern "C" fn readChainingFormat1(
             data.offset(offset as isize)
                 .offset(2 as ::core::ffi::c_int as isize) as *const uint8_t,
         ) as uint32_t) as uint16_t;
-        firstCoverage = otl_iCoverage.read.expect("non-null function pointer")(
+        firstCoverage = readCoverage(
             data as *const uint8_t,
             tableLength,
             covOffset as uint32_t,
@@ -1562,7 +1556,7 @@ unsafe extern "C" fn readChainingFormat1(
                             }
                             j_0 = j_0.wrapping_add(1);
                         }
-                        otl_iCoverage.free.expect("non-null function pointer")(firstCoverage);
+                        otl_Coverage_free(firstCoverage);
                         return subtable;
                     }
                 }
@@ -1806,7 +1800,7 @@ unsafe extern "C" fn closeRule(mut rule: *mut otl_ChainingRule) {
     {
         let mut k: tableid_t = 0 as tableid_t;
         while (k as ::core::ffi::c_int) < (*rule).matchCount as ::core::ffi::c_int {
-            otl_iCoverage.free.expect("non-null function pointer")(
+            otl_Coverage_free(
                 *(*rule).match_0.offset(k as isize),
             );
             k = k.wrapping_add(1);

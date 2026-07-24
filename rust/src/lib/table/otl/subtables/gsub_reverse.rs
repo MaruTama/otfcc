@@ -33,6 +33,7 @@ extern "C" {
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
 
+use crate::src::lib::table::otl::coverage::{otl_Coverage_free, readCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromIndex, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
@@ -185,13 +186,6 @@ pub struct otfcc_Options {
     pub logger: *mut otfcc_ILogger,
 }
 pub type font_file_pointer = *mut uint8_t;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct __otfcc_ICoverage {
@@ -597,14 +591,14 @@ unsafe extern "C" fn disposeGsubReverse(mut subtable: *mut subtable_gsub_reverse
     if !(*subtable).match_0.is_null() {
         let mut j: tableid_t = 0 as tableid_t;
         while (j as ::core::ffi::c_int) < (*subtable).matchCount as ::core::ffi::c_int {
-            otl_iCoverage.free.expect("non-null function pointer")(
+            otl_Coverage_free(
                 *(*subtable).match_0.offset(j as isize),
             );
             j = j.wrapping_add(1);
         }
     }
     if !(*subtable).to.is_null() {
-        otl_iCoverage.free.expect("non-null function pointer")((*subtable).to);
+        otl_Coverage_free((*subtable).to);
     }
 }
 #[inline]
@@ -805,7 +799,7 @@ pub unsafe extern "C" fn otl_read_gsub_reverse(
                         )
                             as uint32_t);
                         let ref mut fresh0 = *(*subtable).match_0.offset(j as isize);
-                        *fresh0 = otl_iCoverage.read.expect("non-null function pointer")(
+                        *fresh0 = readCoverage(
                             data as *const uint8_t,
                             tableLength,
                             covOffset,
@@ -820,7 +814,7 @@ pub unsafe extern "C" fn otl_read_gsub_reverse(
                         as uint32_t);
                     let ref mut fresh1 =
                         *(*subtable).match_0.offset((*subtable).inputIndex as isize);
-                    *fresh1 = otl_iCoverage.read.expect("non-null function pointer")(
+                    *fresh1 = readCoverage(
                         data as *const uint8_t,
                         tableLength,
                         covOffset_0,
@@ -850,7 +844,7 @@ pub unsafe extern "C" fn otl_read_gsub_reverse(
                                     + j_0 as ::core::ffi::c_int)
                                     as isize,
                             );
-                            *fresh2 = otl_iCoverage.read.expect("non-null function pointer")(
+                            *fresh2 = readCoverage(
                                 data as *const uint8_t,
                                 tableLength,
                                 covOffset_1,

@@ -14,6 +14,7 @@ extern "C" {
     static otl_iCoverage: __otfcc_ICoverage;
     static otl_iClassDef: __otfcc_IClassDef;
 }
+use crate::src::lib::table::otl::coverage::{otl_Coverage_free, otl_Coverage};
 use crate::src::lib::support::handle::{otfcc_Handle_dispose, otfcc_GlyphHandle, otfcc_LookupHandle};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
@@ -97,13 +98,6 @@ pub struct caryll_Buffer {
 pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
 pub type tableid_t = uint16_t;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct __otfcc_ICoverage {
@@ -358,7 +352,7 @@ unsafe extern "C" fn closeRule(mut rule: *mut otl_ChainingRule) {
     {
         let mut k: tableid_t = 0 as tableid_t;
         while (k as ::core::ffi::c_int) < (*rule).matchCount as ::core::ffi::c_int {
-            otl_iCoverage.free.expect("non-null function pointer")(
+            otl_Coverage_free(
                 *(*rule).match_0.offset(k as isize),
             );
             k = k.wrapping_add(1);

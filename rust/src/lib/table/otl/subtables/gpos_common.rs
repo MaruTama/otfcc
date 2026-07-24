@@ -57,6 +57,7 @@ extern "C" {
     fn bk_push(b: *mut bk_Block, type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
 }
 
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromName, otfcc_Handle_dispose, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, HANDLE_STATE_EMPTY};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
@@ -262,13 +263,6 @@ pub struct otfcc_Options {
     pub logger: *mut otfcc_ILogger,
 }
 pub type font_file_pointer = *mut uint8_t;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct __caryll_bkblock {

@@ -10,6 +10,7 @@ extern "C" {
         options: *const otfcc_Options,
     );
 }
+use crate::src::lib::table::otl::coverage::{shrinkCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
@@ -512,13 +513,6 @@ pub struct subtable_gsub_reverse {
     pub inputIndex: tableid_t,
     pub match_0: *mut *mut otl_Coverage,
     pub to: *mut otl_Coverage,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -1512,7 +1506,7 @@ pub unsafe extern "C" fn consolidate_gsub_ligature(
             );
         } else {
             fontop_consolidateCoverage(font, (*(*subtable).items.offset(k as isize)).from, options);
-            otl_iCoverage.shrink.expect("non-null function pointer")(
+            shrinkCoverage(
                 (*(*subtable).items.offset(k as isize)).from,
                 false,
             );

@@ -75,6 +75,7 @@ extern "C" {
     ) -> *mut table_hmtx;
 }
 
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
@@ -310,13 +311,6 @@ pub struct vq_SegList {
 pub struct VQ {
     pub kernel: pos_t,
     pub shift: vq_SegList,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]

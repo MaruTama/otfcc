@@ -36,6 +36,7 @@ extern "C" {
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
 
+use crate::src::lib::table::otl::coverage::{otl_Coverage_create, otl_Coverage_free, pushToCoverage, readCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromIndex, handle_fromName, otfcc_Handle_dispose, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle, HANDLE_STATE_EMPTY};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::__caryll_reallocate;
@@ -198,13 +199,6 @@ pub struct otfcc_Options {
     pub logger: *mut otfcc_ILogger,
 }
 pub type font_file_pointer = *mut uint8_t;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct __otfcc_ICoverage {
@@ -574,7 +568,7 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 unsafe extern "C" fn deleteGsubMultiEntry(mut entry: *mut otl_GsubMultiEntry) {
     otfcc_Handle_dispose(&raw mut (*entry).from);
-    otl_iCoverage.free.expect("non-null function pointer")((*entry).to);
+    otl_Coverage_free((*entry).to);
     (*entry).to = ::core::ptr::null_mut::<otl_Coverage>();
 }
 static mut gsm_typeinfo: __caryll_elementinterface_otl_GsubMultiEntry = {
@@ -931,7 +925,7 @@ pub unsafe extern "C" fn otl_read_gsub_multi(
                 .expect("non-null function pointer"))();
     let mut from: *mut otl_Coverage = ::core::ptr::null_mut::<otl_Coverage>();
     if !(tableLength < offset.wrapping_add(6 as uint32_t)) {
-        from = otl_iCoverage.read.expect("non-null function pointer")(
+        from = readCoverage(
             data as *const uint8_t,
             tableLength,
             offset.wrapping_add(read_16u(
@@ -958,12 +952,11 @@ pub unsafe extern "C" fn otl_read_gsub_multi(
                     )
                         as uint32_t);
                     let cov: *mut otl_Coverage =
-                        (
-                            otl_iCoverage.create.expect("non-null function pointer"))();
+                        otl_Coverage_create();
                     let n: glyphid_t =
                         read_16u(data.offset(seqOffset as isize) as *const uint8_t) as glyphid_t;
                     for k in 0..n {
-                        otl_iCoverage.push.expect("non-null function pointer")(
+                        pushToCoverage(
                             cov,
                             handle_fromIndex(read_16u(
                                 data.offset(seqOffset as isize)
@@ -988,13 +981,13 @@ pub unsafe extern "C" fn otl_read_gsub_multi(
                         },
                     );
                 }
-                otl_iCoverage.free.expect("non-null function pointer")(from);
+                otl_Coverage_free(from);
                 return subtable as *mut otl_Subtable;
             }
         }
     }
     if !from.is_null() {
-        otl_iCoverage.free.expect("non-null function pointer")(from);
+        otl_Coverage_free(from);
     }
     iSubtable_gsub_multi
         .free
@@ -1052,10 +1045,9 @@ unsafe extern "C" fn buildGsubMultiSubtableRange(
     start: glyphid_t,
     end: glyphid_t,
 ) -> *mut caryll_Buffer {
-    let cov: *mut otl_Coverage = (
-        otl_iCoverage.create.expect("non-null function pointer"))();
+    let cov: *mut otl_Coverage = otl_Coverage_create();
     for j in start..end {
-        otl_iCoverage.push.expect("non-null function pointer")(
+        pushToCoverage(
             cov,
             otfcc_Handle_dup(
                 (*(*subtable).items.offset(j as isize)).from as otfcc_Handle,
@@ -1093,7 +1085,7 @@ unsafe extern "C" fn buildGsubMultiSubtableRange(
             bkover as ::core::ffi::c_int,
         );
     }
-    otl_iCoverage.free.expect("non-null function pointer")(cov);
+    otl_Coverage_free(cov);
     return bk_build_Block(root);
 }
 pub const GSUB_MULTI_SUBTABLE_SIZE_LIMIT: ::core::ffi::c_int = 0xff00 as ::core::ffi::c_int;

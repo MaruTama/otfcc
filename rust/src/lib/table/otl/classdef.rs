@@ -50,6 +50,7 @@ extern "C" {
     fn bufwrite_bufdel(buf: *mut caryll_Buffer, that: *mut caryll_Buffer);
 }
 
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromIndex, handle_fromName, otfcc_Handle_dispose, otfcc_Handle, otfcc_GlyphHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
@@ -184,13 +185,6 @@ pub struct caryll_Buffer {
 pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
 pub type glyph_handle = otfcc_GlyphHandle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otl_ClassDef {

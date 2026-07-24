@@ -77,6 +77,7 @@ extern "C" {
     fn gpos_parse_value(pos: *mut json_value) -> otl_PositionValue;
 }
 
+use crate::src::lib::table::otl::coverage::{otl_Coverage_free, readCoverage, shrinkCoverage, otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromIndex, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
@@ -277,13 +278,6 @@ pub struct otfcc_Options {
     pub logger: *mut otfcc_ILogger,
 }
 pub type font_file_pointer = *mut uint8_t;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct __otfcc_ICoverage {
@@ -871,7 +865,7 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
     if !(tableLength < offset.wrapping_add(2 as uint32_t)) {
         subtableFormat = read_16u(data.offset(offset as isize) as *const uint8_t);
         if subtableFormat as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
-            let mut cov: *mut otl_Coverage = otl_iCoverage.read.expect("non-null function pointer")(
+            let mut cov: *mut otl_Coverage = readCoverage(
                 data as *const uint8_t,
                 tableLength,
                 offset.wrapping_add(read_16u(
@@ -2525,7 +2519,7 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
                 let mut len1_0: uint8_t = position_format_length(format1_0);
                 let mut len2_0: uint8_t = position_format_length(format2_0);
                 let mut cov_0: *mut otl_Coverage =
-                    otl_iCoverage.read.expect("non-null function pointer")(
+                    readCoverage(
                         data as *const uint8_t,
                         tableLength,
                         offset.wrapping_add(read_16u(
@@ -2547,7 +2541,7 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
                     cov_0,
                     (*subtable).first,
                 );
-                otl_iCoverage.free.expect("non-null function pointer")(cov_0);
+                otl_Coverage_free(cov_0);
                 cov_0 = ::core::ptr::null_mut::<otl_Coverage>();
                 (*subtable).second = otl_iClassDef.read.expect("non-null function pointer")(
                     data as *const uint8_t,
@@ -2948,7 +2942,7 @@ pub unsafe extern "C" fn otfcc_build_gpos_pair_individual(
         j_0 = j_0.wrapping_add(1);
     }
     let mut cov: *mut otl_Coverage = covFromCD((*subtable).first);
-    otl_iCoverage.shrink.expect("non-null function pointer")(cov, true);
+    shrinkCoverage(cov, true);
     let mut root: *mut bk_Block = bk_new_Block(
         b16 as ::core::ffi::c_int,
         1 as ::core::ffi::c_int,
@@ -3047,7 +3041,7 @@ pub unsafe extern "C" fn otfcc_build_gpos_pair_individual(
         );
         j_1 = j_1.wrapping_add(1);
     }
-    otl_iCoverage.free.expect("non-null function pointer")(cov);
+    otl_Coverage_free(cov);
     cov = ::core::ptr::null_mut::<otl_Coverage>();
     free(pairCounts as *mut ::core::ffi::c_void);
     pairCounts = ::core::ptr::null_mut::<glyphid_t>();
@@ -3126,7 +3120,7 @@ pub unsafe extern "C" fn otfcc_build_gpos_pair_classes(
         }
         j_0 = j_0.wrapping_add(1);
     }
-    otl_iCoverage.free.expect("non-null function pointer")(cov);
+    otl_Coverage_free(cov);
     cov = ::core::ptr::null_mut::<otl_Coverage>();
     return root;
 }

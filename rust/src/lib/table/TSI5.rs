@@ -21,6 +21,7 @@ extern "C" {
     ) -> *mut json_value;
 }
 
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromIndex, otfcc_GlyphHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
@@ -188,13 +189,6 @@ pub struct otfcc_Packet {
     pub entrySelector: uint16_t,
     pub rangeShift: uint16_t,
     pub pieces: *mut otfcc_PacketPiece,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]

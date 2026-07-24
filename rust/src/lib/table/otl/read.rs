@@ -106,6 +106,7 @@ extern "C" {
         options: *const otfcc_Options,
     ) -> *mut otl_Subtable;
 }
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::binio::{read_16u, read_32u};
 pub type __uint8_t = u8;
@@ -203,13 +204,6 @@ pub struct otfcc_Packet {
     pub entrySelector: uint16_t,
     pub rangeShift: uint16_t,
     pub pieces: *mut otfcc_PacketPiece,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]

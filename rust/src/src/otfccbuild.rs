@@ -9,6 +9,7 @@
 #![feature(extern_types, raw_ref_op)]
 #[allow(unused_imports)]
 use ::otfcc_rust;
+use otfcc_rust::src::lib::table::otl::coverage::{otl_Coverage};
 use otfcc_rust::src::lib::support::stdio::{stderr, stdin, stdout, FILE};
 extern "C" {
     fn fclose(__stream: *mut FILE) -> ::core::ffi::c_int;
@@ -591,13 +592,6 @@ pub struct subtable_gsub_reverse {
     pub inputIndex: tableid_t,
     pub match_0: *mut *mut otl_Coverage,
     pub to: *mut otl_Coverage,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]

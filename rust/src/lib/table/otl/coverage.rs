@@ -236,7 +236,7 @@ unsafe extern "C" fn disposeCoverage(mut coverage: *mut otl_Coverage) {
     (*coverage).glyphs = ::core::ptr::null_mut::<otfcc_GlyphHandle>();
 }
 #[inline]
-unsafe extern "C" fn otl_Coverage_move(mut dst: *mut otl_Coverage, mut src: *mut otl_Coverage) {
+pub(crate) unsafe extern "C" fn otl_Coverage_move(mut dst: *mut otl_Coverage, mut src: *mut otl_Coverage) {
     memcpy(
         dst as *mut ::core::ffi::c_void,
         src as *const ::core::ffi::c_void,
@@ -245,19 +245,19 @@ unsafe extern "C" fn otl_Coverage_move(mut dst: *mut otl_Coverage, mut src: *mut
     otl_Coverage_init(src);
 }
 #[inline]
-unsafe extern "C" fn otl_Coverage_copyReplace(mut dst: *mut otl_Coverage, src: otl_Coverage) {
+pub(crate) unsafe extern "C" fn otl_Coverage_copyReplace(mut dst: *mut otl_Coverage, src: otl_Coverage) {
     otl_Coverage_dispose(dst);
     otl_Coverage_copy(dst, &raw const src);
 }
 #[inline]
-unsafe extern "C" fn otl_Coverage_create() -> *mut otl_Coverage {
+pub(crate) unsafe extern "C" fn otl_Coverage_create() -> *mut otl_Coverage {
     let mut x: *mut otl_Coverage =
         malloc(::core::mem::size_of::<otl_Coverage>() as size_t) as *mut otl_Coverage;
     otl_Coverage_init(x);
     return x;
 }
 #[inline]
-unsafe extern "C" fn otl_Coverage_free(mut x: *mut otl_Coverage) {
+pub(crate) unsafe extern "C" fn otl_Coverage_free(mut x: *mut otl_Coverage) {
     if x.is_null() {
         return;
     }
@@ -265,11 +265,11 @@ unsafe extern "C" fn otl_Coverage_free(mut x: *mut otl_Coverage) {
     free(x as *mut ::core::ffi::c_void);
 }
 #[inline]
-unsafe extern "C" fn otl_Coverage_dispose(mut x: *mut otl_Coverage) {
+pub(crate) unsafe extern "C" fn otl_Coverage_dispose(mut x: *mut otl_Coverage) {
     disposeCoverage(x);
 }
 #[inline]
-unsafe extern "C" fn otl_Coverage_copy(mut dst: *mut otl_Coverage, mut src: *const otl_Coverage) {
+pub(crate) unsafe extern "C" fn otl_Coverage_copy(mut dst: *mut otl_Coverage, mut src: *const otl_Coverage) {
     memcpy(
         dst as *mut ::core::ffi::c_void,
         src as *const ::core::ffi::c_void,
@@ -277,7 +277,7 @@ unsafe extern "C" fn otl_Coverage_copy(mut dst: *mut otl_Coverage, mut src: *con
     );
 }
 #[inline]
-unsafe extern "C" fn otl_Coverage_init(mut x: *mut otl_Coverage) {
+pub(crate) unsafe extern "C" fn otl_Coverage_init(mut x: *mut otl_Coverage) {
     memset(
         x as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
@@ -285,7 +285,7 @@ unsafe extern "C" fn otl_Coverage_init(mut x: *mut otl_Coverage) {
     );
 }
 #[inline]
-unsafe extern "C" fn otl_Coverage_replace(mut dst: *mut otl_Coverage, src: otl_Coverage) {
+pub(crate) unsafe extern "C" fn otl_Coverage_replace(mut dst: *mut otl_Coverage, src: otl_Coverage) {
     otl_Coverage_dispose(dst);
     memcpy(
         dst as *mut ::core::ffi::c_void,
@@ -314,7 +314,7 @@ unsafe extern "C" fn growCoverage(mut coverage: *mut otl_Coverage, mut n: uint32
         ) as *mut otfcc_GlyphHandle;
     }
 }
-unsafe extern "C" fn clearCoverage(mut coverage: *mut otl_Coverage, mut n: uint32_t) {
+pub(crate) unsafe extern "C" fn clearCoverage(mut coverage: *mut otl_Coverage, mut n: uint32_t) {
     if coverage.is_null() || (*coverage).glyphs.is_null() {
         return;
     }
@@ -334,7 +334,7 @@ unsafe extern "C" fn by_covIndex(
 ) -> ::core::ffi::c_int {
     return (*a).covIndex - (*b).covIndex;
 }
-unsafe extern "C" fn pushToCoverage(mut coverage: *mut otl_Coverage, mut h: otfcc_GlyphHandle) {
+pub(crate) unsafe extern "C" fn pushToCoverage(mut coverage: *mut otl_Coverage, mut h: otfcc_GlyphHandle) {
     (*coverage).numGlyphs =
         ((*coverage).numGlyphs as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as glyphid_t;
     growCoverage(coverage, (*coverage).numGlyphs as uint32_t);
@@ -343,13 +343,12 @@ unsafe extern "C" fn pushToCoverage(mut coverage: *mut otl_Coverage, mut h: otfc
         .offset(((*coverage).numGlyphs as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as isize) =
         h;
 }
-unsafe extern "C" fn readCoverage(
+pub(crate) unsafe extern "C" fn readCoverage(
     mut data: *const uint8_t,
     mut tableLength: uint32_t,
     mut offset: uint32_t,
 ) -> *mut otl_Coverage {
-    let mut coverage: *mut otl_Coverage = (
-        otl_iCoverage.create.expect("non-null function pointer"))();
+    let mut coverage: *mut otl_Coverage = otl_Coverage_create();
     if tableLength < offset.wrapping_add(4 as uint32_t) {
         return coverage;
     }
@@ -2438,7 +2437,7 @@ unsafe extern "C" fn readCoverage(
     }
     return coverage;
 }
-unsafe extern "C" fn dumpCoverage(mut coverage: *const otl_Coverage) -> *mut json_value {
+pub(crate) unsafe extern "C" fn dumpCoverage(mut coverage: *const otl_Coverage) -> *mut json_value {
     let mut a: *mut json_value = json_array_new((*coverage).numGlyphs as size_t);
     let mut j: glyphid_t = 0 as glyphid_t;
     while (j as ::core::ffi::c_int) < (*coverage).numGlyphs as ::core::ffi::c_int {
@@ -2452,9 +2451,8 @@ unsafe extern "C" fn dumpCoverage(mut coverage: *const otl_Coverage) -> *mut jso
     }
     return preserialize(a);
 }
-unsafe extern "C" fn parseCoverage(mut cov: *const json_value) -> *mut otl_Coverage {
-    let mut c: *mut otl_Coverage = (
-        otl_iCoverage.create.expect("non-null function pointer"))();
+pub(crate) unsafe extern "C" fn parseCoverage(mut cov: *const json_value) -> *mut otl_Coverage {
+    let mut c: *mut otl_Coverage = otl_Coverage_create();
     if cov.is_null()
         || (*cov).type_0 as ::core::ffi::c_uint
             != json_array as ::core::ffi::c_int as ::core::ffi::c_uint
@@ -2486,7 +2484,7 @@ unsafe extern "C" fn by_gid(
     return *(a as *mut glyphid_t) as ::core::ffi::c_int
         - *(b as *mut glyphid_t) as ::core::ffi::c_int;
 }
-unsafe extern "C" fn buildCoverageFormat(
+pub(crate) unsafe extern "C" fn buildCoverageFormat(
     mut coverage: *const otl_Coverage,
     mut format: uint16_t,
 ) -> *mut caryll_Buffer {
@@ -2599,7 +2597,7 @@ unsafe extern "C" fn buildCoverageFormat(
         return format2;
     };
 }
-unsafe extern "C" fn buildCoverage(mut coverage: *const otl_Coverage) -> *mut caryll_Buffer {
+pub(crate) unsafe extern "C" fn buildCoverage(mut coverage: *const otl_Coverage) -> *mut caryll_Buffer {
     return buildCoverageFormat(coverage, 0 as uint16_t);
 }
 unsafe extern "C" fn byHandleGID(
@@ -2609,7 +2607,7 @@ unsafe extern "C" fn byHandleGID(
     return (*(a as *mut glyph_handle)).index as ::core::ffi::c_int
         - (*(b as *mut glyph_handle)).index as ::core::ffi::c_int;
 }
-unsafe extern "C" fn shrinkCoverage(mut coverage: *mut otl_Coverage, mut dosort: bool) {
+pub(crate) unsafe extern "C" fn shrinkCoverage(mut coverage: *mut otl_Coverage, mut dosort: bool) {
     if coverage.is_null() {
         return;
     }

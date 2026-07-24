@@ -28,6 +28,7 @@ extern "C" {
     static otl_iLigatureArray: __caryll_vectorinterface_otl_LigatureArray;
 }
 
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
 use crate::src::lib::support::handle::{handle_fromConsolidated, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
@@ -532,13 +533,6 @@ pub struct subtable_gsub_reverse {
     pub inputIndex: tableid_t,
     pub match_0: *mut *mut otl_Coverage,
     pub to: *mut otl_Coverage,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
