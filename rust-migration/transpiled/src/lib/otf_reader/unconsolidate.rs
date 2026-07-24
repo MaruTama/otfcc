@@ -1730,17 +1730,13 @@ unsafe extern "C" fn createGlyphOrder(
     } else {
         prefix = sdsempty();
     }
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as ::core::ffi::c_int) < numGlyphs as ::core::ffi::c_int {
+    for j in 0..numGlyphs {
         let mut g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j as isize) as *mut glyf_Glyph;
         if (*options).name_glyphs_by_hash {
-            let mut h: GlyphHash = nameGlyphByHash(g, (*font).glyf);
+            let h: GlyphHash = nameGlyphByHash(g, (*font).glyf);
             let mut gname: sds = sdsempty();
-            let mut j_0: uint16_t = 0 as uint16_t;
-            while (j_0 as ::core::ffi::c_int) < SHA1_BLOCK_SIZE {
-                if j_0 as ::core::ffi::c_int % 4 as ::core::ffi::c_int == 0
-                    && j_0 as ::core::ffi::c_int / 4 as ::core::ffi::c_int != 0
-                {
+            for j_0 in 0..SHA1_BLOCK_SIZE as uint16_t {
+                if j_0 % 4 == 0 && j_0 / 4 != 0 {
                     gname = sdscatprintf(
                         gname,
                         b"-%02X\0" as *const u8 as *const ::core::ffi::c_char,
@@ -1753,7 +1749,6 @@ unsafe extern "C" fn createGlyphOrder(
                         h.hash[j_0 as usize] as ::core::ffi::c_int,
                     );
                 }
-                j_0 = j_0.wrapping_add(1);
             }
             if otfcc_pkgGlyphOrder
                 .lookupName
@@ -1810,9 +1805,7 @@ unsafe extern "C" fn createGlyphOrder(
                 }
                 (*g).name = sdsdup(sharedName_0);
             }
-        } else if !((*options).ignore_glyph_order as ::core::ffi::c_int != 0
-            || (*options).name_glyphs_by_gid as ::core::ffi::c_int != 0)
-        {
+        } else if !((*options).ignore_glyph_order || (*options).name_glyphs_by_gid) {
             if !(*g).name.is_null() {
                 let mut gname_0: sds = sdscatprintf(
                     sdsempty(),
@@ -1820,7 +1813,7 @@ unsafe extern "C" fn createGlyphOrder(
                     prefix,
                     (*g).name,
                 );
-                let mut sharedName_1: sds = otfcc_pkgGlyphOrder
+                let sharedName_1: sds = otfcc_pkgGlyphOrder
                     .setByGID
                     .expect("non-null function pointer")(
                     glyph_order, j, gname_0
@@ -1831,7 +1824,6 @@ unsafe extern "C" fn createGlyphOrder(
                 (*g).name = sdsdup(sharedName_1);
             }
         }
-        j = j.wrapping_add(1);
     }
     if !(*font).post.is_null()
         && !(*(*font).post).post_name_map.is_null()
@@ -1912,17 +1904,16 @@ unsafe extern "C" fn createGlyphOrder(
         }
         otfcc_pkgGlyphOrder.free.expect("non-null function pointer")(aglfn);
     }
-    let mut j_1: glyphid_t = 0 as glyphid_t;
-    while (j_1 as ::core::ffi::c_int) < numGlyphs as ::core::ffi::c_int {
+    for j_1 in 0..numGlyphs {
         let mut name_0: sds = ::core::ptr::null_mut::<::core::ffi::c_char>();
-        if j_1 as ::core::ffi::c_int > 1 as ::core::ffi::c_int {
+        if j_1 > 1 {
             name_0 = sdscatfmt(
                 sdsempty(),
                 b"%sglyph%u\0" as *const u8 as *const ::core::ffi::c_char,
                 prefix,
                 j_1 as ::core::ffi::c_int,
             );
-        } else if j_1 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+        } else if j_1 == 1 {
             if !(*(*(*font).glyf)
                 .items
                 .offset(1 as ::core::ffi::c_int as isize))
@@ -1963,7 +1954,6 @@ unsafe extern "C" fn createGlyphOrder(
         otfcc_pkgGlyphOrder
             .setByGID
             .expect("non-null function pointer")(glyph_order, j_1, name_0);
-        j_1 = j_1.wrapping_add(1);
     }
     sdsfree(prefix);
     return glyph_order;
@@ -1972,9 +1962,8 @@ unsafe extern "C" fn nameGlyphs(mut font: *mut otfcc_Font, mut gord: *mut otfcc_
     if gord.is_null() {
         return;
     }
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as size_t) < (*(*font).glyf).length {
-        let mut g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j as isize) as *mut glyf_Glyph;
+    for j in 0..(*(*font).glyf).length as glyphid_t {
+        let g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j as isize) as *mut glyf_Glyph;
         let mut glyphName: sds = ::core::ptr::null_mut::<::core::ffi::c_char>();
         otfcc_pkgGlyphOrder
             .nameAField_Shared
@@ -1983,7 +1972,6 @@ unsafe extern "C" fn nameGlyphs(mut font: *mut otfcc_Font, mut gord: *mut otfcc_
             sdsfree((*g).name);
         }
         (*g).name = sdsdup(glyphName);
-        j = j.wrapping_add(1);
     }
 }
 unsafe extern "C" fn unconsolidate_chaining(
@@ -2056,46 +2044,35 @@ unsafe extern "C" fn unconsolidate_chaining(
         .expect("non-null function pointer")(&raw mut (*lookup).subtables, lookup);
     (*lookup).subtables = newsts;
 }
-unsafe extern "C" fn expandChain(
-    mut font: *mut otfcc_Font,
-    mut lookup: *mut otl_Lookup,
-    mut table: *mut table_OTL,
-) {
-    match (*lookup).type_0 as ::core::ffi::c_uint {
-        22 | 40 => {
+unsafe extern "C" fn expandChain(font: *mut otfcc_Font, lookup: *mut otl_Lookup, table: *mut table_OTL) {
+    match (*lookup).type_0 {
+        otl_type_gsub_chaining | otl_type_gpos_chaining => {
             unconsolidate_chaining(font, lookup, table);
         }
         _ => {}
     };
 }
-unsafe extern "C" fn expandChainingLookups(mut font: *mut otfcc_Font) {
+unsafe extern "C" fn expandChainingLookups(font: *mut otfcc_Font) {
     if !(*font).GSUB.is_null() {
-        let mut j: uint32_t = 0 as uint32_t;
-        while (j as size_t) < (*(*font).GSUB).lookups.length {
-            let mut lookup: *mut otl_Lookup =
-                *(*(*font).GSUB).lookups.items.offset(j as isize) as *mut otl_Lookup;
+        for j in 0..(*(*font).GSUB).lookups.length {
+            let lookup: *mut otl_Lookup = *(*(*font).GSUB).lookups.items.offset(j as isize) as *mut otl_Lookup;
             expandChain(font, lookup, (*font).GSUB);
-            j = j.wrapping_add(1);
         }
     }
     if !(*font).GPOS.is_null() {
-        let mut j_0: uint32_t = 0 as uint32_t;
-        while (j_0 as size_t) < (*(*font).GPOS).lookups.length {
-            let mut lookup_0: *mut otl_Lookup =
-                *(*(*font).GPOS).lookups.items.offset(j_0 as isize) as *mut otl_Lookup;
-            expandChain(font, lookup_0, (*font).GPOS);
-            j_0 = j_0.wrapping_add(1);
+        for j in 0..(*(*font).GPOS).lookups.length {
+            let lookup: *mut otl_Lookup = *(*(*font).GPOS).lookups.items.offset(j as isize) as *mut otl_Lookup;
+            expandChain(font, lookup, (*font).GPOS);
         }
     }
 }
-unsafe extern "C" fn mergeHmtx(mut font: *mut otfcc_Font) {
+unsafe extern "C" fn mergeHmtx(font: *mut otfcc_Font) {
     if !(!(*font).hhea.is_null() && !(*font).hmtx.is_null() && !(*font).glyf.is_null()) {
         return;
     }
-    let mut count_a: uint32_t = (*(*font).hhea).numberOfMetrics as uint32_t;
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as size_t) < (*(*font).glyf).length {
-        let mut g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j as isize) as *mut glyf_Glyph;
+    let count_a: uint32_t = (*(*font).hhea).numberOfMetrics as uint32_t;
+    for j in 0..(*(*font).glyf).length as glyphid_t {
+        let g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j as isize) as *mut glyf_Glyph;
         let adw: pos_t = (*(*(*font).hmtx).metrics.offset(
             (if (j as uint32_t) < count_a {
                 j as uint32_t
@@ -2119,45 +2096,37 @@ unsafe extern "C" fn mergeHmtx(mut font: *mut otfcc_Font) {
             &raw mut (*g).horizontalOrigin,
             iVQ.createStill.expect("non-null function pointer")(-lsb + (*g).stat.xMin) as VQ,
         );
-        j = j.wrapping_add(1);
     }
     table_iHmtx.free.expect("non-null function pointer")((*font).hmtx);
     (*font).hmtx = ::core::ptr::null_mut::<table_hmtx>();
 }
-unsafe extern "C" fn mergeVmtx(mut font: *mut otfcc_Font) {
+unsafe extern "C" fn mergeVmtx(font: *mut otfcc_Font) {
     if !(!(*font).vhea.is_null() && !(*font).vmtx.is_null() && !(*font).glyf.is_null()) {
         return;
     }
-    let mut count_a: uint32_t = (*(*font).vhea).numOfLongVerMetrics as uint32_t;
+    let count_a: uint32_t = (*(*font).vhea).numOfLongVerMetrics as uint32_t;
     let mut vorgs: *mut pos_t = ::core::ptr::null_mut::<pos_t>();
     if !(*font).VORG.is_null() {
         vorgs = __caryll_allocate_clean(
             (::core::mem::size_of::<pos_t>() as size_t).wrapping_mul((*(*font).glyf).length),
             351 as ::core::ffi::c_ulong,
         ) as *mut pos_t;
-        let mut j: glyphid_t = 0 as glyphid_t;
-        while (j as size_t) < (*(*font).glyf).length {
+        for j in 0..(*(*font).glyf).length as glyphid_t {
             *vorgs.offset(j as isize) = (*(*font).VORG).defaultVerticalOrigin;
-            j = j.wrapping_add(1);
         }
-        let mut j_0: glyphid_t = 0 as glyphid_t;
-        while (j_0 as ::core::ffi::c_int)
-            < (*(*font).VORG).numVertOriginYMetrics as ::core::ffi::c_int
-        {
+        for j_0 in 0..(*(*font).VORG).numVertOriginYMetrics as glyphid_t {
             if ((*(*(*font).VORG).entries.offset(j_0 as isize)).gid as size_t)
                 < (*(*font).glyf).length
             {
                 *vorgs.offset((*(*(*font).VORG).entries.offset(j_0 as isize)).gid as isize) =
                     (*(*(*font).VORG).entries.offset(j_0 as isize)).verticalOrigin as pos_t;
             }
-            j_0 = j_0.wrapping_add(1);
         }
         table_iVORG.free.expect("non-null function pointer")((*font).VORG);
         (*font).VORG = ::core::ptr::null_mut::<table_VORG>();
     }
-    let mut j_1: glyphid_t = 0 as glyphid_t;
-    while (j_1 as size_t) < (*(*font).glyf).length {
-        let mut g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j_1 as isize) as *mut glyf_Glyph;
+    for j_1 in 0..(*(*font).glyf).length as glyphid_t {
+        let g: *mut glyf_Glyph = *(*(*font).glyf).items.offset(j_1 as isize) as *mut glyf_Glyph;
         let adh: pos_t = (*(*(*font).vmtx).metrics.offset(
             (if (j_1 as uint32_t) < count_a {
                 j_1 as uint32_t
@@ -2185,7 +2154,6 @@ unsafe extern "C" fn mergeVmtx(mut font: *mut otfcc_Font) {
                 tsb + (*g).stat.yMax
             }) as VQ,
         );
-        j_1 = j_1.wrapping_add(1);
     }
     if !vorgs.is_null() {
         free(vorgs as *mut ::core::ffi::c_void);
@@ -2194,15 +2162,12 @@ unsafe extern "C" fn mergeVmtx(mut font: *mut otfcc_Font) {
     table_iVmtx.free.expect("non-null function pointer")((*font).vmtx);
     (*font).vmtx = ::core::ptr::null_mut::<table_vmtx>();
 }
-unsafe extern "C" fn mergeLTSH(mut font: *mut otfcc_Font) {
+unsafe extern "C" fn mergeLTSH(font: *mut otfcc_Font) {
     if !(*font).glyf.is_null() && !(*font).LTSH.is_null() {
-        let mut j: glyphid_t = 0 as glyphid_t;
-        while (j as size_t) < (*(*font).glyf).length
-            && (j as ::core::ffi::c_int) < (*(*font).LTSH).numGlyphs as ::core::ffi::c_int
-        {
+        let n = ((*(*font).glyf).length as glyphid_t).min((*(*font).LTSH).numGlyphs);
+        for j in 0..n {
             (**(*(*font).glyf).items.offset(j as isize)).yPel =
                 *(*(*font).LTSH).yPels.offset(j as isize);
-            j = j.wrapping_add(1);
         }
     }
 }
