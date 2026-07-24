@@ -262,10 +262,41 @@ rewritten to idiomatic bodies:
   support/bk) are unchanged — rolling this out further is a separate,
   larger, more carefully-reviewed pass.
 
+- **`otf_reader`/`otf_writer`** (`otf_reader.rs`, `unconsolidate.rs`,
+  `otf_writer.rs`, `stat.rs`): the second module idiomatized, after
+  support/bk. Two functions (`decideFontSubtypeOTF`,
+  `statMaxContextOTL`) turned out to be c2rust's translation of otfcc's own
+  `foreach(item, vector) { ... }` macro — `__fortable_*`/`__caryll_index*`/
+  `keep*` variables simulating a single-iteration inner loop purely so the
+  macro body can `break`/`continue`; traced by hand against the original C
+  source and collapsed to plain `for` loops (`statMaxContextOTL` had 4
+  nested occurrences). `unconsolidate_chaining` (expands a lookup's
+  multi-rule "poly" chaining representation into one canonical subtable per
+  rule — real ownership-transferring memory management, ~90 lines) had a
+  first pass computing a `totalRules` count that's **never read afterward,
+  confirmed dead in the original C too** (`lib/otf-reader/unconsolidate.c`);
+  removed. Every other bounded loop across the four files became `for`;
+  linked-list-style hash-table traversals (`while !p.is_null() { ...; p =
+  next }`) were left as `while`, consistent with the rest of this pass.
+  Deliberately skipped: `statOS_2UnicodeRanges` (~450 lines, but not a loop
+  — one `if unicode-in-range { set bit N }` per OpenType-spec Unicode block,
+  already flat; retyping ~150 bit positions by hand is high risk for a
+  change that's mostly whitespace). Caught one real mistake mid-rewrite:
+  `onCurve` is `int8_t`, not `bool` — a naive `onCurve as uint8_t` would NOT
+  reproduce the original's "normalize any nonzero value to exactly 1"
+  behavior; fixed to `(onCurve != 0) as uint8_t` before it was ever
+  committed. Verified real coverage before touching
+  `unconsolidate_chaining`: dumped all 6 TTF payloads and confirmed
+  NotoNastaliqUrdu-Regular/iosevka-r/BungeeColor-Regular_colr_Windows/
+  Molengo-Regular all have `gsub_chaining` (and NotoNastaliqUrdu also
+  `gpos_chaining`) lookups, so the standard byte-comparison suite actually
+  exercises the rewritten function.
+
 Every commit in this pass was verified against the full byte-comparison
 matrix (`compare-with-c.sh`), all round-trip payloads
-(`compare-roundtrips.js`), and — for the bk files specifically — the issue
-#1 golden regression test, before moving to the next file.
+(`compare-roundtrips.js`), and — for the bk and unconsolidate_chaining
+changes specifically — the issue #1 golden regression test, before moving
+to the next file.
 
 ## Next steps (Phase 2 continued)
 
@@ -278,21 +309,21 @@ matrix (`compare-with-c.sh`), all round-trip payloads
   so changing their *public* shape needs a coordinated, crate-wide pass, not
   a local one.
 - **Crate-wide rollout of `alloc.rs`/a `binio.rs`**: extend the dedup done
-  here to the remaining ~47 files with their own copy of the alloc helpers,
-  and factor out the also-duplicated `read_8u/16u/24u/32u` family (used
-  throughout `lib/table/**`, `lib/otf_reader/**`, unused in support/bk).
+  here to the remaining files with their own copy of the alloc helpers, and
+  factor out the also-duplicated `read_8u/16u/24u/32u` family (used
+  throughout `lib/table/**`, unused in support/bk/otf_reader/otf_writer).
 - **Redundant same-width casts** (`x as c_int == y as c_int` where both
   sides are already the same type, ~130 occurrences crate-wide) and ternary-
   cast-to-bool chains: skipped in this pass because — unlike the `true_0`/
   `false_0` sweep — safely removing them requires confirming per-site that
-  both operands really are the same original width/signedness; the compiler
-  only catches an outright type error, not a silently-wrong comparison from
-  an incorrectly-dropped cast.
-- Continue module by module: `otf_reader`/`otf_writer` next (parsers are the
-  highest-value target for real memory-safety gains — bounds-checked slices
-  instead of manual pointer arithmetic), then `table/otl`, then
-  `consolidate`/`json_reader`/`json_writer`, then `libcff`/`glyf`/`vf`, per
-  the original plan's ordering — keeping the round-trip tests green
-  throughout.
+  both operands really are the same original width/signedness (and, per the
+  `onCurve` mistake caught above, that the source field really is `bool`);
+  the compiler only catches an outright type error, not a silently-wrong
+  comparison or normalization from an incorrectly-dropped cast.
+- Continue module by module: `table/otl` next (the OTL builder/reader is the
+  largest single cluster, 60 files / 105K lines, and directly touches the
+  issue #1 code path from the C side), then `consolidate`/`json_reader`/
+  `json_writer`, then `libcff`/`glyf`/`vf`, per the original plan's ordering
+  — keeping the round-trip tests green throughout.
 - Once Rust is trusted as the sole implementation, retire the C build
   (`quick.make`, `premake5.lua`, `lib/`, `src/`, `dep/`) and `compare-with-c.sh`.
