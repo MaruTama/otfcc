@@ -37,7 +37,6 @@ extern "C" {
     fn sdsdup(s: sds) -> sds;
     fn sdsfree(s: sds);
     fn sdscatprintf(s: sds, fmt: *const ::core::ffi::c_char, ...) -> sds;
-    static otfcc_iHandle: otfcc_HandlePackage;
     static iVQ: __caryll_vectorinterface_VQ;
     fn json_array_new(length: size_t) -> *mut json_value;
     fn json_array_push(array: *mut json_value, _: *mut json_value) -> *mut json_value;
@@ -86,6 +85,7 @@ extern "C" {
     ) -> *mut json_value;
 }
 
+use crate::src::lib::support::handle::{handle_fromName, otfcc_Handle_copy, otfcc_Handle_dispose, otfcc_Handle_empty, otfcc_Handle, otfcc_GlyphHandle, HANDLE_STATE_EMPTY};
 use crate::src::lib::support::stdio::{FILE, stderr};
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::cvec::{
@@ -212,36 +212,7 @@ pub type glyphid_t = uint16_t;
 pub type shapeid_t = uint16_t;
 pub type pos_t = ::core::ffi::c_double;
 pub type scale_t = ::core::ffi::c_double;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
 pub type otfcc_FDHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct UT_hash_bucket {
@@ -1688,8 +1659,7 @@ unsafe extern "C" fn glyf_ContourList_initCapN(mut arr: *mut glyf_ContourList, m
 }
 #[inline]
 unsafe extern "C" fn initGlyfReference(mut ref_0: *mut glyf_ComponentReference) {
-    (*ref_0).glyph = (
-        otfcc_iHandle.empty.expect("non-null function pointer"))() as otfcc_GlyphHandle;
+    (*ref_0).glyph = otfcc_Handle_empty() as otfcc_GlyphHandle;
     (*ref_0).x =
         iVQ.createStill.expect("non-null function pointer")(0 as ::core::ffi::c_int as pos_t);
     (*ref_0).y =
@@ -1710,7 +1680,7 @@ unsafe extern "C" fn copyGlyfReference(
 ) {
     iVQ.copy.expect("non-null function pointer")(&raw mut (*dst).x, &raw const (*src).x);
     iVQ.copy.expect("non-null function pointer")(&raw mut (*dst).y, &raw const (*src).y);
-    otfcc_iHandle.copy.expect("non-null function pointer")(
+    otfcc_Handle_copy(
         &raw mut (*dst).glyph,
         &raw const (*src).glyph,
     );
@@ -1728,7 +1698,7 @@ unsafe extern "C" fn copyGlyfReference(
 unsafe extern "C" fn disposeGlyfReference(mut ref_0: *mut glyf_ComponentReference) {
     iVQ.dispose.expect("non-null function pointer")(&raw mut (*ref_0).x);
     iVQ.dispose.expect("non-null function pointer")(&raw mut (*ref_0).y);
-    otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*ref_0).glyph);
+    otfcc_Handle_dispose(&raw mut (*ref_0).glyph);
 }
 #[inline]
 unsafe extern "C" fn glyf_ComponentReference_dispose(mut x: *mut glyf_ComponentReference) {
@@ -3069,8 +3039,7 @@ pub unsafe extern "C" fn otfcc_newGlyf_glyph() -> *mut glyf_Glyph {
     glyf_iMaskList.init.expect("non-null function pointer")(&raw mut (*g).contourMasks);
     (*g).instructionsLength = 0 as uint16_t;
     (*g).instructions = ::core::ptr::null_mut::<uint8_t>();
-    (*g).fdSelect = (
-        otfcc_iHandle.empty.expect("non-null function pointer"))() as otfcc_FDHandle;
+    (*g).fdSelect = otfcc_Handle_empty() as otfcc_FDHandle;
     (*g).yPel = 0 as uint8_t;
     (*g).stat.xMin = 0 as ::core::ffi::c_int as pos_t;
     (*g).stat.xMax = 0 as ::core::ffi::c_int as pos_t;
@@ -3110,7 +3079,7 @@ unsafe extern "C" fn otfcc_deleteGlyf_glyph(mut g: *mut glyf_Glyph) {
         free((*g).instructions as *mut ::core::ffi::c_void);
         (*g).instructions = ::core::ptr::null_mut::<uint8_t>();
     }
-    otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*g).fdSelect);
+    otfcc_Handle_dispose(&raw mut (*g).fdSelect);
     (*g).name = ::core::ptr::null_mut::<::core::ffi::c_char>();
     free(g as *mut ::core::ffi::c_void);
     g = ::core::ptr::null_mut::<glyf_Glyph>();
@@ -3913,7 +3882,7 @@ unsafe extern "C" fn glyf_parse_reference(mut refdump: *mut json_value) -> glyf_
                 .empty
                 .expect("non-null function pointer"))();
     if !_gname.is_null() {
-        ref_0.glyph = otfcc_iHandle.fromName.expect("non-null function pointer")(sdsnewlen(
+        ref_0.glyph = handle_fromName(sdsnewlen(
             (*_gname).u.string.ptr as *const ::core::ffi::c_void,
             (*_gname).u.string.length as size_t,
         )) as otfcc_GlyphHandle;
@@ -4256,7 +4225,7 @@ unsafe extern "C" fn otfcc_glyf_parse_glyph(
             b"LTSH_yPel\0" as *const u8 as *const ::core::ffi::c_char,
         ) as uint8_t;
     }
-    (*g).fdSelect = otfcc_iHandle.fromName.expect("non-null function pointer")(json_obj_getsds(
+    (*g).fdSelect = handle_fromName(json_obj_getsds(
         glyphdump,
         b"CFF_fdSelect\0" as *const u8 as *const ::core::ffi::c_char,
     )) as otfcc_FDHandle;

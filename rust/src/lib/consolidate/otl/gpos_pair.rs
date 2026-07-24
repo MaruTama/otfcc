@@ -6,6 +6,8 @@ extern "C" {
         options: *const otfcc_Options,
     );
 }
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
+use crate::src::lib::support::handle::{otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
@@ -123,19 +125,6 @@ pub struct table_TSI5 {
     pub classes: *mut glyphclass_t,
 }
 pub type glyphclass_t = uint16_t;
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct table_TSI {
@@ -523,13 +512,6 @@ pub struct subtable_gsub_reverse {
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
 pub struct subtable_chaining {
     pub type_0: otl_chaining_type,
     pub c2rust_unnamed: C2RustUnnamed,
@@ -565,7 +547,6 @@ pub struct otl_ChainLookupApplication {
     pub index: tableid_t,
     pub lookup: otfcc_LookupHandle,
 }
-pub type otfcc_LookupHandle = otfcc_Handle;
 pub type otl_chaining_type = ::core::ffi::c_uint;
 pub const otl_chaining_classified: otl_chaining_type = 2;
 pub const otl_chaining_poly: otl_chaining_type = 1;

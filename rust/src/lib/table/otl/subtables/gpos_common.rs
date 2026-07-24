@@ -53,11 +53,12 @@ extern "C" {
     fn sdsnewlen(init: *const ::core::ffi::c_void, initlen: size_t) -> sds;
     fn sdsfree(s: sds);
     fn bufwrite16b(buf: *mut caryll_Buffer, x: uint16_t);
-    static otfcc_iHandle: otfcc_HandlePackage;
     fn bk_new_Block(type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
     fn bk_push(b: *mut bk_Block, type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
 }
 
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
+use crate::src::lib::support::handle::{handle_fromName, otfcc_Handle_dispose, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, HANDLE_STATE_EMPTY};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_16u, read_16s};
@@ -197,35 +198,6 @@ pub struct caryll_Buffer {
 pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
 pub type pos_t = ::core::ffi::c_double;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_ILoggerTarget {
@@ -291,13 +263,6 @@ pub struct otfcc_Options {
     pub logger: *mut otfcc_ILogger,
 }
 pub type font_file_pointer = *mut uint8_t;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct __caryll_bkblock {
@@ -558,7 +523,7 @@ unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     return xx;
 }
 unsafe extern "C" fn deleteMarkArrayItem(mut entry: *mut otl_MarkRecord) {
-    otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).glyph);
+    otfcc_Handle_dispose(&raw mut (*entry).glyph);
 }
 static mut gss_typeinfo: __caryll_elementinterface_otl_MarkRecord = {
     __caryll_elementinterface_otl_MarkRecord {
@@ -888,7 +853,7 @@ pub unsafe extern "C" fn otl_readMarkArray(
                 otl_iMarkArray.push.expect("non-null function pointer")(
                     array,
                     otl_MarkRecord {
-                        glyph: otfcc_iHandle.dup.expect("non-null function pointer")(
+                        glyph: otfcc_Handle_dup(
                             *(*cov).glyphs.offset(j as isize) as otfcc_Handle,
                         ) as otfcc_GlyphHandle,
                         markClass: markClass,
@@ -903,7 +868,7 @@ pub unsafe extern "C" fn otl_readMarkArray(
                 otl_iMarkArray.push.expect("non-null function pointer")(
                     array,
                     otl_MarkRecord {
-                        glyph: otfcc_iHandle.dup.expect("non-null function pointer")(
+                        glyph: otfcc_Handle_dup(
                             *(*cov).glyphs.offset(j as isize) as otfcc_Handle,
                         ) as otfcc_GlyphHandle,
                         markClass: markClass,
@@ -950,7 +915,7 @@ pub unsafe extern "C" fn otl_parseMarkArray(
             (*(*_marks).u.object.values.offset(j as isize)).name;
         let mut anchorRecord: *mut json_value =
             (*(*_marks).u.object.values.offset(j as isize)).value as *mut json_value;
-        mark.glyph = otfcc_iHandle.fromName.expect("non-null function pointer")(sdsnewlen(
+        mark.glyph = handle_fromName(sdsnewlen(
             gname as *const ::core::ffi::c_void,
             (*(*_marks).u.object.values.offset(j as isize)).name_length as size_t,
         )) as otfcc_GlyphHandle;

@@ -24,7 +24,6 @@ extern "C" {
     fn sdsnewlen(init: *const ::core::ffi::c_void, initlen: size_t) -> sds;
     fn sdsempty() -> sds;
     fn sdscatprintf(s: sds, fmt: *const ::core::ffi::c_char, ...) -> sds;
-    static otfcc_iHandle: otfcc_HandlePackage;
     static otl_iCoverage: __otfcc_ICoverage;
     static otl_iClassDef: __otfcc_IClassDef;
     fn json_array_new(length: size_t) -> *mut json_value;
@@ -48,6 +47,9 @@ extern "C" {
     fn bk_newBlockFromBuffer(buf: *mut caryll_Buffer) -> *mut bk_Block;
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
+use crate::src::lib::table::otl::classdef::{otl_ClassDef_free, readClassDef, otl_ClassDef};
+use crate::src::lib::table::otl::coverage::{otl_Coverage_create, otl_Coverage_free, pushToCoverage, readCoverage, otl_Coverage};
+use crate::src::lib::support::handle::{handle_fromName, otfcc_Handle_dispose, otfcc_Handle_dup, otfcc_Handle_empty, otfcc_Handle, otfcc_GlyphHandle, HANDLE_STATE_EMPTY};
 use crate::src::lib::support::binio::{read_16u};
 use crate::src::lib::support::cvec::{
     cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
@@ -148,35 +150,6 @@ pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
 pub type shapeid_t = uint16_t;
 pub type pos_t = ::core::ffi::c_double;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_ILoggerTarget {
@@ -262,13 +235,6 @@ pub struct otfcc_Packet {
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
 pub struct __otfcc_ICoverage {
     pub init: Option<unsafe extern "C" fn(*mut otl_Coverage) -> ()>,
     pub copy: Option<unsafe extern "C" fn(*mut otl_Coverage, *const otl_Coverage) -> ()>,
@@ -287,15 +253,6 @@ pub struct __otfcc_ICoverage {
         Option<unsafe extern "C" fn(*const otl_Coverage, uint16_t) -> *mut caryll_Buffer>,
     pub shrink: Option<unsafe extern "C" fn(*mut otl_Coverage, bool) -> ()>,
     pub push: Option<unsafe extern "C" fn(*mut otl_Coverage, otfcc_GlyphHandle) -> ()>,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -838,12 +795,11 @@ unsafe extern "C" fn otl_CaretValueList_fill(mut arr: *mut otl_CaretValueList, m
 }
 #[inline]
 unsafe extern "C" fn initGdefLigCaretRec(mut v: *mut otl_CaretValueRecord) {
-    (*v).glyph = (
-        otfcc_iHandle.empty.expect("non-null function pointer"))() as otfcc_GlyphHandle;
+    (*v).glyph = otfcc_Handle_empty() as otfcc_GlyphHandle;
     otl_iCaretValueList.init.expect("non-null function pointer")(&raw mut (*v).carets);
 }
 unsafe extern "C" fn deleteGdefLigCaretRec(mut v: *mut otl_CaretValueRecord) {
-    otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*v).glyph);
+    otfcc_Handle_dispose(&raw mut (*v).glyph);
     otl_iCaretValueList
         .dispose
         .expect("non-null function pointer")(&raw mut (*v).carets);
@@ -1200,10 +1156,10 @@ unsafe extern "C" fn disposeGDEF(mut gdef: *mut table_GDEF) {
         return;
     }
     if !(*gdef).glyphClassDef.is_null() {
-        otl_iClassDef.free.expect("non-null function pointer")((*gdef).glyphClassDef);
+        otl_ClassDef_free((*gdef).glyphClassDef);
     }
     if !(*gdef).markAttachClassDef.is_null() {
-        otl_iClassDef.free.expect("non-null function pointer")((*gdef).markAttachClassDef);
+        otl_ClassDef_free((*gdef).markAttachClassDef);
     }
     otl_iLigCaretTable
         .dispose
@@ -1395,7 +1351,7 @@ pub unsafe extern "C" fn otfcc_readGDEF(
                         );
                         if classdefOffset != 0 {
                             (*gdef).glyphClassDef =
-                                otl_iClassDef.read.expect("non-null function pointer")(
+                                readClassDef(
                                     data as *const uint8_t,
                                     tableLength,
                                     classdefOffset as uint32_t,
@@ -1412,7 +1368,7 @@ pub unsafe extern "C" fn otfcc_readGDEF(
                                 current_block = 10802812094495641425;
                             } else {
                                 let mut cov: *mut otl_Coverage =
-                                    otl_iCoverage.read.expect("non-null function pointer")(
+                                    readCoverage(
                                         data as *const uint8_t,
                                         tableLength,
                                         (ligCaretOffset as ::core::ffi::c_int
@@ -1469,7 +1425,7 @@ pub unsafe extern "C" fn otfcc_readGDEF(
                                                 as uint32_t,
                                         );
                                         v.glyph =
-                                            otfcc_iHandle.dup.expect("non-null function pointer")(
+                                            otfcc_Handle_dup(
                                                 *(*cov).glyphs.offset(j as isize) as otfcc_Handle,
                                             )
                                                 as otfcc_GlyphHandle;
@@ -1479,7 +1435,7 @@ pub unsafe extern "C" fn otfcc_readGDEF(
                                         );
                                         j = j.wrapping_add(1);
                                     }
-                                    otl_iCoverage.free.expect("non-null function pointer")(cov);
+                                    otl_Coverage_free(cov);
                                     current_block = 11307063007268554308;
                                 }
                             }
@@ -1494,7 +1450,7 @@ pub unsafe extern "C" fn otfcc_readGDEF(
                                         as *const uint8_t);
                                 if markAttachDefOffset != 0 {
                                     (*gdef).markAttachClassDef =
-                                        otl_iClassDef.read.expect("non-null function pointer")(
+                                        readClassDef(
                                             data as *const uint8_t,
                                             tableLength,
                                             markAttachDefOffset as uint32_t,
@@ -1656,7 +1612,7 @@ unsafe extern "C" fn ligCaretFromJson(
             otl_iCaretValueRecord
                 .init
                 .expect("non-null function pointer")(&raw mut v);
-            v.glyph = otfcc_iHandle.fromName.expect("non-null function pointer")(sdsnewlen(
+            v.glyph = handle_fromName(sdsnewlen(
                 (*(*_carets).u.object.values.offset(j as isize)).name as *const ::core::ffi::c_void,
                 (*(*_carets).u.object.values.offset(j as isize)).name_length as size_t,
             )) as otfcc_GlyphHandle;
@@ -1792,13 +1748,12 @@ unsafe extern "C" fn writeLigCaretRec(mut cr: *mut otl_CaretValueRecord) -> *mut
     return bcr;
 }
 unsafe extern "C" fn writeLigCarets(mut lc: *const otl_LigCaretTable) -> *mut bk_Block {
-    let mut cov: *mut otl_Coverage = (
-        otl_iCoverage.create.expect("non-null function pointer"))();
+    let mut cov: *mut otl_Coverage = otl_Coverage_create();
     let mut j: glyphid_t = 0 as glyphid_t;
     while (j as size_t) < (*lc).length {
-        otl_iCoverage.push.expect("non-null function pointer")(
+        pushToCoverage(
             cov,
-            otfcc_iHandle.dup.expect("non-null function pointer")(
+            otfcc_Handle_dup(
                 (*(*lc).items.offset(j as isize)).glyph as otfcc_Handle,
             ) as otfcc_GlyphHandle,
         );
@@ -1821,7 +1776,7 @@ unsafe extern "C" fn writeLigCarets(mut lc: *const otl_LigCaretTable) -> *mut bk
         );
         j_0 = j_0.wrapping_add(1);
     }
-    otl_iCoverage.free.expect("non-null function pointer")(cov);
+    otl_Coverage_free(cov);
     return lct;
 }
 #[no_mangle]

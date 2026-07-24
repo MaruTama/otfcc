@@ -30,7 +30,6 @@ extern "C" {
     fn bufwrite16b(buf: *mut caryll_Buffer, x: uint16_t);
     fn bufwrite32b(buf: *mut caryll_Buffer, x: uint32_t);
     fn bufwrite_sds(buf: *mut caryll_Buffer, str: sds);
-    static otfcc_iHandle: otfcc_HandlePackage;
     fn json_object_new(length: size_t) -> *mut json_value;
     fn json_object_push(
         object: *mut json_value,
@@ -42,6 +41,7 @@ extern "C" {
         _: *const ::core::ffi::c_char,
     ) -> *mut json_value;
 }
+use crate::src::lib::support::handle::{handle_fromIndex, handle_fromName, otfcc_Handle_copy, otfcc_Handle_dispose, otfcc_Handle_empty, otfcc_Handle_init, otfcc_Handle, otfcc_GlyphHandle, HANDLE_STATE_EMPTY};
 use crate::src::lib::support::binio::{read_16u, read_32u};
 use crate::src::lib::support::cvec::{
     cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
@@ -167,35 +167,6 @@ pub struct caryll_Buffer {
     pub data: *mut uint8_t,
 }
 pub type glyphid_t = uint16_t;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_ILoggerTarget {
@@ -389,13 +360,13 @@ unsafe extern "C" fn sdslen(s: sds) -> size_t {
 }
 #[inline]
 unsafe extern "C" fn initTSIEntry(mut entry: *mut tsi_Entry) {
-    otfcc_iHandle.init.expect("non-null function pointer")(&raw mut (*entry).glyph);
+    otfcc_Handle_init(&raw mut (*entry).glyph);
     (*entry).type_0 = TSI_GLYPH;
     (*entry).content = ::core::ptr::null_mut::<::core::ffi::c_char>();
 }
 #[inline]
 unsafe extern "C" fn copyTSIEntry(mut dst: *mut tsi_Entry, mut src: *const tsi_Entry) {
-    otfcc_iHandle.copy.expect("non-null function pointer")(
+    otfcc_Handle_copy(
         &raw mut (*dst).glyph,
         &raw const (*src).glyph,
     );
@@ -404,7 +375,7 @@ unsafe extern "C" fn copyTSIEntry(mut dst: *mut tsi_Entry, mut src: *const tsi_E
 }
 #[inline]
 unsafe extern "C" fn disposeTSIEntry(mut entry: *mut tsi_Entry) {
-    otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).glyph);
+    otfcc_Handle_dispose(&raw mut (*entry).glyph);
     sdsfree((*entry).content);
 }
 #[inline]
@@ -854,19 +825,19 @@ pub unsafe extern "C" fn otfcc_readTSI(
             match gid as ::core::ffi::c_int {
                 65530 => {
                     entry.type_0 = TSI_PREP;
-                    otfcc_iHandle.init.expect("non-null function pointer")(&raw mut entry.glyph);
+                    otfcc_Handle_init(&raw mut entry.glyph);
                 }
                 65531 => {
                     entry.type_0 = TSI_CVT;
-                    otfcc_iHandle.init.expect("non-null function pointer")(&raw mut entry.glyph);
+                    otfcc_Handle_init(&raw mut entry.glyph);
                 }
                 65533 => {
                     entry.type_0 = TSI_FPGM;
-                    otfcc_iHandle.init.expect("non-null function pointer")(&raw mut entry.glyph);
+                    otfcc_Handle_init(&raw mut entry.glyph);
                 }
                 _ => {
                     entry.type_0 = TSI_GLYPH;
-                    entry.glyph = otfcc_iHandle.fromIndex.expect("non-null function pointer")(
+                    entry.glyph = handle_fromIndex(
                         gid as glyphid_t,
                     ) as otfcc_GlyphHandle;
                 }
@@ -1034,7 +1005,7 @@ pub unsafe extern "C" fn otfcc_parseTSI(
                         tsi,
                         tsi_Entry {
                             type_0: TSI_GLYPH,
-                            glyph: otfcc_iHandle.fromName.expect("non-null function pointer")(
+                            glyph: handle_fromName(
                                 sdsnewlen(_gid as *const ::core::ffi::c_void, _gidlen),
                             ) as otfcc_GlyphHandle,
                             content: sdsnewlen(
@@ -1070,8 +1041,7 @@ pub unsafe extern "C" fn otfcc_parseTSI(
                             tsi,
                             tsi_Entry {
                                 type_0: TSI_CVT,
-                                glyph: (
-                                    otfcc_iHandle.empty.expect("non-null function pointer"))() as otfcc_GlyphHandle,
+                                glyph: otfcc_Handle_empty() as otfcc_GlyphHandle,
                                 content: sdsnewlen(
                                     (*_content_0).u.string.ptr as *const ::core::ffi::c_void,
                                     (*_content_0).u.string.length as size_t,
@@ -1085,8 +1055,7 @@ pub unsafe extern "C" fn otfcc_parseTSI(
                             tsi,
                             tsi_Entry {
                                 type_0: TSI_FPGM,
-                                glyph: (
-                                    otfcc_iHandle.empty.expect("non-null function pointer"))() as otfcc_GlyphHandle,
+                                glyph: otfcc_Handle_empty() as otfcc_GlyphHandle,
                                 content: sdsnewlen(
                                     (*_content_0).u.string.ptr as *const ::core::ffi::c_void,
                                     (*_content_0).u.string.length as size_t,
@@ -1100,8 +1069,7 @@ pub unsafe extern "C" fn otfcc_parseTSI(
                             tsi,
                             tsi_Entry {
                                 type_0: TSI_PREP,
-                                glyph: (
-                                    otfcc_iHandle.empty.expect("non-null function pointer"))() as otfcc_GlyphHandle,
+                                glyph: otfcc_Handle_empty() as otfcc_GlyphHandle,
                                 content: sdsnewlen(
                                     (*_content_0).u.string.ptr as *const ::core::ffi::c_void,
                                     (*_content_0).u.string.length as size_t,

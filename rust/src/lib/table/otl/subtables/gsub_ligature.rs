@@ -52,7 +52,6 @@ extern "C" {
     fn json_serialize_ex(buf: *mut ::core::ffi::c_char, _: *mut json_value, _: json_serialize_opts);
     fn json_builder_free(_: *mut json_value);
     fn sdsnewlen(init: *const ::core::ffi::c_void, initlen: size_t) -> sds;
-    static otfcc_iHandle: otfcc_HandlePackage;
     static otl_iCoverage: __otfcc_ICoverage;
     fn bk_new_Block(type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
     fn bk_push(b: *mut bk_Block, type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
@@ -60,6 +59,9 @@ extern "C" {
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
 
+use crate::src::lib::table::otl::classdef::{otl_ClassDef};
+use crate::src::lib::table::otl::coverage::{otl_Coverage_create, otl_Coverage_free, pushToCoverage, readCoverage, otl_Coverage};
+use crate::src::lib::support::handle::{handle_fromIndex, handle_fromName, otfcc_Handle_dispose, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle, HANDLE_STATE_EMPTY};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_16u};
@@ -232,36 +234,6 @@ pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
 pub type tableid_t = uint16_t;
 pub type pos_t = ::core::ffi::c_double;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-pub type otfcc_LookupHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_ILoggerTarget {
@@ -329,13 +301,6 @@ pub struct otfcc_Options {
 pub type font_file_pointer = *mut uint8_t;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
 pub struct __otfcc_ICoverage {
     pub init: Option<unsafe extern "C" fn(*mut otl_Coverage) -> ()>,
     pub copy: Option<unsafe extern "C" fn(*mut otl_Coverage, *const otl_Coverage) -> ()>,
@@ -354,15 +319,6 @@ pub struct __otfcc_ICoverage {
         Option<unsafe extern "C" fn(*const otl_Coverage, uint16_t) -> *mut caryll_Buffer>,
     pub shrink: Option<unsafe extern "C" fn(*mut otl_Coverage, bool) -> ()>,
     pub push: Option<unsafe extern "C" fn(*mut otl_Coverage, otfcc_GlyphHandle) -> ()>,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -810,8 +766,8 @@ unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     return xx;
 }
 unsafe extern "C" fn deleteGsubLigatureEntry(mut entry: *mut otl_GsubLigatureEntry) {
-    otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).to);
-    otl_iCoverage.free.expect("non-null function pointer")((*entry).from);
+    otfcc_Handle_dispose(&raw mut (*entry).to);
+    otl_Coverage_free((*entry).from);
     (*entry).from = ::core::ptr::null_mut::<otl_Coverage>();
 }
 static mut gss_typeinfo: __caryll_elementinterface_otl_GsubLigatureEntry = {
@@ -1187,7 +1143,7 @@ pub unsafe extern "C" fn otl_read_gsub_ligature(
                 .create
                 .expect("non-null function pointer"))();
     if !(tableLength < offset.wrapping_add(6 as uint32_t)) {
-        startCoverage = otl_iCoverage.read.expect("non-null function pointer")(
+        startCoverage = readCoverage(
             data as *const uint8_t,
             tableLength,
             offset.wrapping_add(read_16u(
@@ -1299,13 +1255,10 @@ pub unsafe extern "C" fn otl_read_gsub_ligature(
                                         break 's_77;
                                     }
                                     let mut cov: *mut otl_Coverage =
-                                        (
-                                            otl_iCoverage
-                                                .create
-                                                .expect("non-null function pointer"))();
-                                    otl_iCoverage.push.expect("non-null function pointer")(
+                                        otl_Coverage_create();
+                                    pushToCoverage(
                                         cov,
-                                        otfcc_iHandle.fromIndex.expect("non-null function pointer")(
+                                        handle_fromIndex(
                                             (*(*startCoverage).glyphs.offset(j_0 as isize)).index,
                                         )
                                             as otfcc_GlyphHandle,
@@ -1314,11 +1267,9 @@ pub unsafe extern "C" fn otl_read_gsub_ligature(
                                     while (m as ::core::ffi::c_int)
                                         < ligComponents as ::core::ffi::c_int
                                     {
-                                        otl_iCoverage.push.expect("non-null function pointer")(
+                                        pushToCoverage(
                                             cov,
-                                            otfcc_iHandle
-                                                .fromIndex
-                                                .expect("non-null function pointer")(
+                                            handle_fromIndex(
                                                 read_16u(
                                                     data.offset(ligOffset as isize)
                                                         .offset(2 as ::core::ffi::c_int as isize)
@@ -1341,9 +1292,7 @@ pub unsafe extern "C" fn otl_read_gsub_ligature(
                                         subtable,
                                         otl_GsubLigatureEntry {
                                             from: cov,
-                                            to: otfcc_iHandle
-                                                .fromIndex
-                                                .expect("non-null function pointer")(
+                                            to: handle_fromIndex(
                                                 read_16u(data.offset(ligOffset as isize)
                                                     as *const uint8_t)
                                                     as glyphid_t,
@@ -1358,7 +1307,7 @@ pub unsafe extern "C" fn otl_read_gsub_ligature(
                             match current_block {
                                 3443835632518673764 => {}
                                 _ => {
-                                    otl_iCoverage.free.expect("non-null function pointer")(
+                                    otl_Coverage_free(
                                         startCoverage,
                                     );
                                     return subtable as *mut otl_Subtable;
@@ -1454,7 +1403,7 @@ pub unsafe extern "C" fn otl_gsub_parse_ligature(
                     st,
                     otl_GsubLigatureEntry {
                         from: otl_iCoverage.parse.expect("non-null function pointer")(_from),
-                        to: otfcc_iHandle.fromName.expect("non-null function pointer")(sdsnewlen(
+                        to: handle_fromName(sdsnewlen(
                             (*_to).u.string.ptr as *const ::core::ffi::c_void,
                             (*_to).u.string.length as size_t,
                         )) as otfcc_GlyphHandle,
@@ -1485,7 +1434,7 @@ pub unsafe extern "C" fn otl_gsub_parse_ligature(
                     st_0,
                     otl_GsubLigatureEntry {
                         from: otl_iCoverage.parse.expect("non-null function pointer")(_from_0),
-                        to: otfcc_iHandle.fromName.expect("non-null function pointer")(sdsnewlen(
+                        to: handle_fromName(sdsnewlen(
                             (*(*_subtable).u.object.values.offset(k_0 as isize)).name
                                 as *const ::core::ffi::c_void,
                             (*(*_subtable).u.object.values.offset(k_0 as isize)).name_length
@@ -2402,13 +2351,12 @@ pub unsafe extern "C" fn otfcc_build_gsub_ligature_subtable(
             _hs_insize = _hs_insize.wrapping_mul(2 as ::core::ffi::c_uint);
         }
     }
-    let mut startcov: *mut otl_Coverage = (
-        otl_iCoverage.create.expect("non-null function pointer"))();
+    let mut startcov: *mut otl_Coverage = otl_Coverage_create();
     s = h;
     while !s.is_null() {
-        otl_iCoverage.push.expect("non-null function pointer")(
+        pushToCoverage(
             startcov,
-            otfcc_iHandle.fromIndex.expect("non-null function pointer")((*s).gid as glyphid_t)
+            handle_fromIndex((*s).gid as glyphid_t)
                 as otfcc_GlyphHandle,
         );
         s = (*s).hh.next as *mut ligature_aggerator;
@@ -2493,7 +2441,7 @@ pub unsafe extern "C" fn otfcc_build_gsub_ligature_subtable(
         );
         s = (*s).hh.next as *mut ligature_aggerator;
     }
-    otl_iCoverage.free.expect("non-null function pointer")(startcov);
+    otl_Coverage_free(startcov);
     s = h;
     tmp = (if !h.is_null() { (*h).hh.next } else { NULL }) as *mut ligature_aggerator
         as *mut ligature_aggerator;

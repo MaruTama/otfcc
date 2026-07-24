@@ -2,6 +2,7 @@ extern "C" {
     fn sdsnew(init: *const ::core::ffi::c_char) -> sds;
     static otfcc_pkgGlyphOrder: otfcc_GlyphOrderPackage;
 }
+use crate::src::lib::support::handle::{otfcc_GlyphHandle};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -45,19 +46,6 @@ pub struct UT_hash_table {
     pub signature: uint32_t,
 }
 pub type glyphid_t = uint16_t;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_GlyphOrderEntry {

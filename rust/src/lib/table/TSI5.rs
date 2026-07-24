@@ -13,7 +13,6 @@ extern "C" {
     ) -> ::core::ffi::c_int;
     fn bufnew() -> *mut caryll_Buffer;
     fn bufwrite16b(buf: *mut caryll_Buffer, x: uint16_t);
-    static otfcc_iHandle: otfcc_HandlePackage;
     static otl_iClassDef: __otfcc_IClassDef;
     fn json_object_push(
         object: *mut json_value,
@@ -22,6 +21,9 @@ extern "C" {
     ) -> *mut json_value;
 }
 
+use crate::src::lib::table::otl::classdef::{otl_ClassDef_create, pushClassDef, otl_ClassDef};
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
+use crate::src::lib::support::handle::{handle_fromIndex, otfcc_GlyphHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_16u};
@@ -106,35 +108,6 @@ pub struct caryll_Buffer {
 }
 pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_ILoggerTarget {
@@ -220,22 +193,6 @@ pub struct otfcc_Packet {
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otl_ClassDef {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub maxclass: glyphclass_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-    pub classes: *mut glyphclass_t,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
 pub struct __otfcc_IClassDef {
     pub init: Option<unsafe extern "C" fn(*mut otl_ClassDef) -> ()>,
     pub copy: Option<unsafe extern "C" fn(*mut otl_ClassDef, *const otl_ClassDef) -> ()>,
@@ -276,15 +233,14 @@ pub unsafe extern "C" fn otfcc_readTSI5(
                 let mut __fortable_k2: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
                 if __fortable_k2 != 0 {
                     let mut tsi5: *mut table_TSI5 =
-                        (
-                            otl_iClassDef.create.expect("non-null function pointer"))() as *mut table_TSI5;
+                        otl_ClassDef_create() as *mut table_TSI5;
                     let mut j: glyphid_t = 0 as glyphid_t;
                     while ((j as ::core::ffi::c_int * 2 as ::core::ffi::c_int) as uint32_t)
                         < table.length
                     {
-                        otl_iClassDef.push.expect("non-null function pointer")(
+                        pushClassDef(
                             tsi5 as *mut otl_ClassDef,
-                            otfcc_iHandle.fromIndex.expect("non-null function pointer")(j)
+                            handle_fromIndex(j)
                                 as otfcc_GlyphHandle,
                             read_16u(table.data.offset(
                                 (j as ::core::ffi::c_int * 2 as ::core::ffi::c_int) as isize,

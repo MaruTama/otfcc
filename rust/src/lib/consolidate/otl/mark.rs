@@ -22,13 +22,14 @@ extern "C" {
         __s2: *const ::core::ffi::c_void,
         __n: size_t,
     ) -> ::core::ffi::c_int;
-    static otfcc_iHandle: otfcc_HandlePackage;
     static otfcc_pkgGlyphOrder: otfcc_GlyphOrderPackage;
     static otl_iMarkArray: __caryll_vectorinterface_otl_MarkArray;
     static otl_iBaseArray: __caryll_vectorinterface_otl_BaseArray;
     static otl_iLigatureArray: __caryll_vectorinterface_otl_LigatureArray;
 }
 
+use crate::src::lib::table::otl::coverage::{otl_Coverage};
+use crate::src::lib::support::handle::{handle_fromConsolidated, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __int8_t = i8;
@@ -148,19 +149,6 @@ pub struct table_TSI5 {
     pub classes: *mut glyphclass_t,
 }
 pub type glyphclass_t = uint16_t;
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct table_TSI {
@@ -548,13 +536,6 @@ pub struct subtable_gsub_reverse {
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct otl_Coverage {
-    pub numGlyphs: glyphid_t,
-    pub capacity: uint32_t,
-    pub glyphs: *mut otfcc_GlyphHandle,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
 pub struct subtable_chaining {
     pub type_0: otl_chaining_type,
     pub c2rust_unnamed: C2RustUnnamed,
@@ -590,7 +571,6 @@ pub struct otl_ChainLookupApplication {
     pub index: tableid_t,
     pub lookup: otfcc_LookupHandle,
 }
-pub type otfcc_LookupHandle = otfcc_Handle;
 pub type otl_chaining_type = ::core::ffi::c_uint;
 pub const otl_chaining_classified: otl_chaining_type = 2;
 pub const otl_chaining_poly: otl_chaining_type = 1;
@@ -1284,22 +1264,6 @@ pub type otfcc_font_subtype = ::core::ffi::c_uint;
 pub const FONTTYPE_CFF: otfcc_font_subtype = 1;
 pub const FONTTYPE_TTF: otfcc_font_subtype = 0;
 pub type otfcc_Font = _caryll_font;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_ILoggerTarget {
@@ -2522,9 +2486,7 @@ unsafe extern "C" fn consolidateMarkArray(
         otl_iMarkArray.push.expect("non-null function pointer")(
             markArray,
             otl_MarkRecord {
-                glyph: otfcc_iHandle
-                    .fromConsolidated
-                    .expect("non-null function pointer")(
+                glyph: handle_fromConsolidated(
                     (*s_0).gid as glyphid_t, (*s_0).name
                 ) as otfcc_GlyphHandle,
                 markClass: (*s_0).markClass,
@@ -3543,9 +3505,7 @@ unsafe extern "C" fn consolidateBaseArray(
         otl_iBaseArray.push.expect("non-null function pointer")(
             baseArray,
             otl_BaseRecord {
-                glyph: otfcc_iHandle
-                    .fromConsolidated
-                    .expect("non-null function pointer")(
+                glyph: handle_fromConsolidated(
                     (*s_0).gid as glyphid_t, (*s_0).name
                 ) as otfcc_GlyphHandle,
                 anchors: (*s_0).anchors,
@@ -4564,9 +4524,7 @@ unsafe extern "C" fn consolidateLigArray(
         otl_iLigatureArray.push.expect("non-null function pointer")(
             ligArray,
             otl_LigatureBaseRecord {
-                glyph: otfcc_iHandle
-                    .fromConsolidated
-                    .expect("non-null function pointer")(
+                glyph: handle_fromConsolidated(
                     (*s_0).gid as glyphid_t, (*s_0).name
                 ) as otfcc_GlyphHandle,
                 componentCount: (*s_0).componentCount,
