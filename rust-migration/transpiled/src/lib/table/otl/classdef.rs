@@ -3259,7 +3259,7 @@ unsafe extern "C" fn shrinkClassDef(mut cd: *mut otl_ClassDef) {
     (*cd).numGlyphs = k;
 }
 #[no_mangle]
-pub static mut otl_iClassDef: __otfcc_IClassDef =  {
+pub static mut otl_iClassDef: __otfcc_IClassDef = {
     __otfcc_IClassDef {
         init: Some(otl_ClassDef_init as unsafe extern "C" fn(*mut otl_ClassDef) -> ()),
         copy: Some(

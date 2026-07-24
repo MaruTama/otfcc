@@ -555,7 +555,7 @@ unsafe extern "C" fn disposeSubrGraph(mut g: *mut cff_SubrGraph) {
     }
 }
 #[no_mangle]
-pub static mut cff_iSubrGraph: __caryll_elementinterface_cff_SubrGraph =  {
+pub static mut cff_iSubrGraph: __caryll_elementinterface_cff_SubrGraph = {
     __caryll_elementinterface_cff_SubrGraph {
         init: Some(cff_SubrGraph_init as unsafe extern "C" fn(*mut cff_SubrGraph) -> ()),
         copy: Some(

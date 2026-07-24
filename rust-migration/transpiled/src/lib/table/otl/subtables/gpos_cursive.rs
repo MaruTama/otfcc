@@ -671,7 +671,7 @@ unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
 unsafe extern "C" fn deleteGposCursiveEntry(mut entry: *mut otl_GposCursiveEntry) {
     otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).target);
 }
-static mut gss_typeinfo: __caryll_elementinterface_otl_GposCursiveEntry =  {
+static mut gss_typeinfo: __caryll_elementinterface_otl_GposCursiveEntry = {
     __caryll_elementinterface_otl_GposCursiveEntry {
         init: None,
         copy: None,
@@ -1013,7 +1013,7 @@ unsafe extern "C" fn subtable_gpos_cursive_create() -> *mut subtable_gpos_cursiv
     return x;
 }
 #[no_mangle]
-pub static mut iSubtable_gpos_cursive: __caryll_vectorinterface_subtable_gpos_cursive =  {
+pub static mut iSubtable_gpos_cursive: __caryll_vectorinterface_subtable_gpos_cursive = {
     __caryll_vectorinterface_subtable_gpos_cursive {
         init: Some(
             subtable_gpos_cursive_init as unsafe extern "C" fn(*mut subtable_gpos_cursive) -> (),

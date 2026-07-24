@@ -487,7 +487,7 @@ unsafe extern "C" fn disposeLayer(mut layer: *mut colr_Layer) {
     otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*layer).glyph);
 }
 #[no_mangle]
-pub static mut colr_iLayer: __caryll_elementinterface_colr_Layer =  {
+pub static mut colr_iLayer: __caryll_elementinterface_colr_Layer = {
     __caryll_elementinterface_colr_Layer {
         init: Some(colr_Layer_init as unsafe extern "C" fn(*mut colr_Layer) -> ()),
         copy: Some(
@@ -621,7 +621,7 @@ unsafe extern "C" fn colr_LayerList_grow(mut arr: *mut colr_LayerList) {
     colr_LayerList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
 }
 #[no_mangle]
-pub static mut colr_iLayerList: __caryll_vectorinterface_colr_LayerList =  {
+pub static mut colr_iLayerList: __caryll_vectorinterface_colr_LayerList = {
     __caryll_vectorinterface_colr_LayerList {
         init: Some(colr_LayerList_init as unsafe extern "C" fn(*mut colr_LayerList) -> ()),
         copy: Some(
@@ -920,7 +920,7 @@ unsafe extern "C" fn colr_Mapping_copyReplace(mut dst: *mut colr_Mapping, src: c
     colr_Mapping_copy(dst, &raw const src);
 }
 #[no_mangle]
-pub static mut colr_iMapping: __caryll_elementinterface_colr_Mapping =  {
+pub static mut colr_iMapping: __caryll_elementinterface_colr_Mapping = {
     __caryll_elementinterface_colr_Mapping {
         init: Some(colr_Mapping_init as unsafe extern "C" fn(*mut colr_Mapping) -> ()),
         copy: Some(
@@ -1001,7 +1001,7 @@ unsafe extern "C" fn table_COLR_growTo(mut arr: *mut table_COLR, mut target: siz
     };
 }
 #[no_mangle]
-pub static mut table_iCOLR: __caryll_vectorinterface_table_COLR =  {
+pub static mut table_iCOLR: __caryll_vectorinterface_table_COLR = {
     __caryll_vectorinterface_table_COLR {
         init: Some(table_COLR_init as unsafe extern "C" fn(*mut table_COLR) -> ()),
         copy: Some(

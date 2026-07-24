@@ -960,7 +960,7 @@ unsafe extern "C" fn deleteBaseArrayItem(mut entry: *mut otl_BaseRecord) {
     free((*entry).anchors as *mut ::core::ffi::c_void);
     (*entry).anchors = ::core::ptr::null_mut::<otl_Anchor>();
 }
-static mut ba_typeinfo: __caryll_elementinterface_otl_BaseRecord =  {
+static mut ba_typeinfo: __caryll_elementinterface_otl_BaseRecord = {
     __caryll_elementinterface_otl_BaseRecord {
         init: None,
         copy: None,
@@ -1172,7 +1172,7 @@ unsafe extern "C" fn otl_BaseArray_filterEnv(
     (*arr).length = j;
 }
 #[no_mangle]
-pub static mut otl_iBaseArray: __caryll_vectorinterface_otl_BaseArray =  {
+pub static mut otl_iBaseArray: __caryll_vectorinterface_otl_BaseArray = {
     __caryll_vectorinterface_otl_BaseArray {
         init: Some(otl_BaseArray_init as unsafe extern "C" fn(*mut otl_BaseArray) -> ()),
         copy: Some(
@@ -1387,7 +1387,7 @@ unsafe extern "C" fn subtable_gpos_markToSingle_dispose(mut x: *mut subtable_gpo
     disposeMarkToSingle(x);
 }
 #[no_mangle]
-pub static mut iSubtable_gpos_markToSingle: __caryll_elementinterface_subtable_gpos_markToSingle =  {
+pub static mut iSubtable_gpos_markToSingle: __caryll_elementinterface_subtable_gpos_markToSingle = {
     __caryll_elementinterface_subtable_gpos_markToSingle {
         init: Some(
             subtable_gpos_markToSingle_init

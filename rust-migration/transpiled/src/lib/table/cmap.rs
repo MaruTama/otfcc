@@ -5064,7 +5064,7 @@ pub unsafe extern "C" fn otfcc_cmapLookupUVS(
     };
 }
 #[no_mangle]
-pub static mut table_iCmap: __caryll_elementinterface_table_cmap =  {
+pub static mut table_iCmap: __caryll_elementinterface_table_cmap = {
     __caryll_elementinterface_table_cmap {
         init: Some(table_cmap_init as unsafe extern "C" fn(*mut table_cmap) -> ()),
         copy: Some(

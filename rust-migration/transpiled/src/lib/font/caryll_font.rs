@@ -2242,7 +2242,7 @@ unsafe extern "C" fn otfcc_Font_move(mut dst: *mut otfcc_Font, mut src: *mut otf
     otfcc_Font_init(src);
 }
 #[no_mangle]
-pub static mut otfcc_iFont: __caryll_elementinterface_otfcc_Font =  {
+pub static mut otfcc_iFont: __caryll_elementinterface_otfcc_Font = {
     __caryll_elementinterface_otfcc_Font {
         init: Some(otfcc_Font_init as unsafe extern "C" fn(*mut otfcc_Font) -> ()),
         copy: Some(

@@ -317,7 +317,7 @@ unsafe extern "C" fn pos_t_init(mut x: *mut pos_t) {
     );
 }
 #[no_mangle]
-pub static mut vq_iPosT: __caryll_elementinterface_pos_t =  {
+pub static mut vq_iPosT: __caryll_elementinterface_pos_t = {
     __caryll_elementinterface_pos_t {
         init: Some(pos_t_init as unsafe extern "C" fn(*mut pos_t) -> ()),
         copy: Some(pos_t_copy as unsafe extern "C" fn(*mut pos_t, *const pos_t) -> ()),
@@ -607,7 +607,7 @@ unsafe extern "C" fn createNeutralVV(mut dimensions: tableid_t) -> VV {
     return vv;
 }
 #[no_mangle]
-pub static mut iVV: __caryll_vectorinterface_VV =  {
+pub static mut iVV: __caryll_vectorinterface_VV = {
     __caryll_vectorinterface_VV {
         init: Some(VV_init as unsafe extern "C" fn(*mut VV) -> ()),
         copy: Some(VV_copy as unsafe extern "C" fn(*mut VV, *const VV) -> ()),
@@ -826,7 +826,7 @@ unsafe extern "C" fn vq_Segment_show(a: vq_Segment) {
     return showVQS(a);
 }
 #[no_mangle]
-pub static mut vq_iSegment: __caryll_elementinterface_vq_Segment =  {
+pub static mut vq_iSegment: __caryll_elementinterface_vq_Segment = {
     __caryll_elementinterface_vq_Segment {
         init: Some(vq_Segment_init as unsafe extern "C" fn(*mut vq_Segment) -> ()),
         copy: Some(
@@ -1110,7 +1110,7 @@ unsafe extern "C" fn vq_SegList_growToN(mut arr: *mut vq_SegList, mut target: si
     };
 }
 #[no_mangle]
-pub static mut vq_iSegList: __caryll_vectorinterface_vq_SegList =  {
+pub static mut vq_iSegList: __caryll_vectorinterface_vq_SegList = {
     __caryll_vectorinterface_vq_SegList {
         init: Some(vq_SegList_init as unsafe extern "C" fn(*mut vq_SegList) -> ()),
         copy: Some(
@@ -1549,7 +1549,7 @@ unsafe extern "C" fn vqPointLinearTfm(ax: VQ, mut a: pos_t, x: VQ, mut b: pos_t,
     return targetX;
 }
 #[no_mangle]
-pub static mut iVQ: __caryll_vectorinterface_VQ =  {
+pub static mut iVQ: __caryll_vectorinterface_VQ = {
     __caryll_vectorinterface_VQ {
         init: Some(VQ_init as unsafe extern "C" fn(*mut VQ) -> ()),
         copy: Some(VQ_copy as unsafe extern "C" fn(*mut VQ, *const VQ) -> ()),

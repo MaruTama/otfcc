@@ -775,7 +775,7 @@ unsafe extern "C" fn otl_CaretValueList_push(
     *(*arr).items.offset(fresh0 as isize) = elem;
 }
 #[no_mangle]
-pub static mut otl_iCaretValueList: __caryll_vectorinterface_otl_CaretValueList =  {
+pub static mut otl_iCaretValueList: __caryll_vectorinterface_otl_CaretValueList = {
     __caryll_vectorinterface_otl_CaretValueList {
         init: Some(otl_CaretValueList_init as unsafe extern "C" fn(*mut otl_CaretValueList) -> ()),
         copy: Some(
@@ -924,7 +924,7 @@ unsafe extern "C" fn deleteGdefLigCaretRec(mut v: *mut otl_CaretValueRecord) {
         .expect("non-null function pointer")(&raw mut (*v).carets);
 }
 #[no_mangle]
-pub static mut otl_iCaretValueRecord: __caryll_elementinterface_otl_CaretValueRecord =  {
+pub static mut otl_iCaretValueRecord: __caryll_elementinterface_otl_CaretValueRecord = {
     __caryll_elementinterface_otl_CaretValueRecord {
         init: Some(initGdefLigCaretRec as unsafe extern "C" fn(*mut otl_CaretValueRecord) -> ()),
         copy: None,
@@ -943,7 +943,7 @@ unsafe extern "C" fn otl_LigCaretTable_init(mut arr: *mut otl_LigCaretTable) {
     (*arr).items = ::core::ptr::null_mut::<otl_CaretValueRecord>();
 }
 #[no_mangle]
-pub static mut otl_iLigCaretTable: __caryll_vectorinterface_otl_LigCaretTable =  {
+pub static mut otl_iLigCaretTable: __caryll_vectorinterface_otl_LigCaretTable = {
     __caryll_vectorinterface_otl_LigCaretTable {
         init: Some(otl_LigCaretTable_init as unsafe extern "C" fn(*mut otl_LigCaretTable) -> ()),
         copy: Some(
@@ -1370,7 +1370,7 @@ unsafe extern "C" fn table_GDEF_dispose(mut x: *mut table_GDEF) {
     disposeGDEF(x);
 }
 #[no_mangle]
-pub static mut table_iGDEF: __caryll_elementinterface_table_GDEF =  {
+pub static mut table_iGDEF: __caryll_elementinterface_table_GDEF = {
     __caryll_elementinterface_table_GDEF {
         init: Some(table_GDEF_init as unsafe extern "C" fn(*mut table_GDEF) -> ()),
         copy: Some(

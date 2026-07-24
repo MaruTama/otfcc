@@ -877,7 +877,7 @@ unsafe extern "C" fn deleteGsubLigatureEntry(mut entry: *mut otl_GsubLigatureEnt
     otl_iCoverage.free.expect("non-null function pointer")((*entry).from);
     (*entry).from = ::core::ptr::null_mut::<otl_Coverage>();
 }
-static mut gss_typeinfo: __caryll_elementinterface_otl_GsubLigatureEntry =  {
+static mut gss_typeinfo: __caryll_elementinterface_otl_GsubLigatureEntry = {
     __caryll_elementinterface_otl_GsubLigatureEntry {
         init: None,
         copy: None,
@@ -1113,7 +1113,7 @@ unsafe extern "C" fn subtable_gsub_ligature_init(mut arr: *mut subtable_gsub_lig
     (*arr).items = ::core::ptr::null_mut::<otl_GsubLigatureEntry>();
 }
 #[no_mangle]
-pub static mut iSubtable_gsub_ligature: __caryll_vectorinterface_subtable_gsub_ligature =  {
+pub static mut iSubtable_gsub_ligature: __caryll_vectorinterface_subtable_gsub_ligature = {
     __caryll_vectorinterface_subtable_gsub_ligature {
         init: Some(
             subtable_gsub_ligature_init as unsafe extern "C" fn(*mut subtable_gsub_ligature) -> (),

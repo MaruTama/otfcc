@@ -627,7 +627,7 @@ unsafe extern "C" fn read_16s(mut src: *const uint8_t) -> int16_t {
 unsafe extern "C" fn deleteMarkArrayItem(mut entry: *mut otl_MarkRecord) {
     otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).glyph);
 }
-static mut gss_typeinfo: __caryll_elementinterface_otl_MarkRecord =  {
+static mut gss_typeinfo: __caryll_elementinterface_otl_MarkRecord = {
     __caryll_elementinterface_otl_MarkRecord {
         init: None,
         copy: None,
@@ -842,7 +842,7 @@ unsafe extern "C" fn otl_MarkArray_filterEnv(
     (*arr).length = j;
 }
 #[no_mangle]
-pub static mut otl_iMarkArray: __caryll_vectorinterface_otl_MarkArray =  {
+pub static mut otl_iMarkArray: __caryll_vectorinterface_otl_MarkArray = {
     __caryll_vectorinterface_otl_MarkArray {
         init: Some(otl_MarkArray_init as unsafe extern "C" fn(*mut otl_MarkArray) -> ()),
         copy: Some(

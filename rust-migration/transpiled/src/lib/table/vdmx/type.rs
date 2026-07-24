@@ -244,7 +244,7 @@ unsafe extern "C" fn vdmx_Record_copyReplace(mut dst: *mut vdmx_Record, src: vdm
     vdmx_Record_copy(dst, &raw const src);
 }
 #[no_mangle]
-pub static mut vdmx_iRecord: __caryll_elementinterface_vdmx_Record =  {
+pub static mut vdmx_iRecord: __caryll_elementinterface_vdmx_Record = {
     __caryll_elementinterface_vdmx_Record {
         init: Some(vdmx_Record_init as unsafe extern "C" fn(*mut vdmx_Record) -> ()),
         copy: Some(
@@ -480,7 +480,7 @@ unsafe extern "C" fn vdmx_Group_move(mut dst: *mut vdmx_Group, mut src: *mut vdm
     vdmx_Group_init(src);
 }
 #[no_mangle]
-pub static mut vdmx_iGroup: __caryll_vectorinterface_vdmx_Group =  {
+pub static mut vdmx_iGroup: __caryll_vectorinterface_vdmx_Group = {
     __caryll_vectorinterface_vdmx_Group {
         init: Some(vdmx_Group_init as unsafe extern "C" fn(*mut vdmx_Group) -> ()),
         copy: Some(
@@ -650,7 +650,7 @@ unsafe extern "C" fn vdmx_RatioRange_replace(mut dst: *mut vdmx_RatioRange, src:
     );
 }
 #[no_mangle]
-pub static mut vdmx_iRatioRange: __caryll_elementinterface_vdmx_RatioRange =  {
+pub static mut vdmx_iRatioRange: __caryll_elementinterface_vdmx_RatioRange = {
     __caryll_elementinterface_vdmx_RatioRange {
         init: Some(vdmx_RatioRange_init as unsafe extern "C" fn(*mut vdmx_RatioRange) -> ()),
         copy: Some(
@@ -685,7 +685,7 @@ unsafe extern "C" fn vdmx_RatioRagneList_disposeItem(
     };
 }
 #[no_mangle]
-pub static mut vdmx_iRatioRangeList: __caryll_vectorinterface_vdmx_RatioRagneList =  {
+pub static mut vdmx_iRatioRangeList: __caryll_vectorinterface_vdmx_RatioRagneList = {
     __caryll_vectorinterface_vdmx_RatioRagneList {
         init: Some(
             vdmx_RatioRagneList_init as unsafe extern "C" fn(*mut vdmx_RatioRagneList) -> (),
@@ -1110,7 +1110,7 @@ unsafe extern "C" fn table_VDMX_copy(mut dst: *mut table_VDMX, mut src: *const t
     );
 }
 #[no_mangle]
-pub static mut table_iVDMX: __caryll_elementinterface_table_VDMX =  {
+pub static mut table_iVDMX: __caryll_elementinterface_table_VDMX = {
     __caryll_elementinterface_table_VDMX {
         init: Some(table_VDMX_init as unsafe extern "C" fn(*mut table_VDMX) -> ()),
         copy: Some(

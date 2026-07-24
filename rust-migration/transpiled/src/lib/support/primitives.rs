@@ -31,15 +31,8 @@ pub unsafe extern "C" fn otfcc_to_fixed(x: ::core::ffi::c_double) -> f16dot16 {
     return round(x * 65536.0f64) as f16dot16;
 }
 #[inline]
-unsafe extern "C" fn clamp(mut value: int64_t) -> f16dot16 {
-    let mut tmp: int64_t = value;
-    if tmp < f16dot16_negativeIntinity as int64_t {
-        tmp = f16dot16_negativeIntinity as int64_t;
-    }
-    if tmp > f16dot16_infinity as int64_t {
-        tmp = f16dot16_infinity as int64_t;
-    }
-    return tmp as f16dot16;
+unsafe extern "C" fn clamp(value: int64_t) -> f16dot16 {
+    value.clamp(f16dot16_negativeIntinity as int64_t, f16dot16_infinity as int64_t) as f16dot16
 }
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_f1616_add(mut a: f16dot16, mut b: f16dot16) -> f16dot16 {
@@ -56,18 +49,18 @@ pub unsafe extern "C" fn otfcc_f1616_multiply(mut a: f16dot16, mut b: f16dot16) 
     return product;
 }
 #[inline]
-unsafe extern "C" fn divide(mut a: int64_t, mut b: int32_t) -> f16dot16 {
-    if b == 0 as int32_t {
-        if a < 0 as int64_t {
-            return f16dot16_negativeIntinity;
+unsafe extern "C" fn divide(mut a: int64_t, b: int32_t) -> f16dot16 {
+    if b == 0 {
+        return if a < 0 {
+            f16dot16_negativeIntinity
         } else {
-            return f16dot16_infinity;
-        }
+            f16dot16_infinity
+        };
     }
-    if (a < 0 as int64_t) as ::core::ffi::c_int != (b < 0 as int32_t) as ::core::ffi::c_int {
-        a -= (b / 2 as int32_t) as int64_t;
+    if (a < 0) != (b < 0) {
+        a -= (b / 2) as int64_t;
     } else {
-        a += (b / 2 as int32_t) as int64_t;
+        a += (b / 2) as int64_t;
     }
     return clamp(a / b as int64_t);
 }
