@@ -44,6 +44,7 @@ extern "C" {
     fn gpos_dump_value(value: otl_PositionValue) -> *mut json_value;
     fn gpos_parse_value(pos: *mut json_value) -> otl_PositionValue;
 }
+use crate::src::lib::support::binio::{read_16u};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -602,14 +603,6 @@ pub type otl_BuildHeuristics = ::core::ffi::c_uint;
 pub const OTL_BH_GSUB_VERT: otl_BuildHeuristics = 1;
 pub const OTL_BH_NORMAL: otl_BuildHeuristics = 0;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
-}
 unsafe extern "C" fn deleteGposSingleEntry(mut entry: *mut otl_GposSingleEntry) {
     otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).target);
 }

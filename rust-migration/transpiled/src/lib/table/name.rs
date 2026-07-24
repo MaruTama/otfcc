@@ -52,6 +52,7 @@ extern "C" {
     fn utf16be_to_utf8(inb: *const uint8_t, inlenb: ::core::ffi::c_int) -> sds;
     fn utf8toutf16be(_in: sds, out_bytes: *mut size_t) -> *mut uint8_t;
 }
+use crate::src::lib::support::binio::{read_16u};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -1377,14 +1378,6 @@ unsafe extern "C" fn json_obj_getint(
         _k = _k.wrapping_add(1);
     }
     return 0 as int32_t;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

@@ -53,6 +53,7 @@ extern "C" {
     fn otl_parse_anchor(v: *mut json_value) -> otl_Anchor;
     fn bkFromAnchor(a: otl_Anchor) -> *mut bk_Block;
 }
+use crate::src::lib::support::binio::{read_16u};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -659,14 +660,6 @@ unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     );
     (*xx).type_0 = json_pre_serialized;
     return xx;
-}
-#[inline]
-unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
-    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
-        as ::core::ffi::c_int)
-        << 8 as ::core::ffi::c_int) as uint16_t;
-    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
-    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
 }
 unsafe extern "C" fn deleteGposCursiveEntry(mut entry: *mut otl_GposCursiveEntry) {
     otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).target);

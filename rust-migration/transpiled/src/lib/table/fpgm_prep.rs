@@ -55,6 +55,7 @@ extern "C" {
         options: *const otfcc_Options,
     ) -> *mut json_value;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -546,26 +547,6 @@ pub unsafe extern "C" fn otfcc_buildFpgmPrep(
     let mut buf: *mut caryll_Buffer = bufnew();
     bufwrite_bytes(buf, (*table).length as size_t, (*table).bytes);
     return buf;
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
 }
 #[inline]
 unsafe extern "C" fn json_obj_get(

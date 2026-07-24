@@ -29,6 +29,7 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
 pub type __int64_t = i64;
@@ -1383,24 +1384,4 @@ pub unsafe extern "C" fn json_ident(mut a: *const json_value, mut b: *const json
         }
         _ => return false,
     };
-}
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
 }

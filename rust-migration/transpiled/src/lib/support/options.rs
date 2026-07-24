@@ -12,6 +12,7 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
 }
+use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type size_t = usize;
 pub type __uint8_t = u8;
 pub type __off_t = ::core::ffi::c_long;
@@ -121,26 +122,6 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-#[inline]
-unsafe extern "C" fn __caryll_allocate_clean(
-    mut n: size_t,
-    mut line: ::core::ffi::c_ulong,
-) -> *mut ::core::ffi::c_void {
-    if n == 0 {
-        return NULL;
-    }
-    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
-    if p.is_null() {
-        fprintf(
-            stderr,
-            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
-            line,
-            n as ::core::ffi::c_ulong,
-        );
-        exit(EXIT_FAILURE);
-    }
-    return p;
-}
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_newOptions() -> *mut otfcc_Options {
     let mut options: *mut otfcc_Options = ::core::ptr::null_mut::<otfcc_Options>();
