@@ -1,0 +1,73 @@
+name: Rust build & compatibility
+
+# Verifies the checked-in Rust port (rust-migration/transpiled/) stays green:
+# it builds, its unit tests pass, and its output is byte-compatible with the
+# C toolchain built from the same tree. See rust-migration/README.md.
+#
+# This does NOT re-run c2rust (the C -> Rust transpile). The transpiled
+# source is committed to the repo, not regenerated per CI run — re-transpile
+# locally with rust-migration/transpile.sh after a C-side change and commit
+# the diff. See "Regenerating the Rust source" in rust-migration/README.md.
+on:
+  push:
+    branches: [master]
+    paths:
+      - "lib/**"
+      - "src/**"
+      - "dep/**"
+      - "include/**"
+      - "quick.make"
+      - "premake5.lua"
+      - "tests/**"
+      - "rust-migration/**"
+      - ".github/workflows/rust-migration.yml"
+  pull_request:
+    paths:
+      - "lib/**"
+      - "src/**"
+      - "dep/**"
+      - "include/**"
+      - "quick.make"
+      - "premake5.lua"
+      - "tests/**"
+      - "rust-migration/**"
+      - ".github/workflows/rust-migration.yml"
+  workflow_dispatch: {}
+
+jobs:
+  # Standard amd64 runner, no Docker, no c2rust: builds the committed Rust
+  # source with the pinned nightly (rust-toolchain.toml; rustup on the
+  # runner installs it automatically), runs `cargo test`, builds the C
+  # toolchain natively (dep/bin-linux/{premake5,ninja} are x86_64, matching
+  # this runner) with clang, and compares its output against the Rust build
+  # byte-for-byte on the same machine. Finally runs the project's own
+  # round-trip stability tests against the Rust binaries.
+  build-test-compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the Rust crate and run cargo test
+        run: ./rust-migration/build-crate.sh
+
+      # compare-with-c.sh builds the C toolchain with clang, not gcc: c2rust's
+      # transpile is based on parsing with clang's AST, and gcc vs clang
+      # produce measurably different floating-point rounding in this codebase
+      # (verified locally: a gcc build differs byte-for-byte from a clang
+      # build of the identical source on the identical machine). ubuntu-latest
+      # doesn't have clang preinstalled.
+      - name: Install clang
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq clang
+
+      - name: Build the C toolchain and compare output byte-for-byte
+        run: ./rust-migration/compare-with-c.sh
+
+      - name: Run dump/build cycles (Rust only)
+        run: ./rust-migration/run-cycles.sh
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Compare round-trip stability
+        run: node rust-migration/compare-roundtrips.js

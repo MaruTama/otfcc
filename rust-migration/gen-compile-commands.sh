@@ -14,9 +14,20 @@ case "${OS}" in
 	*) echo "Unknown OS=${OS} (use macosx|linux)" >&2; exit 1 ;;
 esac
 
-export PREMAKE5="${BINDIR}/premake5"
-export BD_NINJA="${BINDIR}/ninja"
+# Absolute paths: BD_NINJA is invoked after `cd build/ninja` below, so a
+# relative path would resolve against the wrong directory.
+export PREMAKE5="$(pwd)/${BINDIR}/premake5"
+export BD_NINJA="$(pwd)/${BINDIR}/ninja"
 chmod +x "${PREMAKE5}" "${BD_NINJA}" 2>/dev/null || true
+
+# quick.make's mf-ninja-linux target passes --cc=$(CC) to premake5, which
+# needs an actual compiler name (gcc/clang) — Make's built-in default
+# ($(CC) = "cc") isn't one, and premake5 rejects it ("invalid value 'cc' for
+# option 'cc'"). Only relevant for OS=linux; the macOS path doesn't pass --cc.
+if [ "${OS}" = "linux" ]; then
+	export CC="${CC:-gcc}"
+	if [ "${CC}" = "cc" ]; then export CC=gcc; fi
+fi
 
 make -f quick.make "${NINJA_TARGET}"
 ( cd build/ninja && "${BD_NINJA}" -t compdb cc ) > /tmp/compdb.full.json
