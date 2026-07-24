@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Runs the dump/build cycles and the otfccdll ctypes test against an
-# ALREADY-BUILT crate (rust-migration/transpiled/target/release/). Split out
+# ALREADY-BUILT crate (rust/target/release/). Split out
 # from build-crate.sh so a CI job that built the crate on one machine can
 # still run this on the same machine without redoing the build.
 #
-# Invoke as: ./rust-migration/run-cycles.sh
+# Invoke as: ./rust/scripts/run-cycles.sh
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 
-BIN=rust-migration/transpiled/target/release
+BIN=rust/target/release
 BUILD=build/rust-test
 
 if [ ! -x "${BIN}/otfccdump" ] || [ ! -x "${BIN}/otfccbuild" ]; then
@@ -65,7 +65,7 @@ if [ -f "${GVAR_PAYLOAD}" ]; then
 	echo "  gvar-test.ttf"
 	run_ttf_cycle "gvar-test" ttf "${GVAR_PAYLOAD}"
 else
-	echo "  (skipping gvar-test.ttf: not found; run rust-migration/make-test-variable-font.py first)"
+	echo "  (skipping gvar-test.ttf: not found; run rust/scripts/make-test-variable-font.py first)"
 fi
 
 SO_EXT="so"
@@ -83,4 +83,4 @@ fi
 
 echo "==> All cycles completed without crashing."
 echo "==> Run stability comparisons (needs node):"
-echo "    node rust-migration/compare-roundtrips.js"
+echo "    node rust/scripts/compare-roundtrips.js"

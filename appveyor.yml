@@ -13,6 +13,6 @@ install:
   - set PATH=C:\msys64\usr\bin;%PATH%
 
 build_script:
-  - dep\bin-win\premake5.exe vs2017
+  - c\dep\bin-win\premake5.exe --file=c\premake5.lua vs2017
   - msbuild build\vs\otfcc.sln /m:%NUMBER_OF_PROCESSORS% /nr:false /nologo /verbosity:minimal /property:Configuration=Release
-  - make -f quick.make test
+  - make -f c\quick.make test

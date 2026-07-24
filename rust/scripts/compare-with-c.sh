@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Builds the C toolchain natively (amd64; dep/bin-linux/{premake5,ninja} are
+# Builds the C toolchain natively (amd64; c/dep/bin-linux/{premake5,ninja} are
 # x86_64 binaries) and compares its output against the already-built Rust
-# crate (rust-migration/transpiled/target/release/), byte-for-byte, on the
+# crate (rust/target/release/), byte-for-byte, on the
 # same canonical input JSON for each payload.
 #
 # Must run AFTER the Rust crate has been built (cargo build --release) and
 # on the SAME architecture as that build, so both binaries' outputs are
 # directly comparable without any cross-arch ambiguity.
 #
-# Invoke as: ./rust-migration/compare-with-c.sh
+# Invoke as: ./rust/scripts/compare-with-c.sh
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 
-RUST_BIN=rust-migration/transpiled/target/release
+RUST_BIN=rust/target/release
 if [ ! -x "${RUST_BIN}/otfccdump" ] || [ ! -x "${RUST_BIN}/otfccbuild" ]; then
 	echo "ERROR: ${RUST_BIN}/{otfccdump,otfccbuild} not found; build the Rust crate first." >&2
 	exit 1
@@ -23,8 +23,8 @@ echo "==> Building the C toolchain (native amd64)"
 # `cd`), this uses quick.make's own `linux-release-x64` target, which
 # internally does `cd build/ninja && ../../$(BD_NINJA) ...` — BD_NINJA must
 # stay a repo-root-relative path for that "../../" prefix to resolve.
-export PREMAKE5="dep/bin-linux/premake5"
-export BD_NINJA="dep/bin-linux/ninja"
+export PREMAKE5="c/dep/bin-linux/premake5"
+export BD_NINJA="c/dep/bin-linux/ninja"
 chmod +x "${PREMAKE5}" "${BD_NINJA}"
 # quick.make's mf-ninja-linux passes --cc=$(CC) to premake5; Make's built-in
 # default ($(CC) = "cc") isn't a valid compiler name for it. Default to
@@ -36,7 +36,7 @@ chmod +x "${PREMAKE5}" "${BD_NINJA}"
 # gcc/clang difference as a false Rust-vs-C mismatch.
 export CC="${CC:-clang}"
 if [ "${CC}" = "cc" ]; then export CC=clang; fi
-make -f quick.make linux-release-x64
+make -f c/quick.make linux-release-x64
 C_BIN=bin/release-x64
 
 BUILD=build/compare-with-c
@@ -46,7 +46,7 @@ TTF_PAYLOADS="NotoNastaliqUrdu-Regular iosevka-r BungeeColor-Regular_colr_Window
 CFF_PAYLOADS="KRName-Regular"
 # Cormorant-Medium / WorkSans-Regular.otf are excluded: both the C and Rust
 # otfccdump stack-overflow on them (a pre-existing bug in the C CFF
-# interpreter — see rust-migration/README.md), unrelated to this comparison.
+# interpreter — see rust/README.md), unrelated to this comparison.
 
 # Optional: the gvar (variable-font) payload from make-test-variable-font.py.
 # Needs fontTools, so it's generated as a separate CI step rather than always
@@ -84,7 +84,7 @@ done
 if [ -f "${GVAR_PAYLOAD}" ]; then
 	compare_payload "gvar-test" ttf "${GVAR_PAYLOAD}"
 else
-	echo "  (skipping gvar-test.ttf: not found; run rust-migration/make-test-variable-font.py first)"
+	echo "  (skipping gvar-test.ttf: not found; run rust/scripts/make-test-variable-font.py first)"
 fi
 
 echo "==> Comparing C vs Rust otfccdll (cdylib) output, byte-for-byte"

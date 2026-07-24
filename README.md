@@ -126,7 +126,7 @@ On Linux, Either Clang/LLVM or GCC can be used to build `otfcc`.
 3. Run the following from the command line (Change config when necessary):
 
 ```bash
-premake5 gmake
+premake5 --file=c/premake5.lua gmake
 cd build/gmake
 make config=release_x64
 ```
@@ -134,7 +134,7 @@ make config=release_x64
 If you have [Ninja](https://ninja-build.org/) installed on your system, you can use ninja either:
 
 ```bash
-premake5 ninja
+premake5 --file=c/premake5.lua ninja
 cd build/ninja
 ninja otfccdump_release_x64 otfccbuild_release_x64
 ```
@@ -148,7 +148,7 @@ On Windows, building `otfcc` is tested under the toolchains listed below. The de
 * GCC 5.1 included in `TDM-GCC`, or GCC 6.1.0 in MinGW-W64. Run the following from the command line (Change the `config` when necessary):
 
   ```bash
-  premake5 gmake
+  premake5 --file=c/premake5.lua gmake
   cd build/gmake
   make config=release_x64
   ```
@@ -157,17 +157,17 @@ On Windows, building `otfcc` is tested under the toolchains listed below. The de
 * [Visual C++ Building Tools (Mar 2016)](https://blogs.msdn.microsoft.com/vcblog/2016/03/31/announcing-the-official-release-of-the-visual-c-build-tools-2015/) with [Clang/LLVM 3.9](http://clang.llvm.org/). Only Release build is tested. Run the following from the Visual C++ Command Prompt:
 
   ```bat
-  premake5 vs2015
+  premake5 --file=c\premake5.lua vs2015
   msbuild build\vs\otfcc.sln /property:Configuration=Release
   ```
 
 
 ### Mac OS
 
-[premake5](http://premake.github.io/) (can be installed via `brew install premake --devel`, or be found in the `dep/bin-osx` directory) provides ability to produce XCode projects. Run
+[premake5](http://premake.github.io/) (can be installed via `brew install premake --devel`, or be found in the `c/dep/bin-osx` directory) provides ability to produce XCode projects. Run
 
 ```bash
-premake5 xcode4
+premake5 --file=c/premake5.lua xcode4
 ```
 
 And then you can open `build/xcode/otfcc.xcworkspace` and build with XCode. You can find built binaries in `bin/`.
