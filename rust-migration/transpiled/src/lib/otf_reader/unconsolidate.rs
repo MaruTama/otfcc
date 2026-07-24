@@ -1537,26 +1537,25 @@ pub type WORD = ::core::ffi::c_uint;
 pub type BYTE = ::core::ffi::c_uchar;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-unsafe extern "C" fn hashVQS(mut buf: *mut caryll_Buffer, mut s: vq_Segment) {
+unsafe extern "C" fn hashVQS(buf: *mut caryll_Buffer, s: vq_Segment) {
     bufwrite8(buf, s.type_0 as uint8_t);
-    match s.type_0 as ::core::ffi::c_uint {
-        0 => {
+    match s.type_0 {
+        VQ_STILL => {
             bufwrite32b(
                 buf,
                 otfcc_to_fixed(s.val.still as ::core::ffi::c_double) as uint32_t,
             );
         }
-        1 => {
+        VQ_DELTA => {
             bufwrite32b(
                 buf,
                 otfcc_to_fixed(s.val.delta.quantity as ::core::ffi::c_double) as uint32_t,
             );
             bufwrite32b(buf, (*s.val.delta.region).dimensions as uint32_t);
-            let mut j: size_t = 0 as size_t;
-            while j < (*s.val.delta.region).dimensions as size_t {
-                let mut span: *const vq_AxisSpan =
+            for j in 0..(*s.val.delta.region).dimensions as size_t {
+                let span: *const vq_AxisSpan =
                     (&raw const (*s.val.delta.region).spans as *const vq_AxisSpan)
-                        .offset(j as isize) as *const vq_AxisSpan;
+                        .offset(j as isize);
                 bufwrite32b(
                     buf,
                     otfcc_to_f2dot14((*span).start as ::core::ffi::c_double) as uint32_t,
@@ -1569,22 +1568,19 @@ unsafe extern "C" fn hashVQS(mut buf: *mut caryll_Buffer, mut s: vq_Segment) {
                     buf,
                     otfcc_to_f2dot14((*span).end as ::core::ffi::c_double) as uint32_t,
                 );
-                j = j.wrapping_add(1);
             }
         }
         _ => {}
     };
 }
-unsafe extern "C" fn hashVQ(mut buf: *mut caryll_Buffer, mut x: VQ) {
+unsafe extern "C" fn hashVQ(buf: *mut caryll_Buffer, x: VQ) {
     bufwrite32b(
         buf,
         otfcc_to_fixed(x.kernel as ::core::ffi::c_double) as uint32_t,
     );
     bufwrite32b(buf, x.shift.length as uint32_t);
-    let mut j: size_t = 0 as size_t;
-    while j < x.shift.length {
+    for j in 0..x.shift.length {
         hashVQS(buf, *x.shift.items.offset(j as isize));
-        j = j.wrapping_add(1);
     }
 }
 #[no_mangle]
@@ -1592,7 +1588,7 @@ pub unsafe extern "C" fn nameGlyphByHash(
     mut g: *mut glyf_Glyph,
     mut glyf: *mut table_glyf,
 ) -> GlyphHash {
-    let mut buf: *mut caryll_Buffer = bufnew();
+    let buf: *mut caryll_Buffer = bufnew();
     bufwrite8(buf, 'H' as i32 as uint8_t);
     hashVQ(buf, (*g).advanceWidth);
     bufwrite8(buf, 'h' as i32 as uint8_t);
@@ -1603,34 +1599,23 @@ pub unsafe extern "C" fn nameGlyphByHash(
     hashVQ(buf, (*g).verticalOrigin);
     bufwrite8(buf, 'C' as i32 as uint8_t);
     bufwrite8(buf, '(' as i32 as uint8_t);
-    let mut j: shapeid_t = 0 as shapeid_t;
-    while (j as size_t) < (*g).contours.length {
+    for j in 0..(*g).contours.length {
         bufwrite8(buf, '(' as i32 as uint8_t);
-        let mut c: *mut glyf_Contour = (*g).contours.items.offset(j as isize) as *mut glyf_Contour;
-        let mut k: shapeid_t = 0 as shapeid_t;
-        while (k as size_t) < (*c).length {
-            hashVQ(buf, (*(*c).items.offset(k as isize)).x);
-            hashVQ(buf, (*(*c).items.offset(k as isize)).y);
-            bufwrite8(
-                buf,
-                (if (*(*c).items.offset(k as isize)).onCurve as ::core::ffi::c_int != 0 {
-                    1 as ::core::ffi::c_int
-                } else {
-                    0 as ::core::ffi::c_int
-                }) as uint8_t,
-            );
-            k = k.wrapping_add(1);
+        let c: *mut glyf_Contour = (*g).contours.items.offset(j as isize) as *mut glyf_Contour;
+        for k in 0..(*c).length {
+            let point = (*c).items.offset(k as isize);
+            hashVQ(buf, (*point).x);
+            hashVQ(buf, (*point).y);
+            bufwrite8(buf, ((*point).onCurve != 0) as uint8_t);
         }
         bufwrite8(buf, ')' as i32 as uint8_t);
-        j = j.wrapping_add(1);
     }
     bufwrite8(buf, ')' as i32 as uint8_t);
     bufwrite8(buf, 'R' as i32 as uint8_t);
     bufwrite8(buf, '(' as i32 as uint8_t);
-    let mut j_0: shapeid_t = 0 as shapeid_t;
-    while (j_0 as size_t) < (*g).references.length {
-        let mut r: *mut glyf_ComponentReference =
-            (*g).references.items.offset(j_0 as isize) as *mut glyf_ComponentReference;
+    for j in 0..(*g).references.length {
+        let r: *mut glyf_ComponentReference =
+            (*g).references.items.offset(j as isize) as *mut glyf_ComponentReference;
         let mut h: GlyphHash = nameGlyphByHash(
             *(*glyf).items.offset((*r).glyph.index as isize) as *mut glyf_Glyph,
             glyf,
@@ -1658,109 +1643,54 @@ pub unsafe extern "C" fn nameGlyphByHash(
             buf,
             otfcc_to_f2dot14((*r).d as ::core::ffi::c_double) as uint32_t,
         );
-        j_0 = j_0.wrapping_add(1);
     }
     bufwrite8(buf, ')' as i32 as uint8_t);
     bufwrite8(buf, 's' as i32 as uint8_t);
     bufwrite8(buf, 'H' as i32 as uint8_t);
     bufwrite8(buf, '(' as i32 as uint8_t);
-    let mut j_1: shapeid_t = 0 as shapeid_t;
-    while (j_1 as size_t) < (*g).stemH.length {
-        bufwrite32b(
-            buf,
-            otfcc_to_fixed(
-                (*(*g).stemH.items.offset(j_1 as isize)).position as ::core::ffi::c_double,
-            ) as uint32_t,
-        );
-        bufwrite32b(
-            buf,
-            otfcc_to_fixed((*(*g).stemH.items.offset(j_1 as isize)).width as ::core::ffi::c_double)
-                as uint32_t,
-        );
-        j_1 = j_1.wrapping_add(1);
+    for j in 0..(*g).stemH.length {
+        let stem = (*g).stemH.items.offset(j as isize);
+        bufwrite32b(buf, otfcc_to_fixed((*stem).position as ::core::ffi::c_double) as uint32_t);
+        bufwrite32b(buf, otfcc_to_fixed((*stem).width as ::core::ffi::c_double) as uint32_t);
     }
     bufwrite8(buf, ')' as i32 as uint8_t);
     bufwrite8(buf, 's' as i32 as uint8_t);
     bufwrite8(buf, 'V' as i32 as uint8_t);
     bufwrite8(buf, '(' as i32 as uint8_t);
-    let mut j_2: shapeid_t = 0 as shapeid_t;
-    while (j_2 as size_t) < (*g).stemV.length {
-        bufwrite32b(
-            buf,
-            otfcc_to_fixed(
-                (*(*g).stemV.items.offset(j_2 as isize)).position as ::core::ffi::c_double,
-            ) as uint32_t,
-        );
-        bufwrite32b(
-            buf,
-            otfcc_to_fixed((*(*g).stemV.items.offset(j_2 as isize)).width as ::core::ffi::c_double)
-                as uint32_t,
-        );
-        j_2 = j_2.wrapping_add(1);
+    for j in 0..(*g).stemV.length {
+        let stem = (*g).stemV.items.offset(j as isize);
+        bufwrite32b(buf, otfcc_to_fixed((*stem).position as ::core::ffi::c_double) as uint32_t);
+        bufwrite32b(buf, otfcc_to_fixed((*stem).width as ::core::ffi::c_double) as uint32_t);
     }
     bufwrite8(buf, ')' as i32 as uint8_t);
     bufwrite8(buf, 'm' as i32 as uint8_t);
     bufwrite8(buf, 'H' as i32 as uint8_t);
     bufwrite8(buf, '(' as i32 as uint8_t);
-    let mut j_3: shapeid_t = 0 as shapeid_t;
-    while (j_3 as size_t) < (*g).hintMasks.length {
-        bufwrite16b(
-            buf,
-            (*(*g).hintMasks.items.offset(j_3 as isize)).contoursBefore,
-        );
-        bufwrite16b(
-            buf,
-            (*(*g).hintMasks.items.offset(j_3 as isize)).pointsBefore,
-        );
-        let mut k_0: shapeid_t = 0 as shapeid_t;
-        while (k_0 as size_t) < (*g).stemH.length {
-            bufwrite8(
-                buf,
-                (*(*g).hintMasks.items.offset(j_3 as isize)).maskH[k_0 as usize] as uint8_t,
-            );
-            k_0 = k_0.wrapping_add(1);
+    for j in 0..(*g).hintMasks.length {
+        let mask = (*g).hintMasks.items.offset(j as isize);
+        bufwrite16b(buf, (*mask).contoursBefore);
+        bufwrite16b(buf, (*mask).pointsBefore);
+        for k in 0..(*g).stemH.length {
+            bufwrite8(buf, (*mask).maskH[k as usize] as uint8_t);
         }
-        let mut k_1: shapeid_t = 0 as shapeid_t;
-        while (k_1 as size_t) < (*g).stemV.length {
-            bufwrite8(
-                buf,
-                (*(*g).hintMasks.items.offset(j_3 as isize)).maskV[k_1 as usize] as uint8_t,
-            );
-            k_1 = k_1.wrapping_add(1);
+        for k in 0..(*g).stemV.length {
+            bufwrite8(buf, (*mask).maskV[k as usize] as uint8_t);
         }
-        j_3 = j_3.wrapping_add(1);
     }
     bufwrite8(buf, ')' as i32 as uint8_t);
     bufwrite8(buf, 'm' as i32 as uint8_t);
     bufwrite8(buf, 'C' as i32 as uint8_t);
     bufwrite8(buf, '(' as i32 as uint8_t);
-    let mut j_4: shapeid_t = 0 as shapeid_t;
-    while (j_4 as size_t) < (*g).contourMasks.length {
-        bufwrite16b(
-            buf,
-            (*(*g).contourMasks.items.offset(j_4 as isize)).contoursBefore,
-        );
-        bufwrite16b(
-            buf,
-            (*(*g).contourMasks.items.offset(j_4 as isize)).pointsBefore,
-        );
-        let mut k_2: shapeid_t = 0 as shapeid_t;
-        while (k_2 as size_t) < (*g).stemH.length {
-            bufwrite8(
-                buf,
-                (*(*g).contourMasks.items.offset(j_4 as isize)).maskH[k_2 as usize] as uint8_t,
-            );
-            k_2 = k_2.wrapping_add(1);
+    for j in 0..(*g).contourMasks.length {
+        let mask = (*g).contourMasks.items.offset(j as isize);
+        bufwrite16b(buf, (*mask).contoursBefore);
+        bufwrite16b(buf, (*mask).pointsBefore);
+        for k in 0..(*g).stemH.length {
+            bufwrite8(buf, (*mask).maskH[k as usize] as uint8_t);
         }
-        let mut k_3: shapeid_t = 0 as shapeid_t;
-        while (k_3 as size_t) < (*g).stemV.length {
-            bufwrite8(
-                buf,
-                (*(*g).contourMasks.items.offset(j_4 as isize)).maskV[k_3 as usize] as uint8_t,
-            );
-            k_3 = k_3.wrapping_add(1);
+        for k in 0..(*g).stemV.length {
+            bufwrite8(buf, (*mask).maskV[k as usize] as uint8_t);
         }
-        j_4 = j_4.wrapping_add(1);
     }
     bufwrite8(buf, ')' as i32 as uint8_t);
     bufwrite8(buf, 'I' as i32 as uint8_t);
@@ -1778,10 +1708,8 @@ pub unsafe extern "C" fn nameGlyphByHash(
     sha1_update(&raw mut ctx, (*buf).data as *const BYTE, buflen(buf));
     sha1_final(&raw mut ctx, &raw mut hash as *mut BYTE);
     let mut h_0: GlyphHash = GlyphHash { hash: [0; 20] };
-    let mut j_5: uint16_t = 0 as uint16_t;
-    while (j_5 as ::core::ffi::c_int) < SHA1_BLOCK_SIZE {
-        h_0.hash[j_5 as usize] = hash[j_5 as usize];
-        j_5 = j_5.wrapping_add(1);
+    for j in 0..SHA1_BLOCK_SIZE as usize {
+        h_0.hash[j] = hash[j];
     }
     buffree(buf);
     return h_0;
@@ -2059,134 +1987,69 @@ unsafe extern "C" fn nameGlyphs(mut font: *mut otfcc_Font, mut gord: *mut otfcc_
     }
 }
 unsafe extern "C" fn unconsolidate_chaining(
-    mut _font: *mut otfcc_Font,
-    mut lookup: *mut otl_Lookup,
-    mut _table: *mut table_OTL,
+    _font: *mut otfcc_Font,
+    lookup: *mut otl_Lookup,
+    _table: *mut table_OTL,
 ) {
-    let mut totalRules: tableid_t = 0 as tableid_t;
-    let mut j: tableid_t = 0 as tableid_t;
-    while (j as size_t) < (*lookup).subtables.length {
-        if !(*(*lookup).subtables.items.offset(j as isize)).is_null() {
-            if (**(*lookup).subtables.items.offset(j as isize))
-                .chaining
-                .type_0 as ::core::ffi::c_uint
-                == otl_chaining_poly as ::core::ffi::c_int as ::core::ffi::c_uint
-            {
-                totalRules = (totalRules as ::core::ffi::c_int
-                    + (**(*lookup).subtables.items.offset(j as isize))
-                        .chaining
-                        .c2rust_unnamed
-                        .c2rust_unnamed
-                        .rulesCount as ::core::ffi::c_int)
-                    as tableid_t;
-            } else if (**(*lookup).subtables.items.offset(j as isize))
-                .chaining
-                .type_0 as ::core::ffi::c_uint
-                == otl_chaining_canonical as ::core::ffi::c_int as ::core::ffi::c_uint
-            {
-                totalRules =
-                    (totalRules as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as tableid_t;
-            }
-        }
-        j = j.wrapping_add(1);
-    }
+    // The original C (lib/otf-reader/unconsolidate.c) computes a
+    // `totalRules` count in a first pass over the subtables and never uses
+    // it afterward (no capacity-reservation call, no other reference) --
+    // genuinely dead code upstream, not a c2rust artifact. Confirmed by
+    // inspection: the loop body only reads subtable fields into a local
+    // accumulator with no other side effects. Omitted here.
     let mut newsts: otl_SubtableList = otl_SubtableList {
         length: 0,
         capacity: 0,
         items: ::core::ptr::null_mut::<otl_SubtablePtr>(),
     };
     otl_iSubtableList.init.expect("non-null function pointer")(&raw mut newsts);
-    let mut j_0: tableid_t = 0 as tableid_t;
-    while (j_0 as size_t) < (*lookup).subtables.length {
-        if !(*(*lookup).subtables.items.offset(j_0 as isize)).is_null() {
-            if (**(*lookup).subtables.items.offset(j_0 as isize))
-                .chaining
-                .type_0 as ::core::ffi::c_uint
-                == otl_chaining_poly as ::core::ffi::c_int as ::core::ffi::c_uint
-            {
-                let mut k: tableid_t = 0 as tableid_t;
-                while (k as ::core::ffi::c_int)
-                    < (**(*lookup).subtables.items.offset(j_0 as isize))
-                        .chaining
-                        .c2rust_unnamed
-                        .c2rust_unnamed
-                        .rulesCount as ::core::ffi::c_int
-                {
-                    let mut st: *mut otl_Subtable = ::core::ptr::null_mut::<otl_Subtable>();
-                    st = __caryll_allocate_clean(
-                        ::core::mem::size_of::<otl_Subtable>() as size_t,
-                        278 as ::core::ffi::c_ulong,
-                    ) as *mut otl_Subtable;
-                    (*st).chaining.type_0 = otl_chaining_canonical;
-                    (*st).chaining.c2rust_unnamed.rule =
-                        **(**(*lookup).subtables.items.offset(j_0 as isize))
-                            .chaining
-                            .c2rust_unnamed
-                            .c2rust_unnamed
-                            .rules
-                            .offset(k as isize);
-                    free(
-                        *(**(*lookup).subtables.items.offset(j_0 as isize))
-                            .chaining
-                            .c2rust_unnamed
-                            .c2rust_unnamed
-                            .rules
-                            .offset(k as isize) as *mut ::core::ffi::c_void,
-                    );
-                    let ref mut fresh0 = *(**(*lookup).subtables.items.offset(j_0 as isize))
-                        .chaining
-                        .c2rust_unnamed
-                        .c2rust_unnamed
-                        .rules
-                        .offset(k as isize);
-                    *fresh0 = ::core::ptr::null_mut::<otl_ChainingRule>();
-                    otl_iSubtableList.push.expect("non-null function pointer")(
-                        &raw mut newsts,
-                        st as otl_SubtablePtr,
-                    );
-                    k = k.wrapping_add(1);
-                }
-                free(
-                    (**(*lookup).subtables.items.offset(j_0 as isize))
-                        .chaining
-                        .c2rust_unnamed
-                        .c2rust_unnamed
-                        .rules as *mut ::core::ffi::c_void,
-                );
-                let ref mut fresh1 = (**(*lookup).subtables.items.offset(j_0 as isize))
+    for j in 0..(*lookup).subtables.length as tableid_t {
+        let slot = (*lookup).subtables.items.offset(j as isize);
+        if (*slot).is_null() {
+            continue;
+        }
+        let sub: otl_SubtablePtr = *slot;
+        if (*sub).chaining.type_0 == otl_chaining_poly {
+            let rules_count = (*sub).chaining.c2rust_unnamed.c2rust_unnamed.rulesCount;
+            for k in 0..rules_count as ::core::ffi::c_int {
+                let rule_slot = (*sub)
                     .chaining
                     .c2rust_unnamed
                     .c2rust_unnamed
-                    .rules;
-                *fresh1 = ::core::ptr::null_mut::<*mut otl_ChainingRule>();
-                free(*(*lookup).subtables.items.offset(j_0 as isize) as *mut ::core::ffi::c_void);
-                let ref mut fresh2 = *(*lookup).subtables.items.offset(j_0 as isize);
-                *fresh2 = ::core::ptr::null_mut::<otl_Subtable>();
-            } else if (**(*lookup).subtables.items.offset(j_0 as isize))
-                .chaining
-                .type_0 as ::core::ffi::c_uint
-                == otl_chaining_canonical as ::core::ffi::c_int as ::core::ffi::c_uint
-            {
-                let mut st_0: *mut otl_Subtable = ::core::ptr::null_mut::<otl_Subtable>();
-                st_0 = __caryll_allocate_clean(
+                    .rules
+                    .offset(k as isize);
+                let st: *mut otl_Subtable = __caryll_allocate_clean(
                     ::core::mem::size_of::<otl_Subtable>() as size_t,
-                    289 as ::core::ffi::c_ulong,
+                    278 as ::core::ffi::c_ulong,
                 ) as *mut otl_Subtable;
-                (*st_0).chaining.type_0 = otl_chaining_canonical;
-                (*st_0).chaining.c2rust_unnamed.rule =
-                    (**(*lookup).subtables.items.offset(j_0 as isize))
-                        .chaining
-                        .c2rust_unnamed
-                        .rule;
+                (*st).chaining.type_0 = otl_chaining_canonical;
+                // Transfer ownership of the rule out of *rule_slot.
+                (*st).chaining.c2rust_unnamed.rule = **rule_slot;
+                free(*rule_slot as *mut ::core::ffi::c_void);
+                *rule_slot = ::core::ptr::null_mut::<otl_ChainingRule>();
                 otl_iSubtableList.push.expect("non-null function pointer")(
                     &raw mut newsts,
-                    st_0 as otl_SubtablePtr,
+                    st as otl_SubtablePtr,
                 );
-                let ref mut fresh3 = *(*lookup).subtables.items.offset(j_0 as isize);
-                *fresh3 = ::core::ptr::null_mut::<otl_Subtable>();
             }
+            free((*sub).chaining.c2rust_unnamed.c2rust_unnamed.rules as *mut ::core::ffi::c_void);
+            (*sub).chaining.c2rust_unnamed.c2rust_unnamed.rules =
+                ::core::ptr::null_mut::<*mut otl_ChainingRule>();
+            free(sub as *mut ::core::ffi::c_void);
+            *slot = ::core::ptr::null_mut::<otl_Subtable>();
+        } else if (*sub).chaining.type_0 == otl_chaining_canonical {
+            let st_0: *mut otl_Subtable = __caryll_allocate_clean(
+                ::core::mem::size_of::<otl_Subtable>() as size_t,
+                289 as ::core::ffi::c_ulong,
+            ) as *mut otl_Subtable;
+            (*st_0).chaining.type_0 = otl_chaining_canonical;
+            (*st_0).chaining.c2rust_unnamed.rule = (*sub).chaining.c2rust_unnamed.rule;
+            otl_iSubtableList.push.expect("non-null function pointer")(
+                &raw mut newsts,
+                st_0 as otl_SubtablePtr,
+            );
+            *slot = ::core::ptr::null_mut::<otl_Subtable>();
         }
-        j_0 = j_0.wrapping_add(1);
     }
     otl_iSubtableList
         .disposeDependent
