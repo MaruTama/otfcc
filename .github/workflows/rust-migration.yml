@@ -40,12 +40,23 @@ jobs:
   # runner installs it automatically), runs `cargo test`, builds the C
   # toolchain natively (dep/bin-linux/{premake5,ninja} are x86_64, matching
   # this runner) with clang, and compares its output against the Rust build
-  # byte-for-byte on the same machine. Finally runs the project's own
+  # byte-for-byte on the same machine — including the gvar (variable-font)
+  # payload and the otfccdll cdylib, both built via ctypes against the same
+  # JSON input (see compare-with-c.sh). Finally runs the project's own
   # round-trip stability tests against the Rust binaries.
   build-test-compare:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate the gvar (variable-font) test payload
+        run: |
+          pip install --quiet fonttools
+          python3 rust-migration/make-test-variable-font.py
 
       - name: Build the Rust crate and run cargo test
         run: ./rust-migration/build-crate.sh

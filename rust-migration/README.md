@@ -21,6 +21,8 @@ CI (`.github/workflows/rust-migration.yml`) and local development do **not**
 re-run c2rust. They just build the committed Rust source and check it:
 
 ```bash
+pip install fonttools && python3 rust-migration/make-test-variable-font.py
+                                   # optional: adds the gvar payload below
 ./rust-migration/build-crate.sh   # cargo build --release + cargo test
 ./rust-migration/compare-with-c.sh # build C with clang, compare byte-for-byte
 ./rust-migration/run-cycles.sh    # dump/build cycles against the Rust binaries
@@ -146,11 +148,15 @@ transpile step itself needs arm64.
 - `make-test-variable-font.py` — builds a minimal, self-contained variable
   font (fvar + gvar, one `wght` axis, two masters, via fontTools APIs — no
   external download) to exercise the gvar delta-application path, which none
-  of `tests/payload/*.ttf` has.
+  of `tests/payload/*.ttf` has. Needs `fontTools` (`pip install fonttools`);
+  writes `build/gvar-test.ttf`. CI generates this before every run; locally,
+  `compare-with-c.sh`/`run-cycles.sh` pick it up automatically if present and
+  skip it (with a message) otherwise.
 - `test-dll.py` — exercises the `otfccdll` C API (`otfccbuild_json_otf` /
   `otfcc_get_buf_len` / `otfcc_get_buf_data` / `otfccbuild_free_otfbuf`) via
   `ctypes`, against either the C `libotfccdll.{dylib,so}` or the Rust
-  `cdylib`, to compare output byte-for-byte.
+  `cdylib`, to compare output byte-for-byte. `compare-with-c.sh` runs this
+  against both libraries on the same JSON input and diffs the result.
 
 ## Status: Phase 1 complete
 
@@ -159,45 +165,47 @@ The committed crate (`Cargo.toml`, `lib.rs`, `build.rs`, the
 and its round-trips are byte-for-byte correct**:
 
 - The Rust binaries pass `tests/ttf-roundtrip-test.js` on all 6 TTF payloads,
-  the CFF payload `KRName-Regular`, and both from-JSON CFF payloads.
+  the CFF payload `KRName-Regular`, both from-JSON CFF payloads, and the
+  generated gvar payload (see below) — 10 payloads total.
 - Building the *same* input JSON with the C toolchain and the Rust toolchain
   produces `.ttf`/`.otf` files that are **byte-identical** (`cmp` shows 0
-  differing bytes) for all 7 directly-comparable payloads.
+  differing bytes) for all 8 directly-comparable payloads.
 - **Variable-font (gvar) coverage**: none of `tests/payload/*.ttf` has an
   `fvar` table, so the gvar delta-application path (`applyPolymorphism` in
   `lib/table/glyf/read.c`) was untested by the payload matrix above.
-  `make-test-variable-font.py` closes that gap — verified C and Rust are
-  byte-identical at every stage of a full two-cycle round trip (original
-  dump, build 1, post-build dump 1, build 2, post-build dump 2). This also
-  surfaced a pre-existing otfcc limitation (`otfccbuild` doesn't reconstruct
-  `fvar`/`gvar` from JSON with delta-annotated coordinates), but it
-  reproduces identically in C and Rust, confirming it's an existing gap in
-  otfcc's build-side variable-font support, not a migration regression.
+  `make-test-variable-font.py` closes that gap — CI generates the font fresh
+  every run and it's part of the regular byte-comparison and round-trip
+  matrix. C and Rust are byte-identical at every stage of a full two-cycle
+  round trip (original dump, build 1, post-build dump 1, build 2, post-build
+  dump 2). This also surfaced a pre-existing otfcc limitation (`otfccbuild`
+  doesn't reconstruct `fvar`/`gvar` from JSON with delta-annotated
+  coordinates), but it reproduces identically in C and Rust, confirming it's
+  an existing gap in otfcc's build-side variable-font support, not a
+  migration regression.
 
 Two fonts (`Cormorant-Medium.otf`, `WorkSans-Regular.otf`) crash both the C
 *and* Rust `otfccdump` with a stack overflow — a pre-existing bug in the C
 CFF interpreter (verified: the C binary also exits SIGSEGV on them), not
 something the Rust translation introduced or needs to fix here.
 
-**CI checks three things**: the crate builds and `cargo test` passes
+**CI checks four things**: the crate builds and `cargo test` passes
 (currently 0 tests — c2rust generates none; Phase 2 is where real coverage
-gets added), its output is byte-identical to the C toolchain's
-(`compare-with-c.sh`), and the round-trip stability tests pass
-(`compare-roundtrips.js`). It's a single `ubuntu-latest` job, no Docker.
+gets added), its output (including the gvar payload and the `otfccdll`
+cdylib) is byte-identical to the C toolchain's (`compare-with-c.sh`), and the
+round-trip stability tests pass (`compare-roundtrips.js`). It's a single
+`ubuntu-latest` job, no Docker.
 
-**`otfccdll` (cdylib) coverage**: verified via `test-dll.py` (ctypes):
-calling `otfccbuild_json_otf` through the Rust `.so` and the C
-`.dylib`/`.so` on the same JSON input produces output that's byte-identical
-except at the 3 bytes that also differ between two separate invocations of
-the *C* library alone (the DLL API doesn't accept `--keep-modified-time`, so
-`head.created`/`modified`/`checkSumAdjustment` legitimately vary run to run)
-— i.e. functionally identical.
+**`otfccdll` (cdylib) coverage**: `compare-with-c.sh` calls
+`otfccbuild_json_otf` through both the Rust `.so` and the C `.so`/`.dylib`
+(via `test-dll.py`/ctypes) on the same JSON input and diffs the results. The
+DLL API doesn't accept `--keep-modified-time`, so
+`head.created`/`modified`/`checkSumAdjustment` legitimately vary run to run
+even between two C-only invocations — the check compares the Rust-vs-C byte
+diff against that same-library run-to-run baseline instead of requiring a
+plain `cmp` pass.
 
 ## Next steps (Phase 2: idiomatization)
 
-- Test against variable-font payloads and `otfccdll` as an actual loaded
-  cdylib in the regular test/CI matrix (currently verified manually — see
-  Status above).
 - Begin replacing `unsafe`, macro-expanded, C-shaped code with idiomatic Rust,
   module by module, keeping the round-trip tests green throughout.
 - Once Rust is trusted as the sole implementation, retire the C build
