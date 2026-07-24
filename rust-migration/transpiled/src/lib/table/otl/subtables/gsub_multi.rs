@@ -1121,7 +1121,7 @@ pub unsafe extern "C" fn otl_read_gsub_multi(
     mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
     let mut seqCount: glyphid_t = 0;
-    let mut subtable: *mut subtable_gsub_multi =
+    let subtable: *mut subtable_gsub_multi =
         (
             iSubtable_gsub_multi
                 .create
@@ -1140,28 +1140,26 @@ pub unsafe extern "C" fn otl_read_gsub_multi(
             data.offset(offset as isize)
                 .offset(4 as ::core::ffi::c_int as isize) as *const uint8_t,
         ) as glyphid_t;
-        if !(seqCount as ::core::ffi::c_int != (*from).numGlyphs as ::core::ffi::c_int) {
+        if seqCount as ::core::ffi::c_int == (*from).numGlyphs as ::core::ffi::c_int {
             if !(tableLength
                 < offset.wrapping_add(6 as uint32_t).wrapping_add(
                     (seqCount as ::core::ffi::c_int * 2 as ::core::ffi::c_int) as uint32_t,
                 ))
             {
-                let mut j: glyphid_t = 0 as glyphid_t;
-                while (j as ::core::ffi::c_int) < seqCount as ::core::ffi::c_int {
-                    let mut seqOffset: uint32_t = offset.wrapping_add(read_16u(
+                for j in 0..seqCount {
+                    let seqOffset: uint32_t = offset.wrapping_add(read_16u(
                         data.offset(offset as isize)
                             .offset(6 as ::core::ffi::c_int as isize)
                             .offset((j as ::core::ffi::c_int * 2 as ::core::ffi::c_int) as isize)
                             as *const uint8_t,
                     )
                         as uint32_t);
-                    let mut cov: *mut otl_Coverage =
+                    let cov: *mut otl_Coverage =
                         (
                             otl_iCoverage.create.expect("non-null function pointer"))();
-                    let mut n: glyphid_t =
+                    let n: glyphid_t =
                         read_16u(data.offset(seqOffset as isize) as *const uint8_t) as glyphid_t;
-                    let mut k: glyphid_t = 0 as glyphid_t;
-                    while (k as ::core::ffi::c_int) < n as ::core::ffi::c_int {
+                    for k in 0..n {
                         otl_iCoverage.push.expect("non-null function pointer")(
                             cov,
                             otfcc_iHandle.fromIndex.expect("non-null function pointer")(read_16u(
@@ -1174,7 +1172,6 @@ pub unsafe extern "C" fn otl_read_gsub_multi(
                             )
                                 as glyphid_t) as otfcc_GlyphHandle,
                         );
-                        k = k.wrapping_add(1);
                     }
                     iSubtable_gsub_multi
                         .push
@@ -1187,7 +1184,6 @@ pub unsafe extern "C" fn otl_read_gsub_multi(
                             to: cov,
                         },
                     );
-                    j = j.wrapping_add(1);
                 }
                 otl_iCoverage.free.expect("non-null function pointer")(from);
                 return subtable as *mut otl_Subtable;
@@ -1206,18 +1202,15 @@ pub unsafe extern "C" fn otl_read_gsub_multi(
 pub unsafe extern "C" fn otl_gsub_dump_multi(
     mut _subtable: *const otl_Subtable,
 ) -> *mut json_value {
-    let mut subtable: *const subtable_gsub_multi = &raw const (*_subtable).gsub_multi;
-    let mut st: *mut json_value = json_object_new((*subtable).length);
-    let mut j: glyphid_t = 0 as glyphid_t;
-    while (j as size_t) < (*subtable).length {
+    let subtable: *const subtable_gsub_multi = &raw const (*_subtable).gsub_multi;
+    let st: *mut json_value = json_object_new((*subtable).length);
+    for j in 0..(*subtable).length as glyphid_t {
+        let entry = (*subtable).items.offset(j as isize);
         json_object_push(
             st,
-            (*(*subtable).items.offset(j as isize)).from.name as *const ::core::ffi::c_char,
-            otl_iCoverage.dump.expect("non-null function pointer")(
-                (*(*subtable).items.offset(j as isize)).to,
-            ),
+            (*entry).from.name as *const ::core::ffi::c_char,
+            otl_iCoverage.dump.expect("non-null function pointer")((*entry).to),
         );
-        j = j.wrapping_add(1);
     }
     return st;
 }
@@ -1226,55 +1219,47 @@ pub unsafe extern "C" fn otl_gsub_parse_multi(
     mut _subtable: *const json_value,
     mut _options: *const otfcc_Options,
 ) -> *mut otl_Subtable {
-    let mut st: *mut subtable_gsub_multi =
+    let st: *mut subtable_gsub_multi =
         (
             iSubtable_gsub_multi
                 .create
                 .expect("non-null function pointer"))();
-    let mut k: glyphid_t = 0 as glyphid_t;
-    while (k as ::core::ffi::c_uint) < (*_subtable).u.object.length {
-        let mut _to: *mut json_value =
-            (*(*_subtable).u.object.values.offset(k as isize)).value as *mut json_value;
-        if !(_to.is_null()
-            || (*_to).type_0 as ::core::ffi::c_uint
-                != json_array as ::core::ffi::c_int as ::core::ffi::c_uint)
-        {
+    for k in 0..(*_subtable).u.object.length as glyphid_t {
+        let entry = (*_subtable).u.object.values.offset(k as isize);
+        let _to: *mut json_value = (*entry).value as *mut json_value;
+        if !_to.is_null() && (*_to).type_0 == json_array {
             iSubtable_gsub_multi
                 .push
                 .expect("non-null function pointer")(
                 st,
                 otl_GsubMultiEntry {
                     from: otfcc_iHandle.fromName.expect("non-null function pointer")(sdsnewlen(
-                        (*(*_subtable).u.object.values.offset(k as isize)).name
-                            as *const ::core::ffi::c_void,
-                        (*(*_subtable).u.object.values.offset(k as isize)).name_length as size_t,
+                        (*entry).name as *const ::core::ffi::c_void,
+                        (*entry).name_length as size_t,
                     )) as otfcc_GlyphHandle,
                     to: otl_iCoverage.parse.expect("non-null function pointer")(_to),
                 },
             );
         }
-        k = k.wrapping_add(1);
     }
     return st as *mut otl_Subtable;
 }
 unsafe extern "C" fn buildGsubMultiSubtableRange(
-    mut subtable: *const subtable_gsub_multi,
-    mut start: glyphid_t,
-    mut end: glyphid_t,
+    subtable: *const subtable_gsub_multi,
+    start: glyphid_t,
+    end: glyphid_t,
 ) -> *mut caryll_Buffer {
-    let mut cov: *mut otl_Coverage = (
+    let cov: *mut otl_Coverage = (
         otl_iCoverage.create.expect("non-null function pointer"))();
-    let mut j: glyphid_t = start;
-    while (j as ::core::ffi::c_int) < end as ::core::ffi::c_int {
+    for j in start..end {
         otl_iCoverage.push.expect("non-null function pointer")(
             cov,
             otfcc_iHandle.dup.expect("non-null function pointer")(
                 (*(*subtable).items.offset(j as isize)).from as otfcc_Handle,
             ) as otfcc_GlyphHandle,
         );
-        j = j.wrapping_add(1);
     }
-    let mut root: *mut bk_Block = bk_new_Block(
+    let root: *mut bk_Block = bk_new_Block(
         b16 as ::core::ffi::c_int,
         1 as ::core::ffi::c_int,
         p16 as ::core::ffi::c_int,
@@ -1283,27 +1268,20 @@ unsafe extern "C" fn buildGsubMultiSubtableRange(
         end as ::core::ffi::c_int - start as ::core::ffi::c_int,
         bkover as ::core::ffi::c_int,
     );
-    let mut j_0: glyphid_t = start;
-    while (j_0 as ::core::ffi::c_int) < end as ::core::ffi::c_int {
-        let mut b: *mut bk_Block = bk_new_Block(
+    for j_0 in start..end {
+        let to = (*(*subtable).items.offset(j_0 as isize)).to;
+        let b: *mut bk_Block = bk_new_Block(
             b16 as ::core::ffi::c_int,
-            (*(*(*subtable).items.offset(j_0 as isize)).to).numGlyphs as ::core::ffi::c_int,
+            (*to).numGlyphs as ::core::ffi::c_int,
             bkover as ::core::ffi::c_int,
         );
-        let mut k: glyphid_t = 0 as glyphid_t;
-        while (k as ::core::ffi::c_int)
-            < (*(*(*subtable).items.offset(j_0 as isize)).to).numGlyphs as ::core::ffi::c_int
-        {
+        for k in 0..(*to).numGlyphs {
             bk_push(
                 b,
                 b16 as ::core::ffi::c_int,
-                (*(*(*(*subtable).items.offset(j_0 as isize)).to)
-                    .glyphs
-                    .offset(k as isize))
-                .index as ::core::ffi::c_int,
+                (*(*to).glyphs.offset(k as isize)).index as ::core::ffi::c_int,
                 bkover as ::core::ffi::c_int,
             );
-            k = k.wrapping_add(1);
         }
         bk_push(
             root,
@@ -1311,7 +1289,6 @@ unsafe extern "C" fn buildGsubMultiSubtableRange(
             b,
             bkover as ::core::ffi::c_int,
         );
-        j_0 = j_0.wrapping_add(1);
     }
     otl_iCoverage.free.expect("non-null function pointer")(cov);
     return bk_build_Block(root);
