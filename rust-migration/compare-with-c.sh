@@ -48,6 +48,11 @@ CFF_PAYLOADS="KRName-Regular"
 # otfccdump stack-overflow on them (a pre-existing bug in the C CFF
 # interpreter — see rust-migration/README.md), unrelated to this comparison.
 
+# Optional: the gvar (variable-font) payload from make-test-variable-font.py.
+# Needs fontTools, so it's generated as a separate CI step rather than always
+# required; skip if it wasn't generated.
+GVAR_PAYLOAD="build/gvar-test.ttf"
+
 fail=0
 
 compare_payload() {
@@ -76,6 +81,38 @@ done
 for f in ${CFF_PAYLOADS}; do
 	compare_payload "${f}" otf "tests/payload/${f}.otf"
 done
+if [ -f "${GVAR_PAYLOAD}" ]; then
+	compare_payload "gvar-test" ttf "${GVAR_PAYLOAD}"
+else
+	echo "  (skipping gvar-test.ttf: not found; run rust-migration/make-test-variable-font.py first)"
+fi
+
+echo "==> Comparing C vs Rust otfccdll (cdylib) output, byte-for-byte"
+DLL_C="${C_BIN}/libotfccdll.so"
+[ "$(uname)" = "Darwin" ] && DLL_C="${C_BIN}/libotfccdll.dylib"
+RUST_SO_EXT="so"
+[ "$(uname)" = "Darwin" ] && RUST_SO_EXT="dylib"
+DLL_RUST="${RUST_BIN}/libotfcc_rust.${RUST_SO_EXT}"
+if [ -f "${DLL_C}" ] && [ -f "${DLL_RUST}" ]; then
+	DLL_JSON="${BUILD}/Molengo-Regular.json"
+	python3 "$(dirname "$0")/test-dll.py" "${DLL_C}" "${DLL_JSON}" "${BUILD}/dll-c.otf"
+	python3 "$(dirname "$0")/test-dll.py" "${DLL_RUST}" "${DLL_JSON}" "${BUILD}/dll-rust.otf"
+	# The DLL API doesn't take --keep-modified-time, so head.created/modified/
+	# checkSumAdjustment legitimately vary run to run (see README) — even two
+	# C-only invocations differ at those bytes. Diff byte count against that
+	# same-library baseline instead of expecting a plain cmp to pass.
+	python3 "$(dirname "$0")/test-dll.py" "${DLL_C}" "${DLL_JSON}" "${BUILD}/dll-c-2.otf"
+	baseline_diff=$(cmp -l "${BUILD}/dll-c.otf" "${BUILD}/dll-c-2.otf" 2>/dev/null | wc -l | tr -d ' ')
+	cross_diff=$(cmp -l "${BUILD}/dll-c.otf" "${BUILD}/dll-rust.otf" 2>/dev/null | wc -l | tr -d ' ')
+	if [ "${cross_diff}" -le "${baseline_diff}" ]; then
+		echo "PASS  otfccdll: Rust matches C (differs in ${cross_diff} bytes, same as the ${baseline_diff}-byte run-to-run timestamp variance)"
+	else
+		echo "FAIL  otfccdll: Rust differs from C in ${cross_diff} bytes (run-to-run baseline is only ${baseline_diff})"
+		fail=1
+	fi
+else
+	echo "  (skipping otfccdll comparison: ${DLL_C} or ${DLL_RUST} not built)"
+fi
 
 if [ "${fail}" -ne 0 ]; then
 	echo "==> FAILED: at least one payload's Rust output differs from C" >&2
