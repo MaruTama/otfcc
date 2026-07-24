@@ -33,11 +33,22 @@ node rust-migration/compare-roundtrips.js
 convenience.) None of this needs Docker, c2rust, or a specific architecture —
 plain `rustup`/`cargo` plus a C compiler.
 
-## Regenerating the Rust source (manual only)
+## Regenerating the Rust source (manual only, and now mostly historical)
 
 Re-transpiling is a **manual, local, occasional** step — done after a C-side
 change, reviewed like any other diff, and committed. It is not automated in
 CI. Requires Docker and (see below) a **native arm64** host.
+
+**Since Phase 2 (idiomatization) started, re-running this will destroy hand-
+edited code.** `transpile.sh` does a wholesale `rm -rf` of
+`rust-migration/transpiled/` and regenerates it from the C sources, which
+would overwrite every idiomatized file (`lib/support/buffer/buffer.rs`,
+`lib/bk/bkblock.rs`, `lib/bk/bkgraph.rs`, `lib/support/alloc.rs`, `lib.rs`'s
+module list, ...) with fresh c2rust output. The steps below are kept for
+reference/audit purposes and for the C-only files that haven't been
+idiomatized yet, but from here on a C-side change should be ported to the
+Rust side by hand (mirroring whatever the equivalent C diff does), not by
+re-transpiling.
 
 1. Generate the compilation database (macOS shown; `OS=linux` on Linux):
 
@@ -204,9 +215,84 @@ even between two C-only invocations — the check compares the Rust-vs-C byte
 diff against that same-library run-to-run baseline instead of requiring a
 plain `cmp` pass.
 
-## Next steps (Phase 2: idiomatization)
+## Status: Phase 2 in progress (idiomatization)
 
-- Begin replacing `unsafe`, macro-expanded, C-shaped code with idiomatic Rust,
-  module by module, keeping the round-trip tests green throughout.
+The crate went from raw c2rust output (317 compiler warnings, exclusively
+`unsafe extern "C" fn`s full of manual pointer-offset loops and redundant
+casts) to a **0-warning build** with `lib/support/buffer/buffer.rs`,
+`lib/bk/bkblock.rs`, and `lib/bk/bkgraph.rs` (the "support/low-level I/O"
+layer the original plan called out as the correct starting point — it's the
+most-depended-on code and the least entangled with the rest of the crate)
+rewritten to idiomatic bodies:
+
+- **Crate-wide, byte-preserving mechanical sweep**: `cargo fix` removed 151
+  unused-variable and 50 unnecessary-parens warnings; a script-driven pass
+  stripped 113 redundant `unsafe` blocks (struct-of-fn-pointer vtable
+  initializers that never needed the keyword); another replaced all 434
+  `(true|false)_0 != 0` occurrences (c2rust's rename of C's `true`/`false`
+  macros, since they collide with Rust keywords) with plain `true`/`false`.
+- **buffer.rs**: the eight `bufwrite16l/b`..`bufwrite64l/b` functions'
+  manual per-byte shift/mask/store expansions became
+  `x.to_le_bytes()`/`to_be_bytes()` through one shared `buf_push_bytes()`
+  helper; `bufwrite_sds/_str/_bytes/_buf/_bufdel` build a slice and go
+  through the same helper instead of a raw `memcpy` call; index `while`
+  loops became `for` loops throughout.
+- **bkblock.rs** / **bkgraph.rs**: triple-cast type comparisons
+  (`x as c_uint == Y as c_int as c_uint`, where both sides were already the
+  same type) became `match`/`==` on the named `bk_CellType` consts directly;
+  every index `while` loop became a `for` loop, including
+  `dfs_attract_cells`'s reverse-iteration underflow-sentinel trick
+  (`j = length; loop { let fresh = j; j -= 1; if fresh == 0 { break } ...
+  }`), which became `for j in (0..length).rev()`; the offsets-prefix-sum
+  computation duplicated identically in three functions was factored into
+  one private `compute_block_offsets()`. **The actual offset-overflow
+  decision logic — `getoffset()`, `getoffset_untangle()`, and
+  `try_untabgle_block`'s bounds check — was deliberately left untouched
+  beyond an equivalent-by-construction rewrite** (`offset < 0 || offset >
+  0xffff` → `!(0..=0xffff).contains(&offset)`), since this module is where
+  issue #1's fix lives; verified with `tests/gsub-alternate-large-test.js`
+  (the dedicated issue #1 regression test) run directly against the Rust
+  build, not just the standard payload matrix.
+- **alloc.rs** (new): `__caryll_allocate_clean`/`__caryll_reallocate` were
+  duplicated byte-for-byte in every file that used them (c2rust's per-
+  translation-unit expansion of a `static inline` C header); factored out to
+  one shared module and wired into the three files above. Neither helper was
+  ever `#[no_mangle]`, so this changes no ABI. The ~47 other files with their
+  own copy (and the still-per-file `read_8u/16u/24u/32u` family, unused in
+  support/bk) are unchanged — rolling this out further is a separate,
+  larger, more carefully-reviewed pass.
+
+Every commit in this pass was verified against the full byte-comparison
+matrix (`compare-with-c.sh`), all round-trip payloads
+(`compare-roundtrips.js`), and — for the bk files specifically — the issue
+#1 golden regression test, before moving to the next file.
+
+## Next steps (Phase 2 continued)
+
+- **Public vtable → trait conversion**: `bk_CellType`'s *type* (still a
+  plain `c_uint`, not a real Rust `enum`) and the struct-of-function-pointer
+  "interfaces" (`otl_iCoverage`, `otfcc_iHandle`, etc.) were deliberately
+  left alone in this pass. They're referenced via duplicated `extern "C"`
+  declarations in dozens of other files (there are no `use` statements
+  anywhere pre-idiomatization — every file redeclares everything it calls),
+  so changing their *public* shape needs a coordinated, crate-wide pass, not
+  a local one.
+- **Crate-wide rollout of `alloc.rs`/a `binio.rs`**: extend the dedup done
+  here to the remaining ~47 files with their own copy of the alloc helpers,
+  and factor out the also-duplicated `read_8u/16u/24u/32u` family (used
+  throughout `lib/table/**`, `lib/otf_reader/**`, unused in support/bk).
+- **Redundant same-width casts** (`x as c_int == y as c_int` where both
+  sides are already the same type, ~130 occurrences crate-wide) and ternary-
+  cast-to-bool chains: skipped in this pass because — unlike the `true_0`/
+  `false_0` sweep — safely removing them requires confirming per-site that
+  both operands really are the same original width/signedness; the compiler
+  only catches an outright type error, not a silently-wrong comparison from
+  an incorrectly-dropped cast.
+- Continue module by module: `otf_reader`/`otf_writer` next (parsers are the
+  highest-value target for real memory-safety gains — bounds-checked slices
+  instead of manual pointer arithmetic), then `table/otl`, then
+  `consolidate`/`json_reader`/`json_writer`, then `libcff`/`glyf`/`vf`, per
+  the original plan's ordering — keeping the round-trip tests green
+  throughout.
 - Once Rust is trusted as the sole implementation, retire the C build
   (`quick.make`, `premake5.lua`, `lib/`, `src/`, `dep/`) and `compare-with-c.sh`.
