@@ -2733,7 +2733,7 @@ pub unsafe extern "C" fn otfcc_statFont(
         {
             (*cff).fontBBoxRight = (*(*font).head).xMax as ::core::ffi::c_double;
         }
-        if !(*font).glyf.is_null() && (*cff).isCID as ::core::ffi::c_int != 0 {
+        if !(*font).glyf.is_null() && (*cff).isCID {
             (*cff).cidCount = (*(*font).glyf).length as uint32_t;
         }
         if (*cff).isCID {
@@ -2742,16 +2742,13 @@ pub unsafe extern "C" fn otfcc_statFont(
                 iVQ.dispose.expect("non-null function pointer")(&raw mut (*(*cff).fontMatrix).y);
                 free((*cff).fontMatrix as *mut ::core::ffi::c_void);
                 (*cff).fontMatrix = ::core::ptr::null_mut::<cff_FontMatrix>();
-                (*cff).fontMatrix = ::core::ptr::null_mut::<cff_FontMatrix>();
             }
-            let mut j: tableid_t = 0 as tableid_t;
-            while (j as ::core::ffi::c_int) < (*cff).fdArrayCount as ::core::ffi::c_int {
-                let mut fd: *mut table_CFF = *(*cff).fdArray.offset(j as isize);
+            for j in 0..(*cff).fdArrayCount {
+                let fd: *mut table_CFF = *(*cff).fdArray.offset(j as isize);
                 if !(*fd).fontMatrix.is_null() {
                     iVQ.dispose.expect("non-null function pointer")(&raw mut (*(*fd).fontMatrix).x);
                     iVQ.dispose.expect("non-null function pointer")(&raw mut (*(*fd).fontMatrix).y);
                     free((*fd).fontMatrix as *mut ::core::ffi::c_void);
-                    (*fd).fontMatrix = ::core::ptr::null_mut::<cff_FontMatrix>();
                     (*fd).fontMatrix = ::core::ptr::null_mut::<cff_FontMatrix>();
                 }
                 if (*(*font).head).unitsPerEm as ::core::ffi::c_int == 1000 as ::core::ffi::c_int {
@@ -2774,7 +2771,6 @@ pub unsafe extern "C" fn otfcc_statFont(
                     (*(*fd).fontMatrix).y = (
                         iVQ.neutral.expect("non-null function pointer"))();
                 }
-                j = j.wrapping_add(1);
             }
         } else if (*(*font).head).unitsPerEm as ::core::ffi::c_int == 1000 as ::core::ffi::c_int {
             (*cff).fontMatrix = ::core::ptr::null_mut::<cff_FontMatrix>();
@@ -2823,9 +2819,7 @@ pub unsafe extern "C" fn otfcc_statFont(
     if !(*font).OS_2.is_null() && !(*font).cmap.is_null() && !(*font).glyf.is_null() {
         statOS_2(font, options);
     }
-    if (*font).subtype as ::core::ffi::c_uint
-        == FONTTYPE_TTF as ::core::ffi::c_int as ::core::ffi::c_uint
-    {
+    if (*font).subtype == FONTTYPE_TTF {
         if !(*font).maxp.is_null() {
             (*(*font).maxp).version = 0x10000 as ::core::ffi::c_int as f16dot16;
         }
