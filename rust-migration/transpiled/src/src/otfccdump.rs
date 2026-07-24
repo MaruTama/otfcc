@@ -1633,7 +1633,7 @@ unsafe fn main_0(
     let mut show_pretty: bool = false_0 != 0;
     let mut show_ugly: bool = false_0 != 0;
     let mut add_bom: bool = false_0 != 0;
-    let mut no_bom: bool = false_0 != 0;
+    let mut _no_bom: bool = false_0 != 0;
     let mut ttcindex: uint32_t = 0 as uint32_t;
     let mut longopts: [option; 21] = [
         option {
@@ -1812,7 +1812,7 @@ unsafe fn main_0(
                             b"no-bom\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            no_bom = true_0 != 0;
+                            _no_bom = true_0 != 0;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"ignore-glyph-order\0" as *const u8 as *const ::core::ffi::c_char,

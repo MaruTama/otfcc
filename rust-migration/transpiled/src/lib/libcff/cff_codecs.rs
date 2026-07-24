@@ -656,7 +656,7 @@ unsafe extern "C" fn cff_dec_e(mut start: *const uint8_t, mut val: *mut cff_Valu
     (*val).t = cff_INTEGER;
     return 1 as uint32_t;
 }
-static mut _de_t2: [Option<unsafe extern "C" fn(*const uint8_t, *mut cff_Value) -> uint32_t>; 256] = unsafe {
+static mut _de_t2: [Option<unsafe extern "C" fn(*const uint8_t, *mut cff_Value) -> uint32_t>; 256] =  {
     [
         Some(cff_dec_o as unsafe extern "C" fn(*const uint8_t, *mut cff_Value) -> uint32_t),
         Some(cff_dec_o as unsafe extern "C" fn(*const uint8_t, *mut cff_Value) -> uint32_t),

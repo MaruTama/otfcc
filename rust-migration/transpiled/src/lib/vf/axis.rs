@@ -152,7 +152,7 @@ unsafe extern "C" fn vf_Axis_move(mut dst: *mut vf_Axis, mut src: *mut vf_Axis) 
     vf_Axis_init(src);
 }
 #[no_mangle]
-pub static mut vf_iAxis: __caryll_elementinterface_vf_Axis = unsafe {
+pub static mut vf_iAxis: __caryll_elementinterface_vf_Axis =  {
     __caryll_elementinterface_vf_Axis {
         init: Some(vf_Axis_init as unsafe extern "C" fn(*mut vf_Axis) -> ()),
         copy: Some(vf_Axis_copy as unsafe extern "C" fn(*mut vf_Axis, *const vf_Axis) -> ()),
@@ -208,7 +208,7 @@ unsafe extern "C" fn vf_Axes_init(mut arr: *mut vf_Axes) {
     (*arr).items = ::core::ptr::null_mut::<vf_Axis>();
 }
 #[no_mangle]
-pub static mut vf_iAxes: __caryll_vectorinterface_vf_Axes = unsafe {
+pub static mut vf_iAxes: __caryll_vectorinterface_vf_Axes =  {
     __caryll_vectorinterface_vf_Axes {
         init: Some(vf_Axes_init as unsafe extern "C" fn(*mut vf_Axes) -> ()),
         copy: Some(vf_Axes_copy as unsafe extern "C" fn(*mut vf_Axes, *const vf_Axes) -> ()),

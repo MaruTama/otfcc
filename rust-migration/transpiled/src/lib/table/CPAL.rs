@@ -473,7 +473,7 @@ unsafe extern "C" fn cpal_Color_replace(mut dst: *mut cpal_Color, src: cpal_Colo
     );
 }
 #[no_mangle]
-pub static mut cpal_iColor: __caryll_elementinterface_cpal_Color = unsafe {
+pub static mut cpal_iColor: __caryll_elementinterface_cpal_Color =  {
     __caryll_elementinterface_cpal_Color {
         init: Some(cpal_Color_init as unsafe extern "C" fn(*mut cpal_Color) -> ()),
         copy: Some(
@@ -700,7 +700,7 @@ unsafe extern "C" fn cpal_ColorSet_shrinkToFit(mut arr: *mut cpal_ColorSet) {
     cpal_ColorSet_resizeTo(arr, (*arr).length);
 }
 #[no_mangle]
-pub static mut cpal_iColorSet: __caryll_vectorinterface_cpal_ColorSet = unsafe {
+pub static mut cpal_iColorSet: __caryll_vectorinterface_cpal_ColorSet =  {
     __caryll_vectorinterface_cpal_ColorSet {
         init: Some(cpal_ColorSet_init as unsafe extern "C" fn(*mut cpal_ColorSet) -> ()),
         copy: Some(
@@ -865,7 +865,7 @@ unsafe extern "C" fn disposePalette(mut p: *mut cpal_Palette) {
     cpal_iColorSet.dispose.expect("non-null function pointer")(&raw mut (*p).colorset);
 }
 #[no_mangle]
-pub static mut cpal_iPalette: __caryll_elementinterface_cpal_Palette = unsafe {
+pub static mut cpal_iPalette: __caryll_elementinterface_cpal_Palette =  {
     __caryll_elementinterface_cpal_Palette {
         init: Some(cpal_Palette_init as unsafe extern "C" fn(*mut cpal_Palette) -> ()),
         copy: Some(
@@ -1194,7 +1194,7 @@ unsafe extern "C" fn cpal_PaletteSet_shrinkToFit(mut arr: *mut cpal_PaletteSet) 
     cpal_PaletteSet_resizeTo(arr, (*arr).length);
 }
 #[no_mangle]
-pub static mut cpal_iPaletteSet: __caryll_vectorinterface_cpal_PaletteSet = unsafe {
+pub static mut cpal_iPaletteSet: __caryll_vectorinterface_cpal_PaletteSet =  {
     __caryll_vectorinterface_cpal_PaletteSet {
         init: Some(cpal_PaletteSet_init as unsafe extern "C" fn(*mut cpal_PaletteSet) -> ()),
         copy: Some(
@@ -1338,7 +1338,7 @@ unsafe extern "C" fn table_CPAL_move(mut dst: *mut table_CPAL, mut src: *mut tab
     table_CPAL_init(src);
 }
 #[no_mangle]
-pub static mut table_iCPAL: __caryll_elementinterface_table_CPAL = unsafe {
+pub static mut table_iCPAL: __caryll_elementinterface_table_CPAL =  {
     __caryll_elementinterface_table_CPAL {
         init: Some(table_CPAL_init as unsafe extern "C" fn(*mut table_CPAL) -> ()),
         copy: Some(

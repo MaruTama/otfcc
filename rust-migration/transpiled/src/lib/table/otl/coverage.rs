@@ -2788,7 +2788,7 @@ unsafe extern "C" fn shrinkCoverage(mut coverage: *mut otl_Coverage, mut dosort:
     (*coverage).numGlyphs = k;
 }
 #[no_mangle]
-pub static mut otl_iCoverage: __otfcc_ICoverage = unsafe {
+pub static mut otl_iCoverage: __otfcc_ICoverage =  {
     __otfcc_ICoverage {
         init: Some(otl_Coverage_init as unsafe extern "C" fn(*mut otl_Coverage) -> ()),
         copy: Some(

@@ -1663,7 +1663,7 @@ unsafe extern "C" fn table_CFF_replace(mut dst: *mut table_CFF, src: table_CFF) 
     );
 }
 #[no_mangle]
-pub static mut table_iCFF: __caryll_elementinterface_table_CFF = unsafe {
+pub static mut table_iCFF: __caryll_elementinterface_table_CFF =  {
     __caryll_elementinterface_table_CFF {
         init: Some(table_CFF_init as unsafe extern "C" fn(*mut table_CFF) -> ()),
         copy: Some(table_CFF_copy as unsafe extern "C" fn(*mut table_CFF, *const table_CFF) -> ()),
@@ -2401,7 +2401,7 @@ unsafe extern "C" fn callback_draw_getrand(
     };
     return a.d - q;
 }
-static mut drawPass: cff_IOutlineBuilder = unsafe {
+static mut drawPass: cff_IOutlineBuilder =  {
     cff_IOutlineBuilder {
         setWidth: Some(
             callback_draw_setwidth

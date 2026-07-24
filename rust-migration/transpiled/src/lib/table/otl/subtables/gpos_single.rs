@@ -613,7 +613,7 @@ unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
 unsafe extern "C" fn deleteGposSingleEntry(mut entry: *mut otl_GposSingleEntry) {
     otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).target);
 }
-static mut gss_typeinfo: __caryll_elementinterface_otl_GposSingleEntry = unsafe {
+static mut gss_typeinfo: __caryll_elementinterface_otl_GposSingleEntry =  {
     __caryll_elementinterface_otl_GposSingleEntry {
         init: None,
         copy: None,
@@ -945,7 +945,7 @@ unsafe extern "C" fn subtable_gpos_single_create() -> *mut subtable_gpos_single 
     return x;
 }
 #[no_mangle]
-pub static mut iSubtable_gpos_single: __caryll_vectorinterface_subtable_gpos_single = unsafe {
+pub static mut iSubtable_gpos_single: __caryll_vectorinterface_subtable_gpos_single =  {
     __caryll_vectorinterface_subtable_gpos_single {
         init: Some(
             subtable_gpos_single_init as unsafe extern "C" fn(*mut subtable_gpos_single) -> (),
