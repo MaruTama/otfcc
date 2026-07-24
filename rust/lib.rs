@@ -84,6 +84,7 @@ pub mod src {
             pub mod binio;
             pub mod ctype_compat;
             pub mod cvec;
+            pub mod stdio;
             pub mod base64 {
                 pub mod base64;
             } // mod base64
