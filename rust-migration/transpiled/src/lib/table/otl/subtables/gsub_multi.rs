@@ -9,10 +9,7 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
         __base: *mut ::core::ffi::c_void,
         __nmemb: size_t,
@@ -45,6 +42,10 @@ extern "C" {
 }
 use crate::src::lib::support::alloc::__caryll_reallocate;
 use crate::src::lib::support::binio::{read_16u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -656,34 +657,12 @@ static mut gsm_typeinfo: __caryll_elementinterface_otl_GsubMultiEntry = {
     }
 };
 #[inline]
-unsafe extern "C" fn subtable_gsub_multi_growTo(
-    mut arr: *mut subtable_gsub_multi,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GsubMultiEntry>() as size_t),
-        ) as *mut otl_GsubMultiEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GsubMultiEntry>() as size_t,
-        ) as *mut otl_GsubMultiEntry;
-    };
+unsafe fn as_cvec(arr: *mut subtable_gsub_multi) -> *mut CVecRaw<otl_GsubMultiEntry> {
+    arr as *mut CVecRaw<otl_GsubMultiEntry>
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_growTo(arr: *mut subtable_gsub_multi, target: size_t) {
+    cvec_grow_to(as_cvec(arr), target);
 }
 #[no_mangle]
 pub static mut iSubtable_gsub_multi: __caryll_vectorinterface_subtable_gsub_multi = {
@@ -779,32 +758,15 @@ unsafe extern "C" fn subtable_gsub_multi_shrinkToFit(mut arr: *mut subtable_gsub
     subtable_gsub_multi_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_multi_resizeTo(
-    mut arr: *mut subtable_gsub_multi,
-    mut target: size_t,
-) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GsubMultiEntry>() as size_t),
-        ) as *mut otl_GsubMultiEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GsubMultiEntry>() as size_t,
-        ) as *mut otl_GsubMultiEntry;
-    };
+unsafe extern "C" fn subtable_gsub_multi_resizeTo(arr: *mut subtable_gsub_multi, target: size_t) {
+    cvec_resize_to(as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_multi_move(
-    mut dst: *mut subtable_gsub_multi,
-    mut src: *mut subtable_gsub_multi,
+    dst: *mut subtable_gsub_multi,
+    src: *mut subtable_gsub_multi,
 ) {
-    *dst = *src;
-    subtable_gsub_multi_init(src);
+    cvec_move(as_cvec(dst), as_cvec(src));
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_multi_disposeItem(
@@ -867,24 +829,16 @@ unsafe extern "C" fn subtable_gsub_multi_fill(mut arr: *mut subtable_gsub_multi,
     }
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_multi_push(
-    mut arr: *mut subtable_gsub_multi,
-    mut elem: otl_GsubMultiEntry,
-) {
-    subtable_gsub_multi_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn subtable_gsub_multi_push(arr: *mut subtable_gsub_multi, elem: otl_GsubMultiEntry) {
+    cvec_push(as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_multi_grow(mut arr: *mut subtable_gsub_multi) {
-    subtable_gsub_multi_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn subtable_gsub_multi_grow(arr: *mut subtable_gsub_multi) {
+    cvec_grow(as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_multi_init(mut arr: *mut subtable_gsub_multi) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_GsubMultiEntry>();
+unsafe extern "C" fn subtable_gsub_multi_init(arr: *mut subtable_gsub_multi) {
+    cvec_init(as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_multi_copyReplace(
@@ -895,14 +849,8 @@ unsafe extern "C" fn subtable_gsub_multi_copyReplace(
     subtable_gsub_multi_copy(dst, &raw const src);
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_multi_pop(
-    mut arr: *mut subtable_gsub_multi,
-) -> otl_GsubMultiEntry {
-    let mut t: otl_GsubMultiEntry = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn subtable_gsub_multi_pop(arr: *mut subtable_gsub_multi) -> otl_GsubMultiEntry {
+    cvec_pop(as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_multi_copy(
@@ -974,32 +922,8 @@ unsafe extern "C" fn subtable_gsub_multi_initCapN(
     subtable_gsub_multi_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn subtable_gsub_multi_growToN(
-    mut arr: *mut subtable_gsub_multi,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GsubMultiEntry>() as size_t),
-        ) as *mut otl_GsubMultiEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GsubMultiEntry>() as size_t,
-        ) as *mut otl_GsubMultiEntry;
-    };
+unsafe extern "C" fn subtable_gsub_multi_growToN(arr: *mut subtable_gsub_multi, target: size_t) {
+    cvec_grow_to_n(as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn subtable_gsub_multi_initN(mut arr: *mut subtable_gsub_multi, mut n: size_t) {
