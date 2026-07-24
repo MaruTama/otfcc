@@ -9,10 +9,7 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
         __base: *mut ::core::ffi::c_void,
         __nmemb: size_t,
@@ -99,6 +96,10 @@ extern "C" {
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_16u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -952,50 +953,20 @@ unsafe extern "C" fn otl_BaseArray_createN(mut n: size_t) -> *mut otl_BaseArray 
     return t;
 }
 #[inline]
-unsafe extern "C" fn otl_BaseArray_push(mut arr: *mut otl_BaseArray, mut elem: otl_BaseRecord) {
-    otl_BaseArray_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn otl_BaseArray_push(arr: *mut otl_BaseArray, elem: otl_BaseRecord) {
+    cvec_push(otl_BaseArray_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn otl_BaseArray_grow(mut arr: *mut otl_BaseArray) {
-    otl_BaseArray_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn otl_BaseArray_grow(arr: *mut otl_BaseArray) {
+    cvec_grow(otl_BaseArray_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn otl_BaseArray_growTo(mut arr: *mut otl_BaseArray, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_BaseRecord>() as size_t),
-        ) as *mut otl_BaseRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_BaseRecord>() as size_t,
-        ) as *mut otl_BaseRecord;
-    };
+unsafe extern "C" fn otl_BaseArray_growTo(arr: *mut otl_BaseArray, target: size_t) {
+    cvec_grow_to(otl_BaseArray_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_BaseArray_pop(mut arr: *mut otl_BaseArray) -> otl_BaseRecord {
-    let mut t: otl_BaseRecord = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn otl_BaseArray_pop(arr: *mut otl_BaseArray) -> otl_BaseRecord {
+    cvec_pop(otl_BaseArray_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn otl_BaseArray_copyReplace(mut dst: *mut otl_BaseArray, src: otl_BaseArray) {
@@ -1065,29 +1036,8 @@ unsafe extern "C" fn otl_BaseArray_initCapN(mut arr: *mut otl_BaseArray, mut n: 
     otl_BaseArray_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn otl_BaseArray_growToN(mut arr: *mut otl_BaseArray, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_BaseRecord>() as size_t),
-        ) as *mut otl_BaseRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_BaseRecord>() as size_t,
-        ) as *mut otl_BaseRecord;
-    };
+unsafe extern "C" fn otl_BaseArray_growToN(arr: *mut otl_BaseArray, target: size_t) {
+    cvec_grow_to_n(otl_BaseArray_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_BaseArray_initN(mut arr: *mut otl_BaseArray, mut n: size_t) {
@@ -1104,10 +1054,12 @@ unsafe extern "C" fn otl_BaseArray_free(mut x: *mut otl_BaseArray) {
     free(x as *mut ::core::ffi::c_void);
 }
 #[inline]
-unsafe extern "C" fn otl_BaseArray_init(mut arr: *mut otl_BaseArray) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_BaseRecord>();
+unsafe fn otl_BaseArray_as_cvec(arr: *mut otl_BaseArray) -> *mut CVecRaw<otl_BaseRecord> {
+    arr as *mut CVecRaw<otl_BaseRecord>
+}
+#[inline]
+unsafe extern "C" fn otl_BaseArray_init(arr: *mut otl_BaseArray) {
+    cvec_init(otl_BaseArray_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn otl_BaseArray_create() -> *mut otl_BaseArray {
@@ -1216,26 +1168,12 @@ unsafe extern "C" fn otl_BaseArray_shrinkToFit(mut arr: *mut otl_BaseArray) {
     otl_BaseArray_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn otl_BaseArray_move(mut dst: *mut otl_BaseArray, mut src: *mut otl_BaseArray) {
-    *dst = *src;
-    otl_BaseArray_init(src);
+unsafe extern "C" fn otl_BaseArray_move(dst: *mut otl_BaseArray, src: *mut otl_BaseArray) {
+    cvec_move(otl_BaseArray_as_cvec(dst), otl_BaseArray_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn otl_BaseArray_resizeTo(mut arr: *mut otl_BaseArray, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_BaseRecord>() as size_t),
-        ) as *mut otl_BaseRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_BaseRecord>() as size_t,
-        ) as *mut otl_BaseRecord;
-    };
+unsafe extern "C" fn otl_BaseArray_resizeTo(arr: *mut otl_BaseArray, target: size_t) {
+    cvec_resize_to(otl_BaseArray_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_BaseArray_disposeItem(mut arr: *mut otl_BaseArray, mut n: size_t) {

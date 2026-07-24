@@ -1,7 +1,5 @@
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn qsort(
         __base: *mut ::core::ffi::c_void,
@@ -53,6 +51,10 @@ extern "C" {
     fn utf8toutf16be(_in: sds, out_bytes: *mut size_t) -> *mut uint8_t;
 }
 use crate::src::lib::support::binio::{read_16u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -453,37 +455,16 @@ unsafe extern "C" fn otfcc_NameRecord_copy(
     );
 }
 #[inline]
-unsafe extern "C" fn table_name_growTo(mut arr: *mut table_name, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otfcc_NameRecord>() as size_t),
-        ) as *mut otfcc_NameRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otfcc_NameRecord>() as size_t,
-        ) as *mut otfcc_NameRecord;
-    };
+unsafe extern "C" fn table_name_growTo(arr: *mut table_name, target: size_t) {
+    cvec_grow_to(table_name_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn table_name_init(mut arr: *mut table_name) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otfcc_NameRecord>();
+unsafe fn table_name_as_cvec(arr: *mut table_name) -> *mut CVecRaw<otfcc_NameRecord> {
+    arr as *mut CVecRaw<otfcc_NameRecord>
+}
+#[inline]
+unsafe extern "C" fn table_name_init(arr: *mut table_name) {
+    cvec_init(table_name_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn table_name_filterEnv(
@@ -577,15 +558,12 @@ unsafe extern "C" fn table_name_fill(mut arr: *mut table_name, mut n: size_t) {
     }
 }
 #[inline]
-unsafe extern "C" fn table_name_push(mut arr: *mut table_name, mut elem: otfcc_NameRecord) {
-    table_name_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn table_name_push(arr: *mut table_name, elem: otfcc_NameRecord) {
+    cvec_push(table_name_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn table_name_grow(mut arr: *mut table_name) {
-    table_name_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn table_name_grow(arr: *mut table_name) {
+    cvec_grow(table_name_as_cvec(arr));
 }
 #[no_mangle]
 pub static mut table_iName: __caryll_vectorinterface_table_name = {
@@ -647,12 +625,8 @@ pub static mut table_iName: __caryll_vectorinterface_table_name = {
     }
 };
 #[inline]
-unsafe extern "C" fn table_name_pop(mut arr: *mut table_name) -> otfcc_NameRecord {
-    let mut t: otfcc_NameRecord = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn table_name_pop(arr: *mut table_name) -> otfcc_NameRecord {
+    cvec_pop(table_name_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn table_name_copyReplace(mut dst: *mut table_name, src: table_name) {
@@ -721,29 +695,8 @@ unsafe extern "C" fn table_name_initCapN(mut arr: *mut table_name, mut n: size_t
     table_name_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn table_name_growToN(mut arr: *mut table_name, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otfcc_NameRecord>() as size_t),
-        ) as *mut otfcc_NameRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otfcc_NameRecord>() as size_t,
-        ) as *mut otfcc_NameRecord;
-    };
+unsafe extern "C" fn table_name_growToN(arr: *mut table_name, target: size_t) {
+    cvec_grow_to_n(table_name_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn table_name_initN(mut arr: *mut table_name, mut n: size_t) {
@@ -778,26 +731,12 @@ unsafe extern "C" fn table_name_shrinkToFit(mut arr: *mut table_name) {
     table_name_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn table_name_resizeTo(mut arr: *mut table_name, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otfcc_NameRecord>() as size_t),
-        ) as *mut otfcc_NameRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otfcc_NameRecord>() as size_t,
-        ) as *mut otfcc_NameRecord;
-    };
+unsafe extern "C" fn table_name_resizeTo(arr: *mut table_name, target: size_t) {
+    cvec_resize_to(table_name_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn table_name_move(mut dst: *mut table_name, mut src: *mut table_name) {
-    *dst = *src;
-    table_name_init(src);
+unsafe extern "C" fn table_name_move(dst: *mut table_name, src: *mut table_name) {
+    cvec_move(table_name_as_cvec(dst), table_name_as_cvec(src));
 }
 unsafe extern "C" fn shouldDecodeAsUTF16(mut record: *const otfcc_NameRecord) -> bool {
     return (*record).platformID as ::core::ffi::c_int == 0 as ::core::ffi::c_int

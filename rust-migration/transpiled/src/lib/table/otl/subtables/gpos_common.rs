@@ -9,8 +9,6 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
@@ -65,6 +63,10 @@ extern "C" {
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_16u, read_16s};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
 pub type __uint16_t = u16;
@@ -617,39 +619,12 @@ unsafe extern "C" fn otl_MarkArray_disposeItem(mut arr: *mut otl_MarkArray, mut 
     };
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_growTo(mut arr: *mut otl_MarkArray, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_MarkRecord>() as size_t),
-        ) as *mut otl_MarkRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_MarkRecord>() as size_t,
-        ) as *mut otl_MarkRecord;
-    };
+unsafe extern "C" fn otl_MarkArray_growTo(arr: *mut otl_MarkArray, target: size_t) {
+    cvec_grow_to(otl_MarkArray_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_pop(mut arr: *mut otl_MarkArray) -> otl_MarkRecord {
-    let mut t: otl_MarkRecord = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn otl_MarkArray_pop(arr: *mut otl_MarkArray) -> otl_MarkRecord {
+    cvec_pop(otl_MarkArray_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn otl_MarkArray_copyReplace(mut dst: *mut otl_MarkArray, src: otl_MarkArray) {
@@ -719,29 +694,8 @@ unsafe extern "C" fn otl_MarkArray_initCapN(mut arr: *mut otl_MarkArray, mut n: 
     otl_MarkArray_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_growToN(mut arr: *mut otl_MarkArray, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_MarkRecord>() as size_t),
-        ) as *mut otl_MarkRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_MarkRecord>() as size_t,
-        ) as *mut otl_MarkRecord;
-    };
+unsafe extern "C" fn otl_MarkArray_growToN(arr: *mut otl_MarkArray, target: size_t) {
+    cvec_grow_to_n(otl_MarkArray_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_MarkArray_initN(mut arr: *mut otl_MarkArray, mut n: size_t) {
@@ -772,15 +726,16 @@ unsafe extern "C" fn otl_MarkArray_create() -> *mut otl_MarkArray {
     return x;
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_move(mut dst: *mut otl_MarkArray, mut src: *mut otl_MarkArray) {
-    *dst = *src;
-    otl_MarkArray_init(src);
+unsafe extern "C" fn otl_MarkArray_move(dst: *mut otl_MarkArray, src: *mut otl_MarkArray) {
+    cvec_move(otl_MarkArray_as_cvec(dst), otl_MarkArray_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_init(mut arr: *mut otl_MarkArray) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_MarkRecord>();
+unsafe fn otl_MarkArray_as_cvec(arr: *mut otl_MarkArray) -> *mut CVecRaw<otl_MarkRecord> {
+    arr as *mut CVecRaw<otl_MarkRecord>
+}
+#[inline]
+unsafe extern "C" fn otl_MarkArray_init(arr: *mut otl_MarkArray) {
+    cvec_init(otl_MarkArray_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn otl_MarkArray_filterEnv(
@@ -882,21 +837,8 @@ unsafe extern "C" fn otl_MarkArray_shrinkToFit(mut arr: *mut otl_MarkArray) {
     otl_MarkArray_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_resizeTo(mut arr: *mut otl_MarkArray, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_MarkRecord>() as size_t),
-        ) as *mut otl_MarkRecord;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_MarkRecord>() as size_t,
-        ) as *mut otl_MarkRecord;
-    };
+unsafe extern "C" fn otl_MarkArray_resizeTo(arr: *mut otl_MarkArray, target: size_t) {
+    cvec_resize_to(otl_MarkArray_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_MarkArray_sort(
@@ -949,15 +891,12 @@ unsafe extern "C" fn otl_MarkArray_fill(mut arr: *mut otl_MarkArray, mut n: size
     }
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_push(mut arr: *mut otl_MarkArray, mut elem: otl_MarkRecord) {
-    otl_MarkArray_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn otl_MarkArray_push(arr: *mut otl_MarkArray, elem: otl_MarkRecord) {
+    cvec_push(otl_MarkArray_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn otl_MarkArray_grow(mut arr: *mut otl_MarkArray) {
-    otl_MarkArray_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn otl_MarkArray_grow(arr: *mut otl_MarkArray) {
+    cvec_grow(otl_MarkArray_as_cvec(arr));
 }
 #[no_mangle]
 pub unsafe extern "C" fn otl_readMarkArray(

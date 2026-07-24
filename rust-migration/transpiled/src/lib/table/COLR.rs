@@ -3,10 +3,7 @@ extern "C" {
     pub type _IO_codecvt;
     pub type _IO_marker;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
         __base: *mut ::core::ffi::c_void,
         __nmemb: size_t,
@@ -60,6 +57,10 @@ extern "C" {
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_16u, read_32u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -543,31 +544,8 @@ unsafe extern "C" fn colr_Layer_replace(mut dst: *mut colr_Layer, src: colr_Laye
     );
 }
 #[inline]
-unsafe extern "C" fn colr_LayerList_growTo(mut arr: *mut colr_LayerList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<colr_Layer>() as size_t),
-        ) as *mut colr_Layer;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<colr_Layer>() as size_t,
-        ) as *mut colr_Layer;
-    };
+unsafe extern "C" fn colr_LayerList_growTo(arr: *mut colr_LayerList, target: size_t) {
+    cvec_grow_to(colr_LayerList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn colr_LayerList_sort(
@@ -612,15 +590,12 @@ unsafe extern "C" fn colr_LayerList_fill(mut arr: *mut colr_LayerList, mut n: si
     }
 }
 #[inline]
-unsafe extern "C" fn colr_LayerList_push(mut arr: *mut colr_LayerList, mut elem: colr_Layer) {
-    colr_LayerList_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn colr_LayerList_push(arr: *mut colr_LayerList, elem: colr_Layer) {
+    cvec_push(colr_LayerList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn colr_LayerList_grow(mut arr: *mut colr_LayerList) {
-    colr_LayerList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn colr_LayerList_grow(arr: *mut colr_LayerList) {
+    cvec_grow(colr_LayerList_as_cvec(arr));
 }
 #[no_mangle]
 pub static mut colr_iLayerList: __caryll_vectorinterface_colr_LayerList = {
@@ -691,12 +666,8 @@ pub static mut colr_iLayerList: __caryll_vectorinterface_colr_LayerList = {
     }
 };
 #[inline]
-unsafe extern "C" fn colr_LayerList_pop(mut arr: *mut colr_LayerList) -> colr_Layer {
-    let mut t: colr_Layer = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn colr_LayerList_pop(arr: *mut colr_LayerList) -> colr_Layer {
+    cvec_pop(colr_LayerList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn colr_LayerList_copyReplace(mut dst: *mut colr_LayerList, src: colr_LayerList) {
@@ -766,29 +737,8 @@ unsafe extern "C" fn colr_LayerList_initCapN(mut arr: *mut colr_LayerList, mut n
     colr_LayerList_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn colr_LayerList_growToN(mut arr: *mut colr_LayerList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<colr_Layer>() as size_t),
-        ) as *mut colr_Layer;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<colr_Layer>() as size_t,
-        ) as *mut colr_Layer;
-    };
+unsafe extern "C" fn colr_LayerList_growToN(arr: *mut colr_LayerList, target: size_t) {
+    cvec_grow_to_n(colr_LayerList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn colr_LayerList_initN(mut arr: *mut colr_LayerList, mut n: size_t) {
@@ -823,35 +773,20 @@ unsafe extern "C" fn colr_LayerList_shrinkToFit(mut arr: *mut colr_LayerList) {
     colr_LayerList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn colr_LayerList_resizeTo(mut arr: *mut colr_LayerList, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<colr_Layer>() as size_t),
-        ) as *mut colr_Layer;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<colr_Layer>() as size_t,
-        ) as *mut colr_Layer;
-    };
+unsafe extern "C" fn colr_LayerList_resizeTo(arr: *mut colr_LayerList, target: size_t) {
+    cvec_resize_to(colr_LayerList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn colr_LayerList_move(
-    mut dst: *mut colr_LayerList,
-    mut src: *mut colr_LayerList,
-) {
-    *dst = *src;
-    colr_LayerList_init(src);
+unsafe extern "C" fn colr_LayerList_move(dst: *mut colr_LayerList, src: *mut colr_LayerList) {
+    cvec_move(colr_LayerList_as_cvec(dst), colr_LayerList_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn colr_LayerList_init(mut arr: *mut colr_LayerList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<colr_Layer>();
+unsafe fn colr_LayerList_as_cvec(arr: *mut colr_LayerList) -> *mut CVecRaw<colr_Layer> {
+    arr as *mut CVecRaw<colr_Layer>
+}
+#[inline]
+unsafe extern "C" fn colr_LayerList_init(arr: *mut colr_LayerList) {
+    cvec_init(colr_LayerList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn colr_LayerList_disposeItem(mut arr: *mut colr_LayerList, mut n: size_t) {
@@ -976,31 +911,8 @@ unsafe extern "C" fn table_COLR_replace(mut dst: *mut table_COLR, src: table_COL
     );
 }
 #[inline]
-unsafe extern "C" fn table_COLR_growTo(mut arr: *mut table_COLR, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<colr_Mapping>() as size_t),
-        ) as *mut colr_Mapping;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<colr_Mapping>() as size_t,
-        ) as *mut colr_Mapping;
-    };
+unsafe extern "C" fn table_COLR_growTo(arr: *mut table_COLR, target: size_t) {
+    cvec_grow_to(table_COLR_as_cvec(arr), target);
 }
 #[no_mangle]
 pub static mut table_iCOLR: __caryll_vectorinterface_table_COLR = {
@@ -1061,32 +973,20 @@ unsafe extern "C" fn table_COLR_shrinkToFit(mut arr: *mut table_COLR) {
     table_COLR_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn table_COLR_resizeTo(mut arr: *mut table_COLR, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<colr_Mapping>() as size_t),
-        ) as *mut colr_Mapping;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<colr_Mapping>() as size_t,
-        ) as *mut colr_Mapping;
-    };
+unsafe extern "C" fn table_COLR_resizeTo(arr: *mut table_COLR, target: size_t) {
+    cvec_resize_to(table_COLR_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn table_COLR_move(mut dst: *mut table_COLR, mut src: *mut table_COLR) {
-    *dst = *src;
-    table_COLR_init(src);
+unsafe extern "C" fn table_COLR_move(dst: *mut table_COLR, src: *mut table_COLR) {
+    cvec_move(table_COLR_as_cvec(dst), table_COLR_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn table_COLR_init(mut arr: *mut table_COLR) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<colr_Mapping>();
+unsafe fn table_COLR_as_cvec(arr: *mut table_COLR) -> *mut CVecRaw<colr_Mapping> {
+    arr as *mut CVecRaw<colr_Mapping>
+}
+#[inline]
+unsafe extern "C" fn table_COLR_init(arr: *mut table_COLR) {
+    cvec_init(table_COLR_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn table_COLR_filterEnv(
@@ -1176,23 +1076,16 @@ unsafe extern "C" fn table_COLR_fill(mut arr: *mut table_COLR, mut n: size_t) {
     }
 }
 #[inline]
-unsafe extern "C" fn table_COLR_push(mut arr: *mut table_COLR, mut elem: colr_Mapping) {
-    table_COLR_grow(arr);
-    let fresh2 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh2 as isize) = elem;
+unsafe extern "C" fn table_COLR_push(arr: *mut table_COLR, elem: colr_Mapping) {
+    cvec_push(table_COLR_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn table_COLR_grow(mut arr: *mut table_COLR) {
-    table_COLR_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn table_COLR_grow(arr: *mut table_COLR) {
+    cvec_grow(table_COLR_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn table_COLR_pop(mut arr: *mut table_COLR) -> colr_Mapping {
-    let mut t: colr_Mapping = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn table_COLR_pop(arr: *mut table_COLR) -> colr_Mapping {
+    cvec_pop(table_COLR_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn table_COLR_copyReplace(mut dst: *mut table_COLR, src: table_COLR) {
@@ -1250,29 +1143,8 @@ unsafe extern "C" fn table_COLR_initCapN(mut arr: *mut table_COLR, mut n: size_t
     table_COLR_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn table_COLR_growToN(mut arr: *mut table_COLR, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<colr_Mapping>() as size_t),
-        ) as *mut colr_Mapping;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<colr_Mapping>() as size_t,
-        ) as *mut colr_Mapping;
-    };
+unsafe extern "C" fn table_COLR_growToN(arr: *mut table_COLR, target: size_t) {
+    cvec_grow_to_n(table_COLR_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn table_COLR_initN(mut arr: *mut table_COLR, mut n: size_t) {

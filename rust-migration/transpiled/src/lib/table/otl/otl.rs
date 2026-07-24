@@ -9,10 +9,7 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
         __base: *mut ::core::ffi::c_void,
         __nmemb: size_t,
@@ -42,6 +39,10 @@ extern "C" {
     static iSubtable_gpos_markToLigature: __caryll_elementinterface_subtable_gpos_markToLigature;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
 pub type __off_t = ::core::ffi::c_long;
@@ -1292,35 +1293,20 @@ unsafe extern "C" fn otl_SubtableList_shrinkToFit(mut arr: *mut otl_SubtableList
     otl_SubtableList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn otl_SubtableList_resizeTo(mut arr: *mut otl_SubtableList, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_SubtablePtr>() as size_t),
-        ) as *mut otl_SubtablePtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_SubtablePtr>() as size_t,
-        ) as *mut otl_SubtablePtr;
-    };
+unsafe extern "C" fn otl_SubtableList_resizeTo(arr: *mut otl_SubtableList, target: size_t) {
+    cvec_resize_to(otl_SubtableList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_SubtableList_move(
-    mut dst: *mut otl_SubtableList,
-    mut src: *mut otl_SubtableList,
-) {
-    *dst = *src;
-    otl_SubtableList_init(src);
+unsafe extern "C" fn otl_SubtableList_move(dst: *mut otl_SubtableList, src: *mut otl_SubtableList) {
+    cvec_move(otl_SubtableList_as_cvec(dst), otl_SubtableList_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn otl_SubtableList_init(mut arr: *mut otl_SubtableList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_SubtablePtr>();
+unsafe fn otl_SubtableList_as_cvec(arr: *mut otl_SubtableList) -> *mut CVecRaw<otl_SubtablePtr> {
+    arr as *mut CVecRaw<otl_SubtablePtr>
+}
+#[inline]
+unsafe extern "C" fn otl_SubtableList_init(arr: *mut otl_SubtableList) {
+    cvec_init(otl_SubtableList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn otl_SubtableList_free(mut x: *mut otl_SubtableList) {
@@ -1363,54 +1349,20 @@ unsafe extern "C" fn otl_SubtableList_disposeItem(mut arr: *mut otl_SubtableList
     };
 }
 #[inline]
-unsafe extern "C" fn otl_SubtableList_push(
-    mut arr: *mut otl_SubtableList,
-    mut elem: otl_SubtablePtr,
-) {
-    otl_SubtableList_grow(arr);
-    let fresh2 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    let ref mut fresh3 = *(*arr).items.offset(fresh2 as isize);
-    *fresh3 = elem;
+unsafe extern "C" fn otl_SubtableList_push(arr: *mut otl_SubtableList, elem: otl_SubtablePtr) {
+    cvec_push(otl_SubtableList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn otl_SubtableList_grow(mut arr: *mut otl_SubtableList) {
-    otl_SubtableList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn otl_SubtableList_grow(arr: *mut otl_SubtableList) {
+    cvec_grow(otl_SubtableList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn otl_SubtableList_growTo(mut arr: *mut otl_SubtableList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_SubtablePtr>() as size_t),
-        ) as *mut otl_SubtablePtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_SubtablePtr>() as size_t,
-        ) as *mut otl_SubtablePtr;
-    };
+unsafe extern "C" fn otl_SubtableList_growTo(arr: *mut otl_SubtableList, target: size_t) {
+    cvec_grow_to(otl_SubtableList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_SubtableList_pop(mut arr: *mut otl_SubtableList) -> otl_SubtablePtr {
-    let mut t: otl_SubtablePtr = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn otl_SubtableList_pop(arr: *mut otl_SubtableList) -> otl_SubtablePtr {
+    cvec_pop(otl_SubtableList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn otl_SubtableList_copyReplace(
@@ -1487,29 +1439,8 @@ unsafe extern "C" fn otl_SubtableList_initCapN(mut arr: *mut otl_SubtableList, m
     otl_SubtableList_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn otl_SubtableList_growToN(mut arr: *mut otl_SubtableList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_SubtablePtr>() as size_t),
-        ) as *mut otl_SubtablePtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_SubtablePtr>() as size_t,
-        ) as *mut otl_SubtablePtr;
-    };
+unsafe extern "C" fn otl_SubtableList_growToN(arr: *mut otl_SubtableList, target: size_t) {
+    cvec_grow_to_n(otl_SubtableList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_SubtableList_initN(mut arr: *mut otl_SubtableList, mut n: size_t) {
@@ -1690,39 +1621,24 @@ unsafe extern "C" fn otl_LookupPtr_init(mut x: *mut otl_LookupPtr) {
     initLookupPtr(x);
 }
 #[inline]
-unsafe extern "C" fn otl_LookupList_resizeTo(mut arr: *mut otl_LookupList, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LookupPtr>() as size_t),
-        ) as *mut otl_LookupPtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LookupPtr>() as size_t,
-        ) as *mut otl_LookupPtr;
-    };
+unsafe extern "C" fn otl_LookupList_resizeTo(arr: *mut otl_LookupList, target: size_t) {
+    cvec_resize_to(otl_LookupList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_LookupList_shrinkToFit(mut arr: *mut otl_LookupList) {
     otl_LookupList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn otl_LookupList_move(
-    mut dst: *mut otl_LookupList,
-    mut src: *mut otl_LookupList,
-) {
-    *dst = *src;
-    otl_LookupList_init(src);
+unsafe extern "C" fn otl_LookupList_move(dst: *mut otl_LookupList, src: *mut otl_LookupList) {
+    cvec_move(otl_LookupList_as_cvec(dst), otl_LookupList_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn otl_LookupList_init(mut arr: *mut otl_LookupList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_LookupPtr>();
+unsafe fn otl_LookupList_as_cvec(arr: *mut otl_LookupList) -> *mut CVecRaw<otl_LookupPtr> {
+    arr as *mut CVecRaw<otl_LookupPtr>
+}
+#[inline]
+unsafe extern "C" fn otl_LookupList_init(arr: *mut otl_LookupList) {
+    cvec_init(otl_LookupList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn otl_LookupList_filterEnv(
@@ -1802,51 +1718,20 @@ unsafe extern "C" fn otl_LookupList_fill(mut arr: *mut otl_LookupList, mut n: si
     }
 }
 #[inline]
-unsafe extern "C" fn otl_LookupList_push(mut arr: *mut otl_LookupList, mut elem: otl_LookupPtr) {
-    otl_LookupList_grow(arr);
-    let fresh7 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    let ref mut fresh8 = *(*arr).items.offset(fresh7 as isize);
-    *fresh8 = elem;
+unsafe extern "C" fn otl_LookupList_push(arr: *mut otl_LookupList, elem: otl_LookupPtr) {
+    cvec_push(otl_LookupList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn otl_LookupList_grow(mut arr: *mut otl_LookupList) {
-    otl_LookupList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn otl_LookupList_grow(arr: *mut otl_LookupList) {
+    cvec_grow(otl_LookupList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn otl_LookupList_growTo(mut arr: *mut otl_LookupList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LookupPtr>() as size_t),
-        ) as *mut otl_LookupPtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LookupPtr>() as size_t,
-        ) as *mut otl_LookupPtr;
-    };
+unsafe extern "C" fn otl_LookupList_growTo(arr: *mut otl_LookupList, target: size_t) {
+    cvec_grow_to(otl_LookupList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_LookupList_pop(mut arr: *mut otl_LookupList) -> otl_LookupPtr {
-    let mut t: otl_LookupPtr = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn otl_LookupList_pop(arr: *mut otl_LookupList) -> otl_LookupPtr {
+    cvec_pop(otl_LookupList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn otl_LookupList_copyReplace(mut dst: *mut otl_LookupList, src: otl_LookupList) {
@@ -1917,29 +1802,8 @@ unsafe extern "C" fn otl_LookupList_initCapN(mut arr: *mut otl_LookupList, mut n
     otl_LookupList_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn otl_LookupList_growToN(mut arr: *mut otl_LookupList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LookupPtr>() as size_t),
-        ) as *mut otl_LookupPtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LookupPtr>() as size_t,
-        ) as *mut otl_LookupPtr;
-    };
+unsafe extern "C" fn otl_LookupList_growToN(arr: *mut otl_LookupList, target: size_t) {
+    cvec_grow_to_n(otl_LookupList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_LookupList_initN(mut arr: *mut otl_LookupList, mut n: size_t) {
@@ -2107,12 +1971,8 @@ pub static mut otl_iLookupRef: __caryll_elementinterface_otl_LookupRef = {
     }
 };
 #[inline]
-unsafe extern "C" fn otl_LookupRefList_pop(mut arr: *mut otl_LookupRefList) -> otl_LookupRef {
-    let mut t: otl_LookupRef = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn otl_LookupRefList_pop(arr: *mut otl_LookupRefList) -> otl_LookupRef {
+    cvec_pop(otl_LookupRefList_as_cvec(arr))
 }
 #[no_mangle]
 pub static mut otl_iLookupRefList: __caryll_vectorinterface_otl_LookupRefList = {
@@ -2201,38 +2061,20 @@ unsafe extern "C" fn otl_LookupRefList_shrinkToFit(mut arr: *mut otl_LookupRefLi
     otl_LookupRefList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn otl_LookupRefList_resizeTo(
-    mut arr: *mut otl_LookupRefList,
-    mut target: size_t,
-) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LookupRef>() as size_t),
-        ) as *mut otl_LookupRef;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LookupRef>() as size_t,
-        ) as *mut otl_LookupRef;
-    };
+unsafe extern "C" fn otl_LookupRefList_resizeTo(arr: *mut otl_LookupRefList, target: size_t) {
+    cvec_resize_to(otl_LookupRefList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_LookupRefList_move(
-    mut dst: *mut otl_LookupRefList,
-    mut src: *mut otl_LookupRefList,
-) {
-    *dst = *src;
-    otl_LookupRefList_init(src);
+unsafe extern "C" fn otl_LookupRefList_move(dst: *mut otl_LookupRefList, src: *mut otl_LookupRefList) {
+    cvec_move(otl_LookupRefList_as_cvec(dst), otl_LookupRefList_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn otl_LookupRefList_init(mut arr: *mut otl_LookupRefList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_LookupRef>();
+unsafe fn otl_LookupRefList_as_cvec(arr: *mut otl_LookupRefList) -> *mut CVecRaw<otl_LookupRef> {
+    arr as *mut CVecRaw<otl_LookupRef>
+}
+#[inline]
+unsafe extern "C" fn otl_LookupRefList_init(arr: *mut otl_LookupRefList) {
+    cvec_init(otl_LookupRefList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn otl_LookupRefList_filterEnv(
@@ -2312,15 +2154,8 @@ unsafe extern "C" fn otl_LookupRefList_fill(mut arr: *mut otl_LookupRefList, mut
     }
 }
 #[inline]
-unsafe extern "C" fn otl_LookupRefList_push(
-    mut arr: *mut otl_LookupRefList,
-    mut elem: otl_LookupRef,
-) {
-    otl_LookupRefList_grow(arr);
-    let fresh12 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    let ref mut fresh13 = *(*arr).items.offset(fresh12 as isize);
-    *fresh13 = elem;
+unsafe extern "C" fn otl_LookupRefList_push(arr: *mut otl_LookupRefList, elem: otl_LookupRef) {
+    cvec_push(otl_LookupRefList_as_cvec(arr), elem);
 }
 #[inline]
 unsafe extern "C" fn otl_LookupRefList_createN(mut n: size_t) -> *mut otl_LookupRefList {
@@ -2330,35 +2165,12 @@ unsafe extern "C" fn otl_LookupRefList_createN(mut n: size_t) -> *mut otl_Lookup
     return t;
 }
 #[inline]
-unsafe extern "C" fn otl_LookupRefList_grow(mut arr: *mut otl_LookupRefList) {
-    otl_LookupRefList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn otl_LookupRefList_grow(arr: *mut otl_LookupRefList) {
+    cvec_grow(otl_LookupRefList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn otl_LookupRefList_growTo(mut arr: *mut otl_LookupRefList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LookupRef>() as size_t),
-        ) as *mut otl_LookupRef;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LookupRef>() as size_t,
-        ) as *mut otl_LookupRef;
-    };
+unsafe extern "C" fn otl_LookupRefList_growTo(arr: *mut otl_LookupRefList, target: size_t) {
+    cvec_grow_to(otl_LookupRefList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_LookupRefList_create() -> *mut otl_LookupRefList {
@@ -2456,32 +2268,8 @@ unsafe extern "C" fn otl_LookupRefList_free(mut x: *mut otl_LookupRefList) {
     free(x as *mut ::core::ffi::c_void);
 }
 #[inline]
-unsafe extern "C" fn otl_LookupRefList_growToN(
-    mut arr: *mut otl_LookupRefList,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LookupRef>() as size_t),
-        ) as *mut otl_LookupRef;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LookupRef>() as size_t,
-        ) as *mut otl_LookupRef;
-    };
+unsafe extern "C" fn otl_LookupRefList_growToN(arr: *mut otl_LookupRefList, target: size_t) {
+    cvec_grow_to_n(otl_LookupRefList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn initFeaturePtr(mut feature: *mut otl_FeaturePtr) {
@@ -2590,56 +2378,12 @@ unsafe extern "C" fn otl_FeatureList_fill(mut arr: *mut otl_FeatureList, mut n: 
     }
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureList_growTo(mut arr: *mut otl_FeatureList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_FeaturePtr>() as size_t),
-        ) as *mut otl_FeaturePtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_FeaturePtr>() as size_t,
-        ) as *mut otl_FeaturePtr;
-    };
+unsafe extern "C" fn otl_FeatureList_growTo(arr: *mut otl_FeatureList, target: size_t) {
+    cvec_grow_to(otl_FeatureList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureList_growToN(mut arr: *mut otl_FeatureList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_FeaturePtr>() as size_t),
-        ) as *mut otl_FeaturePtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_FeaturePtr>() as size_t,
-        ) as *mut otl_FeaturePtr;
-    };
+unsafe extern "C" fn otl_FeatureList_growToN(arr: *mut otl_FeatureList, target: size_t) {
+    cvec_grow_to_n(otl_FeatureList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_FeatureList_initN(mut arr: *mut otl_FeatureList, mut n: size_t) {
@@ -2692,26 +2436,20 @@ unsafe extern "C" fn otl_FeatureList_sort(
     );
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureList_push(mut arr: *mut otl_FeatureList, mut elem: otl_FeaturePtr) {
-    otl_FeatureList_grow(arr);
-    let fresh17 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    let ref mut fresh18 = *(*arr).items.offset(fresh17 as isize);
-    *fresh18 = elem;
+unsafe extern "C" fn otl_FeatureList_push(arr: *mut otl_FeatureList, elem: otl_FeaturePtr) {
+    cvec_push(otl_FeatureList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureList_init(mut arr: *mut otl_FeatureList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_FeaturePtr>();
+unsafe fn otl_FeatureList_as_cvec(arr: *mut otl_FeatureList) -> *mut CVecRaw<otl_FeaturePtr> {
+    arr as *mut CVecRaw<otl_FeaturePtr>
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureList_pop(mut arr: *mut otl_FeatureList) -> otl_FeaturePtr {
-    let mut t: otl_FeaturePtr = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn otl_FeatureList_init(arr: *mut otl_FeatureList) {
+    cvec_init(otl_FeatureList_as_cvec(arr));
+}
+#[inline]
+unsafe extern "C" fn otl_FeatureList_pop(arr: *mut otl_FeatureList) -> otl_FeaturePtr {
+    cvec_pop(otl_FeatureList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn otl_FeatureList_copyReplace(
@@ -2748,8 +2486,8 @@ unsafe extern "C" fn otl_FeatureList_copy(
     };
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureList_grow(mut arr: *mut otl_FeatureList) {
-    otl_FeatureList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn otl_FeatureList_grow(arr: *mut otl_FeatureList) {
+    cvec_grow(otl_FeatureList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn otl_FeatureList_dispose(mut arr: *mut otl_FeatureList) {
@@ -2869,29 +2607,12 @@ unsafe extern "C" fn otl_FeatureList_shrinkToFit(mut arr: *mut otl_FeatureList) 
     otl_FeatureList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureList_resizeTo(mut arr: *mut otl_FeatureList, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_FeaturePtr>() as size_t),
-        ) as *mut otl_FeaturePtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_FeaturePtr>() as size_t,
-        ) as *mut otl_FeaturePtr;
-    };
+unsafe extern "C" fn otl_FeatureList_resizeTo(arr: *mut otl_FeatureList, target: size_t) {
+    cvec_resize_to(otl_FeatureList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureList_move(
-    mut dst: *mut otl_FeatureList,
-    mut src: *mut otl_FeatureList,
-) {
-    *dst = *src;
-    otl_FeatureList_init(src);
+unsafe extern "C" fn otl_FeatureList_move(dst: *mut otl_FeatureList, src: *mut otl_FeatureList) {
+    cvec_move(otl_FeatureList_as_cvec(dst), otl_FeatureList_as_cvec(src));
 }
 #[inline]
 unsafe extern "C" fn otl_FeatureList_filterEnv(
@@ -3019,42 +2740,12 @@ unsafe extern "C" fn otl_FeatureRefList_fill(mut arr: *mut otl_FeatureRefList, m
     }
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureRefList_growTo(
-    mut arr: *mut otl_FeatureRefList,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_FeatureRef>() as size_t),
-        ) as *mut otl_FeatureRef;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_FeatureRef>() as size_t,
-        ) as *mut otl_FeatureRef;
-    };
+unsafe extern "C" fn otl_FeatureRefList_growTo(arr: *mut otl_FeatureRefList, target: size_t) {
+    cvec_grow_to(otl_FeatureRefList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureRefList_pop(mut arr: *mut otl_FeatureRefList) -> otl_FeatureRef {
-    let mut t: otl_FeatureRef = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn otl_FeatureRefList_pop(arr: *mut otl_FeatureRefList) -> otl_FeatureRef {
+    cvec_pop(otl_FeatureRefList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn otl_FeatureRefList_copyReplace(
@@ -3131,32 +2822,8 @@ unsafe extern "C" fn otl_FeatureRefList_initCapN(mut arr: *mut otl_FeatureRefLis
     otl_FeatureRefList_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureRefList_growToN(
-    mut arr: *mut otl_FeatureRefList,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_FeatureRef>() as size_t),
-        ) as *mut otl_FeatureRef;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_FeatureRef>() as size_t,
-        ) as *mut otl_FeatureRef;
-    };
+unsafe extern "C" fn otl_FeatureRefList_growToN(arr: *mut otl_FeatureRefList, target: size_t) {
+    cvec_grow_to_n(otl_FeatureRefList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_FeatureRefList_initN(mut arr: *mut otl_FeatureRefList, mut n: size_t) {
@@ -3274,32 +2941,12 @@ unsafe extern "C" fn otl_FeatureRefList_shrinkToFit(mut arr: *mut otl_FeatureRef
     otl_FeatureRefList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureRefList_resizeTo(
-    mut arr: *mut otl_FeatureRefList,
-    mut target: size_t,
-) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_FeatureRef>() as size_t),
-        ) as *mut otl_FeatureRef;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_FeatureRef>() as size_t,
-        ) as *mut otl_FeatureRef;
-    };
+unsafe extern "C" fn otl_FeatureRefList_resizeTo(arr: *mut otl_FeatureRefList, target: size_t) {
+    cvec_resize_to(otl_FeatureRefList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureRefList_move(
-    mut dst: *mut otl_FeatureRefList,
-    mut src: *mut otl_FeatureRefList,
-) {
-    *dst = *src;
-    otl_FeatureRefList_init(src);
+unsafe extern "C" fn otl_FeatureRefList_move(dst: *mut otl_FeatureRefList, src: *mut otl_FeatureRefList) {
+    cvec_move(otl_FeatureRefList_as_cvec(dst), otl_FeatureRefList_as_cvec(src));
 }
 #[inline]
 unsafe extern "C" fn otl_FeatureRefList_filterEnv(
@@ -3354,25 +3001,20 @@ unsafe extern "C" fn otl_FeatureRefList_sort(
     );
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureRefList_push(
-    mut arr: *mut otl_FeatureRefList,
-    mut elem: otl_FeatureRef,
-) {
-    otl_FeatureRefList_grow(arr);
-    let fresh22 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    let ref mut fresh23 = *(*arr).items.offset(fresh22 as isize);
-    *fresh23 = elem;
+unsafe extern "C" fn otl_FeatureRefList_push(arr: *mut otl_FeatureRefList, elem: otl_FeatureRef) {
+    cvec_push(otl_FeatureRefList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureRefList_init(mut arr: *mut otl_FeatureRefList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_FeatureRef>();
+unsafe fn otl_FeatureRefList_as_cvec(arr: *mut otl_FeatureRefList) -> *mut CVecRaw<otl_FeatureRef> {
+    arr as *mut CVecRaw<otl_FeatureRef>
 }
 #[inline]
-unsafe extern "C" fn otl_FeatureRefList_grow(mut arr: *mut otl_FeatureRefList) {
-    otl_FeatureRefList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn otl_FeatureRefList_init(arr: *mut otl_FeatureRefList) {
+    cvec_init(otl_FeatureRefList_as_cvec(arr));
+}
+#[inline]
+unsafe extern "C" fn otl_FeatureRefList_grow(arr: *mut otl_FeatureRefList) {
+    cvec_grow(otl_FeatureRefList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn otl_FeatureRefList_disposeItem(
@@ -3454,10 +3096,12 @@ unsafe extern "C" fn otl_LangSystemList_filterEnv(
     (*arr).length = j;
 }
 #[inline]
-unsafe extern "C" fn otl_LangSystemList_init(mut arr: *mut otl_LangSystemList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_LanguageSystemPtr>();
+unsafe fn otl_LangSystemList_as_cvec(arr: *mut otl_LangSystemList) -> *mut CVecRaw<otl_LanguageSystemPtr> {
+    arr as *mut CVecRaw<otl_LanguageSystemPtr>
+}
+#[inline]
+unsafe extern "C" fn otl_LangSystemList_init(arr: *mut otl_LangSystemList) {
+    cvec_init(otl_LangSystemList_as_cvec(arr));
 }
 #[no_mangle]
 pub static mut otl_iLangSystemList: __caryll_vectorinterface_otl_LangSystemList = {
@@ -3598,59 +3242,20 @@ unsafe extern "C" fn otl_LangSystemList_fill(mut arr: *mut otl_LangSystemList, m
     }
 }
 #[inline]
-unsafe extern "C" fn otl_LangSystemList_push(
-    mut arr: *mut otl_LangSystemList,
-    mut elem: otl_LanguageSystemPtr,
-) {
-    otl_LangSystemList_grow(arr);
-    let fresh27 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    let ref mut fresh28 = *(*arr).items.offset(fresh27 as isize);
-    *fresh28 = elem;
+unsafe extern "C" fn otl_LangSystemList_push(arr: *mut otl_LangSystemList, elem: otl_LanguageSystemPtr) {
+    cvec_push(otl_LangSystemList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn otl_LangSystemList_grow(mut arr: *mut otl_LangSystemList) {
-    otl_LangSystemList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn otl_LangSystemList_grow(arr: *mut otl_LangSystemList) {
+    cvec_grow(otl_LangSystemList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn otl_LangSystemList_growTo(
-    mut arr: *mut otl_LangSystemList,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LanguageSystemPtr>() as size_t),
-        ) as *mut otl_LanguageSystemPtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LanguageSystemPtr>() as size_t,
-        ) as *mut otl_LanguageSystemPtr;
-    };
+unsafe extern "C" fn otl_LangSystemList_growTo(arr: *mut otl_LangSystemList, target: size_t) {
+    cvec_grow_to(otl_LangSystemList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_LangSystemList_pop(
-    mut arr: *mut otl_LangSystemList,
-) -> otl_LanguageSystemPtr {
-    let mut t: otl_LanguageSystemPtr = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn otl_LangSystemList_pop(arr: *mut otl_LangSystemList) -> otl_LanguageSystemPtr {
+    cvec_pop(otl_LangSystemList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn otl_LangSystemList_copyReplace(
@@ -3730,32 +3335,8 @@ unsafe extern "C" fn otl_LangSystemList_initCapN(mut arr: *mut otl_LangSystemLis
     otl_LangSystemList_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn otl_LangSystemList_growToN(
-    mut arr: *mut otl_LangSystemList,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LanguageSystemPtr>() as size_t),
-        ) as *mut otl_LanguageSystemPtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LanguageSystemPtr>() as size_t,
-        ) as *mut otl_LanguageSystemPtr;
-    };
+unsafe extern "C" fn otl_LangSystemList_growToN(arr: *mut otl_LangSystemList, target: size_t) {
+    cvec_grow_to_n(otl_LangSystemList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn otl_LangSystemList_initN(mut arr: *mut otl_LangSystemList, mut n: size_t) {
@@ -3790,32 +3371,12 @@ unsafe extern "C" fn otl_LangSystemList_shrinkToFit(mut arr: *mut otl_LangSystem
     otl_LangSystemList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn otl_LangSystemList_resizeTo(
-    mut arr: *mut otl_LangSystemList,
-    mut target: size_t,
-) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_LanguageSystemPtr>() as size_t),
-        ) as *mut otl_LanguageSystemPtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_LanguageSystemPtr>() as size_t,
-        ) as *mut otl_LanguageSystemPtr;
-    };
+unsafe extern "C" fn otl_LangSystemList_resizeTo(arr: *mut otl_LangSystemList, target: size_t) {
+    cvec_resize_to(otl_LangSystemList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn otl_LangSystemList_move(
-    mut dst: *mut otl_LangSystemList,
-    mut src: *mut otl_LangSystemList,
-) {
-    *dst = *src;
-    otl_LangSystemList_init(src);
+unsafe extern "C" fn otl_LangSystemList_move(dst: *mut otl_LangSystemList, src: *mut otl_LangSystemList) {
+    cvec_move(otl_LangSystemList_as_cvec(dst), otl_LangSystemList_as_cvec(src));
 }
 #[inline]
 unsafe extern "C" fn initOTL(mut table: *mut table_OTL) {

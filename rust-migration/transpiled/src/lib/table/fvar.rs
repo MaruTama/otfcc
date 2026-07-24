@@ -3,8 +3,6 @@ extern "C" {
     pub type _IO_codecvt;
     pub type _IO_marker;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
@@ -78,6 +76,10 @@ extern "C" {
     fn round(__x: ::core::ffi::c_double) -> ::core::ffi::c_double;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -792,24 +794,8 @@ unsafe extern "C" fn fvar_InstanceList_free(mut x: *mut fvar_InstanceList) {
     free(x as *mut ::core::ffi::c_void);
 }
 #[inline]
-unsafe extern "C" fn fvar_InstanceList_resizeTo(
-    mut arr: *mut fvar_InstanceList,
-    mut target: size_t,
-) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<fvar_Instance>() as size_t),
-        ) as *mut fvar_Instance;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<fvar_Instance>() as size_t,
-        ) as *mut fvar_Instance;
-    };
+unsafe extern "C" fn fvar_InstanceList_resizeTo(arr: *mut fvar_InstanceList, target: size_t) {
+    cvec_resize_to(fvar_InstanceList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn fvar_InstanceList_createN(mut n: size_t) -> *mut fvar_InstanceList {
@@ -826,18 +812,16 @@ unsafe extern "C" fn fvar_InstanceList_create() -> *mut fvar_InstanceList {
     return x;
 }
 #[inline]
-unsafe extern "C" fn fvar_InstanceList_init(mut arr: *mut fvar_InstanceList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<fvar_Instance>();
+unsafe fn fvar_InstanceList_as_cvec(arr: *mut fvar_InstanceList) -> *mut CVecRaw<fvar_Instance> {
+    arr as *mut CVecRaw<fvar_Instance>
 }
 #[inline]
-unsafe extern "C" fn fvar_InstanceList_move(
-    mut dst: *mut fvar_InstanceList,
-    mut src: *mut fvar_InstanceList,
-) {
-    *dst = *src;
-    fvar_InstanceList_init(src);
+unsafe extern "C" fn fvar_InstanceList_init(arr: *mut fvar_InstanceList) {
+    cvec_init(fvar_InstanceList_as_cvec(arr));
+}
+#[inline]
+unsafe extern "C" fn fvar_InstanceList_move(dst: *mut fvar_InstanceList, src: *mut fvar_InstanceList) {
+    cvec_move(fvar_InstanceList_as_cvec(dst), fvar_InstanceList_as_cvec(src));
 }
 #[inline]
 unsafe extern "C" fn fvar_InstanceList_filterEnv(
@@ -925,53 +909,20 @@ unsafe extern "C" fn fvar_InstanceList_fill(mut arr: *mut fvar_InstanceList, mut
     }
 }
 #[inline]
-unsafe extern "C" fn fvar_InstanceList_push(
-    mut arr: *mut fvar_InstanceList,
-    mut elem: fvar_Instance,
-) {
-    fvar_InstanceList_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn fvar_InstanceList_push(arr: *mut fvar_InstanceList, elem: fvar_Instance) {
+    cvec_push(fvar_InstanceList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn fvar_InstanceList_grow(mut arr: *mut fvar_InstanceList) {
-    fvar_InstanceList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn fvar_InstanceList_grow(arr: *mut fvar_InstanceList) {
+    cvec_grow(fvar_InstanceList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn fvar_InstanceList_growTo(mut arr: *mut fvar_InstanceList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<fvar_Instance>() as size_t),
-        ) as *mut fvar_Instance;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<fvar_Instance>() as size_t,
-        ) as *mut fvar_Instance;
-    };
+unsafe extern "C" fn fvar_InstanceList_growTo(arr: *mut fvar_InstanceList, target: size_t) {
+    cvec_grow_to(fvar_InstanceList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn fvar_InstanceList_pop(mut arr: *mut fvar_InstanceList) -> fvar_Instance {
-    let mut t: fvar_Instance = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn fvar_InstanceList_pop(arr: *mut fvar_InstanceList) -> fvar_Instance {
+    cvec_pop(fvar_InstanceList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn fvar_InstanceList_copyReplace(
@@ -1047,32 +998,8 @@ unsafe extern "C" fn fvar_InstanceList_initCapN(mut arr: *mut fvar_InstanceList,
     fvar_InstanceList_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn fvar_InstanceList_growToN(
-    mut arr: *mut fvar_InstanceList,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<fvar_Instance>() as size_t),
-        ) as *mut fvar_Instance;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<fvar_Instance>() as size_t,
-        ) as *mut fvar_Instance;
-    };
+unsafe extern "C" fn fvar_InstanceList_growToN(arr: *mut fvar_InstanceList, target: size_t) {
+    cvec_grow_to_n(fvar_InstanceList_as_cvec(arr), target);
 }
 #[no_mangle]
 pub static mut fvar_iInstanceList: __caryll_vectorinterface_fvar_InstanceList = {

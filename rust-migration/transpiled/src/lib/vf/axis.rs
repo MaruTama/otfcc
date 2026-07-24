@@ -1,7 +1,5 @@
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn qsort(
         __base: *mut ::core::ffi::c_void,
@@ -20,6 +18,10 @@ extern "C" {
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
 }
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type size_t = usize;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -178,34 +180,24 @@ unsafe extern "C" fn vf_Axis_dup(src: vf_Axis) -> vf_Axis {
     return dst;
 }
 #[inline]
-unsafe extern "C" fn vf_Axes_resizeTo(mut arr: *mut vf_Axes, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vf_Axis>() as size_t),
-        ) as *mut vf_Axis;
-    } else {
-        (*arr).items =
-            calloc((*arr).capacity, ::core::mem::size_of::<vf_Axis>() as size_t) as *mut vf_Axis;
-    };
+unsafe extern "C" fn vf_Axes_resizeTo(arr: *mut vf_Axes, target: size_t) {
+    cvec_resize_to(vf_Axes_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn vf_Axes_shrinkToFit(mut arr: *mut vf_Axes) {
     vf_Axes_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn vf_Axes_move(mut dst: *mut vf_Axes, mut src: *mut vf_Axes) {
-    *dst = *src;
-    vf_Axes_init(src);
+unsafe extern "C" fn vf_Axes_move(dst: *mut vf_Axes, src: *mut vf_Axes) {
+    cvec_move(vf_Axes_as_cvec(dst), vf_Axes_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn vf_Axes_init(mut arr: *mut vf_Axes) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<vf_Axis>();
+unsafe fn vf_Axes_as_cvec(arr: *mut vf_Axes) -> *mut CVecRaw<vf_Axis> {
+    arr as *mut CVecRaw<vf_Axis>
+}
+#[inline]
+unsafe extern "C" fn vf_Axes_init(arr: *mut vf_Axes) {
+    cvec_init(vf_Axes_as_cvec(arr));
 }
 #[no_mangle]
 pub static mut vf_iAxes: __caryll_vectorinterface_vf_Axes = {
@@ -323,40 +315,16 @@ unsafe extern "C" fn vf_Axes_fill(mut arr: *mut vf_Axes, mut n: size_t) {
     }
 }
 #[inline]
-unsafe extern "C" fn vf_Axes_push(mut arr: *mut vf_Axes, mut elem: vf_Axis) {
-    vf_Axes_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn vf_Axes_push(arr: *mut vf_Axes, elem: vf_Axis) {
+    cvec_push(vf_Axes_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn vf_Axes_growTo(mut arr: *mut vf_Axes, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vf_Axis>() as size_t),
-        ) as *mut vf_Axis;
-    } else {
-        (*arr).items =
-            calloc((*arr).capacity, ::core::mem::size_of::<vf_Axis>() as size_t) as *mut vf_Axis;
-    };
+unsafe extern "C" fn vf_Axes_growTo(arr: *mut vf_Axes, target: size_t) {
+    cvec_grow_to(vf_Axes_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn vf_Axes_grow(mut arr: *mut vf_Axes) {
-    vf_Axes_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn vf_Axes_grow(arr: *mut vf_Axes) {
+    cvec_grow(vf_Axes_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn vf_Axes_copyReplace(mut dst: *mut vf_Axes, src: vf_Axes) {
@@ -409,12 +377,8 @@ unsafe extern "C" fn vf_Axes_dispose(mut arr: *mut vf_Axes) {
     (*arr).capacity = 0 as size_t;
 }
 #[inline]
-unsafe extern "C" fn vf_Axes_pop(mut arr: *mut vf_Axes) -> vf_Axis {
-    let mut t: vf_Axis = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn vf_Axes_pop(arr: *mut vf_Axes) -> vf_Axis {
+    cvec_pop(vf_Axes_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn vf_Axes_replace(mut dst: *mut vf_Axes, src: vf_Axes) {
@@ -431,27 +395,8 @@ unsafe extern "C" fn vf_Axes_initCapN(mut arr: *mut vf_Axes, mut n: size_t) {
     vf_Axes_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn vf_Axes_growToN(mut arr: *mut vf_Axes, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<vf_Axis>() as size_t),
-        ) as *mut vf_Axis;
-    } else {
-        (*arr).items =
-            calloc((*arr).capacity, ::core::mem::size_of::<vf_Axis>() as size_t) as *mut vf_Axis;
-    };
+unsafe extern "C" fn vf_Axes_growToN(arr: *mut vf_Axes, target: size_t) {
+    cvec_grow_to_n(vf_Axes_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn vf_Axes_initN(mut arr: *mut vf_Axes, mut n: size_t) {

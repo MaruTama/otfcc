@@ -1,7 +1,5 @@
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn qsort(
         __base: *mut ::core::ffi::c_void,
@@ -45,6 +43,10 @@ extern "C" {
     ) -> *mut json_value;
 }
 use crate::src::lib::support::binio::{read_16u, read_32u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -478,15 +480,16 @@ unsafe extern "C" fn table_TSI_fill(mut arr: *mut table_TSI, mut n: size_t) {
     }
 }
 #[inline]
-unsafe extern "C" fn table_TSI_move(mut dst: *mut table_TSI, mut src: *mut table_TSI) {
-    *dst = *src;
-    table_TSI_init(src);
+unsafe extern "C" fn table_TSI_move(dst: *mut table_TSI, src: *mut table_TSI) {
+    cvec_move(table_TSI_as_cvec(dst), table_TSI_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn table_TSI_init(mut arr: *mut table_TSI) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<tsi_Entry>();
+unsafe fn table_TSI_as_cvec(arr: *mut table_TSI) -> *mut CVecRaw<tsi_Entry> {
+    arr as *mut CVecRaw<tsi_Entry>
+}
+#[inline]
+unsafe extern "C" fn table_TSI_init(arr: *mut table_TSI) {
+    cvec_init(table_TSI_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn table_TSI_filterEnv(
@@ -590,50 +593,20 @@ pub static mut table_iTSI: __caryll_vectorinterface_table_TSI = {
     }
 };
 #[inline]
-unsafe extern "C" fn table_TSI_push(mut arr: *mut table_TSI, mut elem: tsi_Entry) {
-    table_TSI_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn table_TSI_push(arr: *mut table_TSI, elem: tsi_Entry) {
+    cvec_push(table_TSI_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn table_TSI_grow(mut arr: *mut table_TSI) {
-    table_TSI_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn table_TSI_grow(arr: *mut table_TSI) {
+    cvec_grow(table_TSI_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn table_TSI_growTo(mut arr: *mut table_TSI, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<tsi_Entry>() as size_t),
-        ) as *mut tsi_Entry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<tsi_Entry>() as size_t,
-        ) as *mut tsi_Entry;
-    };
+unsafe extern "C" fn table_TSI_growTo(arr: *mut table_TSI, target: size_t) {
+    cvec_grow_to(table_TSI_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn table_TSI_pop(mut arr: *mut table_TSI) -> tsi_Entry {
-    let mut t: tsi_Entry = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn table_TSI_pop(arr: *mut table_TSI) -> tsi_Entry {
+    cvec_pop(table_TSI_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn table_TSI_copyReplace(mut dst: *mut table_TSI, src: table_TSI) {
@@ -700,29 +673,8 @@ unsafe extern "C" fn table_TSI_initCapN(mut arr: *mut table_TSI, mut n: size_t) 
     table_TSI_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn table_TSI_growToN(mut arr: *mut table_TSI, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<tsi_Entry>() as size_t),
-        ) as *mut tsi_Entry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<tsi_Entry>() as size_t,
-        ) as *mut tsi_Entry;
-    };
+unsafe extern "C" fn table_TSI_growToN(arr: *mut table_TSI, target: size_t) {
+    cvec_grow_to_n(table_TSI_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn table_TSI_initN(mut arr: *mut table_TSI, mut n: size_t) {
@@ -757,21 +709,8 @@ unsafe extern "C" fn table_TSI_shrinkToFit(mut arr: *mut table_TSI) {
     table_TSI_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn table_TSI_resizeTo(mut arr: *mut table_TSI, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<tsi_Entry>() as size_t),
-        ) as *mut tsi_Entry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<tsi_Entry>() as size_t,
-        ) as *mut tsi_Entry;
-    };
+unsafe extern "C" fn table_TSI_resizeTo(arr: *mut table_TSI, target: size_t) {
+    cvec_resize_to(table_TSI_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn isValidGID(mut gid: uint16_t, mut tagIndex: uint32_t) -> bool {

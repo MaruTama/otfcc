@@ -1,7 +1,5 @@
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn qsort(
         __base: *mut ::core::ffi::c_void,
@@ -52,6 +50,10 @@ extern "C" {
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
 use crate::src::lib::support::binio::{read_16u, read_32u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __int32_t = i32;
@@ -516,15 +518,16 @@ unsafe extern "C" fn table_SVG_createN(mut n: size_t) -> *mut table_SVG {
     return t;
 }
 #[inline]
-unsafe extern "C" fn table_SVG_move(mut dst: *mut table_SVG, mut src: *mut table_SVG) {
-    *dst = *src;
-    table_SVG_init(src);
+unsafe extern "C" fn table_SVG_move(dst: *mut table_SVG, src: *mut table_SVG) {
+    cvec_move(table_SVG_as_cvec(dst), table_SVG_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn table_SVG_init(mut arr: *mut table_SVG) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<svg_Assignment>();
+unsafe fn table_SVG_as_cvec(arr: *mut table_SVG) -> *mut CVecRaw<svg_Assignment> {
+    arr as *mut CVecRaw<svg_Assignment>
+}
+#[inline]
+unsafe extern "C" fn table_SVG_init(arr: *mut table_SVG) {
+    cvec_init(table_SVG_as_cvec(arr));
 }
 #[no_mangle]
 pub static mut table_iSVG: __caryll_vectorinterface_table_SVG = {
@@ -658,50 +661,20 @@ unsafe extern "C" fn table_SVG_fill(mut arr: *mut table_SVG, mut n: size_t) {
     }
 }
 #[inline]
-unsafe extern "C" fn table_SVG_push(mut arr: *mut table_SVG, mut elem: svg_Assignment) {
-    table_SVG_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn table_SVG_push(arr: *mut table_SVG, elem: svg_Assignment) {
+    cvec_push(table_SVG_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn table_SVG_grow(mut arr: *mut table_SVG) {
-    table_SVG_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn table_SVG_grow(arr: *mut table_SVG) {
+    cvec_grow(table_SVG_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn table_SVG_growTo(mut arr: *mut table_SVG, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<svg_Assignment>() as size_t),
-        ) as *mut svg_Assignment;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<svg_Assignment>() as size_t,
-        ) as *mut svg_Assignment;
-    };
+unsafe extern "C" fn table_SVG_growTo(arr: *mut table_SVG, target: size_t) {
+    cvec_grow_to(table_SVG_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn table_SVG_pop(mut arr: *mut table_SVG) -> svg_Assignment {
-    let mut t: svg_Assignment = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn table_SVG_pop(arr: *mut table_SVG) -> svg_Assignment {
+    cvec_pop(table_SVG_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn table_SVG_copyReplace(mut dst: *mut table_SVG, src: table_SVG) {
@@ -768,29 +741,8 @@ unsafe extern "C" fn table_SVG_initCapN(mut arr: *mut table_SVG, mut n: size_t) 
     table_SVG_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn table_SVG_growToN(mut arr: *mut table_SVG, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<svg_Assignment>() as size_t),
-        ) as *mut svg_Assignment;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<svg_Assignment>() as size_t,
-        ) as *mut svg_Assignment;
-    };
+unsafe extern "C" fn table_SVG_growToN(arr: *mut table_SVG, target: size_t) {
+    cvec_grow_to_n(table_SVG_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn table_SVG_initN(mut arr: *mut table_SVG, mut n: size_t) {
@@ -818,21 +770,8 @@ unsafe extern "C" fn table_SVG_create() -> *mut table_SVG {
     return x;
 }
 #[inline]
-unsafe extern "C" fn table_SVG_resizeTo(mut arr: *mut table_SVG, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<svg_Assignment>() as size_t),
-        ) as *mut svg_Assignment;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<svg_Assignment>() as size_t,
-        ) as *mut svg_Assignment;
-    };
+unsafe extern "C" fn table_SVG_resizeTo(arr: *mut table_SVG, target: size_t) {
+    cvec_resize_to(table_SVG_as_cvec(arr), target);
 }
 #[no_mangle]
 pub unsafe extern "C" fn otfcc_readSVG(

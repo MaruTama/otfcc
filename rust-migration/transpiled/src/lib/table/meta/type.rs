@@ -1,7 +1,5 @@
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn qsort(
         __base: *mut ::core::ffi::c_void,
@@ -21,6 +19,10 @@ extern "C" {
     ) -> *mut ::core::ffi::c_void;
     fn sdsfree(s: sds);
 }
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint32_t = u32;
 pub type uint32_t = __uint32_t;
 pub type size_t = usize;
@@ -203,15 +205,16 @@ unsafe extern "C" fn meta_Entries_filterEnv(
     (*arr).length = j;
 }
 #[inline]
-unsafe extern "C" fn meta_Entries_move(mut dst: *mut meta_Entries, mut src: *mut meta_Entries) {
-    *dst = *src;
-    meta_Entries_init(src);
+unsafe extern "C" fn meta_Entries_move(dst: *mut meta_Entries, src: *mut meta_Entries) {
+    cvec_move(meta_Entries_as_cvec(dst), meta_Entries_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn meta_Entries_init(mut arr: *mut meta_Entries) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<meta_Entry>();
+unsafe fn meta_Entries_as_cvec(arr: *mut meta_Entries) -> *mut CVecRaw<meta_Entry> {
+    arr as *mut CVecRaw<meta_Entry>
+}
+#[inline]
+unsafe extern "C" fn meta_Entries_init(arr: *mut meta_Entries) {
+    cvec_init(meta_Entries_as_cvec(arr));
 }
 #[no_mangle]
 pub static mut meta_iEntries: __caryll_vectorinterface_meta_Entries = {
@@ -319,50 +322,20 @@ unsafe extern "C" fn meta_Entries_fill(mut arr: *mut meta_Entries, mut n: size_t
     }
 }
 #[inline]
-unsafe extern "C" fn meta_Entries_push(mut arr: *mut meta_Entries, mut elem: meta_Entry) {
-    meta_Entries_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn meta_Entries_push(arr: *mut meta_Entries, elem: meta_Entry) {
+    cvec_push(meta_Entries_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn meta_Entries_grow(mut arr: *mut meta_Entries) {
-    meta_Entries_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn meta_Entries_grow(arr: *mut meta_Entries) {
+    cvec_grow(meta_Entries_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn meta_Entries_growTo(mut arr: *mut meta_Entries, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<meta_Entry>() as size_t),
-        ) as *mut meta_Entry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<meta_Entry>() as size_t,
-        ) as *mut meta_Entry;
-    };
+unsafe extern "C" fn meta_Entries_growTo(arr: *mut meta_Entries, target: size_t) {
+    cvec_grow_to(meta_Entries_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn meta_Entries_pop(mut arr: *mut meta_Entries) -> meta_Entry {
-    let mut t: meta_Entry = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn meta_Entries_pop(arr: *mut meta_Entries) -> meta_Entry {
+    cvec_pop(meta_Entries_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn meta_Entries_copyReplace(mut dst: *mut meta_Entries, src: meta_Entries) {
@@ -429,29 +402,8 @@ unsafe extern "C" fn meta_Entries_initCapN(mut arr: *mut meta_Entries, mut n: si
     meta_Entries_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn meta_Entries_growToN(mut arr: *mut meta_Entries, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<meta_Entry>() as size_t),
-        ) as *mut meta_Entry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<meta_Entry>() as size_t,
-        ) as *mut meta_Entry;
-    };
+unsafe extern "C" fn meta_Entries_growToN(arr: *mut meta_Entries, target: size_t) {
+    cvec_grow_to_n(meta_Entries_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn meta_Entries_initN(mut arr: *mut meta_Entries, mut n: size_t) {
@@ -486,21 +438,8 @@ unsafe extern "C" fn meta_Entries_shrinkToFit(mut arr: *mut meta_Entries) {
     meta_Entries_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn meta_Entries_resizeTo(mut arr: *mut meta_Entries, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<meta_Entry>() as size_t),
-        ) as *mut meta_Entry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<meta_Entry>() as size_t,
-        ) as *mut meta_Entry;
-    };
+unsafe extern "C" fn meta_Entries_resizeTo(arr: *mut meta_Entries, target: size_t) {
+    cvec_resize_to(meta_Entries_as_cvec(arr), target);
 }
 unsafe extern "C" fn initMetaTable(mut t: *mut table_meta) {
     (*t).version = 1 as uint32_t;

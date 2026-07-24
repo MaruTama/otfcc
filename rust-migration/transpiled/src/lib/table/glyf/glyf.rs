@@ -3,10 +3,7 @@ extern "C" {
     pub type _IO_codecvt;
     pub type _IO_marker;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn exit(__status: ::core::ffi::c_int) -> !;
     fn qsort(
         __base: *mut ::core::ffi::c_void,
         __nmemb: size_t,
@@ -93,6 +90,10 @@ extern "C" {
     ) -> *mut json_value;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
@@ -1237,32 +1238,20 @@ unsafe extern "C" fn glyf_Contour_shrinkToFit(mut arr: *mut glyf_Contour) {
     glyf_Contour_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn glyf_Contour_resizeTo(mut arr: *mut glyf_Contour, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_Point>() as size_t),
-        ) as *mut glyf_Point;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_Point>() as size_t,
-        ) as *mut glyf_Point;
-    };
+unsafe extern "C" fn glyf_Contour_resizeTo(arr: *mut glyf_Contour, target: size_t) {
+    cvec_resize_to(glyf_Contour_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn glyf_Contour_move(mut dst: *mut glyf_Contour, mut src: *mut glyf_Contour) {
-    *dst = *src;
-    glyf_Contour_init(src);
+unsafe extern "C" fn glyf_Contour_move(dst: *mut glyf_Contour, src: *mut glyf_Contour) {
+    cvec_move(glyf_Contour_as_cvec(dst), glyf_Contour_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn glyf_Contour_init(mut arr: *mut glyf_Contour) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<glyf_Point>();
+unsafe fn glyf_Contour_as_cvec(arr: *mut glyf_Contour) -> *mut CVecRaw<glyf_Point> {
+    arr as *mut CVecRaw<glyf_Point>
+}
+#[inline]
+unsafe extern "C" fn glyf_Contour_init(arr: *mut glyf_Contour) {
+    cvec_init(glyf_Contour_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn glyf_Contour_filterEnv(
@@ -1356,50 +1345,20 @@ unsafe extern "C" fn glyf_Contour_fill(mut arr: *mut glyf_Contour, mut n: size_t
     }
 }
 #[inline]
-unsafe extern "C" fn glyf_Contour_push(mut arr: *mut glyf_Contour, mut elem: glyf_Point) {
-    glyf_Contour_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn glyf_Contour_push(arr: *mut glyf_Contour, elem: glyf_Point) {
+    cvec_push(glyf_Contour_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn glyf_Contour_grow(mut arr: *mut glyf_Contour) {
-    glyf_Contour_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn glyf_Contour_grow(arr: *mut glyf_Contour) {
+    cvec_grow(glyf_Contour_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn glyf_Contour_growTo(mut arr: *mut glyf_Contour, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_Point>() as size_t),
-        ) as *mut glyf_Point;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_Point>() as size_t,
-        ) as *mut glyf_Point;
-    };
+unsafe extern "C" fn glyf_Contour_growTo(arr: *mut glyf_Contour, target: size_t) {
+    cvec_grow_to(glyf_Contour_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn glyf_Contour_pop(mut arr: *mut glyf_Contour) -> glyf_Point {
-    let mut t: glyf_Point = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn glyf_Contour_pop(arr: *mut glyf_Contour) -> glyf_Point {
+    cvec_pop(glyf_Contour_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn glyf_Contour_copyReplace(mut dst: *mut glyf_Contour, src: glyf_Contour) {
@@ -1466,29 +1425,8 @@ unsafe extern "C" fn glyf_Contour_initCapN(mut arr: *mut glyf_Contour, mut n: si
     glyf_Contour_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn glyf_Contour_growToN(mut arr: *mut glyf_Contour, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_Point>() as size_t),
-        ) as *mut glyf_Point;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_Point>() as size_t,
-        ) as *mut glyf_Point;
-    };
+unsafe extern "C" fn glyf_Contour_growToN(arr: *mut glyf_Contour, target: size_t) {
+    cvec_grow_to_n(glyf_Contour_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn glyf_ContourList_initN(mut arr: *mut glyf_ContourList, mut n: size_t) {
@@ -1555,29 +1493,8 @@ unsafe extern "C" fn glyf_ContourList_copyReplace(
     glyf_ContourList_copy(dst, &raw const src);
 }
 #[inline]
-unsafe extern "C" fn glyf_ContourList_growToN(mut arr: *mut glyf_ContourList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_Contour>() as size_t),
-        ) as *mut glyf_Contour;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_Contour>() as size_t,
-        ) as *mut glyf_Contour;
-    };
+unsafe extern "C" fn glyf_ContourList_growToN(arr: *mut glyf_ContourList, target: size_t) {
+    cvec_grow_to_n(glyf_ContourList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn glyf_ContourList_copy(
@@ -1772,81 +1689,36 @@ unsafe extern "C" fn glyf_ContourList_fill(mut arr: *mut glyf_ContourList, mut n
     }
 }
 #[inline]
-unsafe extern "C" fn glyf_ContourList_push(mut arr: *mut glyf_ContourList, mut elem: glyf_Contour) {
-    glyf_ContourList_grow(arr);
-    let fresh2 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh2 as isize) = elem;
+unsafe extern "C" fn glyf_ContourList_push(arr: *mut glyf_ContourList, elem: glyf_Contour) {
+    cvec_push(glyf_ContourList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn glyf_ContourList_grow(mut arr: *mut glyf_ContourList) {
-    glyf_ContourList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn glyf_ContourList_grow(arr: *mut glyf_ContourList) {
+    cvec_grow(glyf_ContourList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn glyf_ContourList_growTo(mut arr: *mut glyf_ContourList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_Contour>() as size_t),
-        ) as *mut glyf_Contour;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_Contour>() as size_t,
-        ) as *mut glyf_Contour;
-    };
+unsafe extern "C" fn glyf_ContourList_growTo(arr: *mut glyf_ContourList, target: size_t) {
+    cvec_grow_to(glyf_ContourList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn glyf_ContourList_pop(mut arr: *mut glyf_ContourList) -> glyf_Contour {
-    let mut t: glyf_Contour = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn glyf_ContourList_pop(arr: *mut glyf_ContourList) -> glyf_Contour {
+    cvec_pop(glyf_ContourList_as_cvec(arr))
 }
 #[inline]
-unsafe extern "C" fn glyf_ContourList_resizeTo(mut arr: *mut glyf_ContourList, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_Contour>() as size_t),
-        ) as *mut glyf_Contour;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_Contour>() as size_t,
-        ) as *mut glyf_Contour;
-    };
+unsafe extern "C" fn glyf_ContourList_resizeTo(arr: *mut glyf_ContourList, target: size_t) {
+    cvec_resize_to(glyf_ContourList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn glyf_ContourList_move(
-    mut dst: *mut glyf_ContourList,
-    mut src: *mut glyf_ContourList,
-) {
-    *dst = *src;
-    glyf_ContourList_init(src);
+unsafe extern "C" fn glyf_ContourList_move(dst: *mut glyf_ContourList, src: *mut glyf_ContourList) {
+    cvec_move(glyf_ContourList_as_cvec(dst), glyf_ContourList_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn glyf_ContourList_init(mut arr: *mut glyf_ContourList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<glyf_Contour>();
+unsafe fn glyf_ContourList_as_cvec(arr: *mut glyf_ContourList) -> *mut CVecRaw<glyf_Contour> {
+    arr as *mut CVecRaw<glyf_Contour>
+}
+#[inline]
+unsafe extern "C" fn glyf_ContourList_init(arr: *mut glyf_ContourList) {
+    cvec_init(glyf_ContourList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn glyf_ContourList_initCapN(mut arr: *mut glyf_ContourList, mut n: size_t) {
@@ -2130,58 +2002,20 @@ unsafe extern "C" fn glyf_ReferenceList_fill(mut arr: *mut glyf_ReferenceList, m
     }
 }
 #[inline]
-unsafe extern "C" fn glyf_ReferenceList_push(
-    mut arr: *mut glyf_ReferenceList,
-    mut elem: glyf_ComponentReference,
-) {
-    glyf_ReferenceList_grow(arr);
-    let fresh8 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh8 as isize) = elem;
+unsafe extern "C" fn glyf_ReferenceList_push(arr: *mut glyf_ReferenceList, elem: glyf_ComponentReference) {
+    cvec_push(glyf_ReferenceList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn glyf_ReferenceList_grow(mut arr: *mut glyf_ReferenceList) {
-    glyf_ReferenceList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn glyf_ReferenceList_grow(arr: *mut glyf_ReferenceList) {
+    cvec_grow(glyf_ReferenceList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn glyf_ReferenceList_growTo(
-    mut arr: *mut glyf_ReferenceList,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_ComponentReference>() as size_t),
-        ) as *mut glyf_ComponentReference;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_ComponentReference>() as size_t,
-        ) as *mut glyf_ComponentReference;
-    };
+unsafe extern "C" fn glyf_ReferenceList_growTo(arr: *mut glyf_ReferenceList, target: size_t) {
+    cvec_grow_to(glyf_ReferenceList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn glyf_ReferenceList_pop(
-    mut arr: *mut glyf_ReferenceList,
-) -> glyf_ComponentReference {
-    let mut t: glyf_ComponentReference = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn glyf_ReferenceList_pop(arr: *mut glyf_ReferenceList) -> glyf_ComponentReference {
+    cvec_pop(glyf_ReferenceList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn glyf_ReferenceList_dispose(mut arr: *mut glyf_ReferenceList) {
@@ -2254,32 +2088,8 @@ unsafe extern "C" fn glyf_ReferenceList_replace(
     );
 }
 #[inline]
-unsafe extern "C" fn glyf_ReferenceList_growToN(
-    mut arr: *mut glyf_ReferenceList,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_ComponentReference>() as size_t),
-        ) as *mut glyf_ComponentReference;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_ComponentReference>() as size_t,
-        ) as *mut glyf_ComponentReference;
-    };
+unsafe extern "C" fn glyf_ReferenceList_growToN(arr: *mut glyf_ReferenceList, target: size_t) {
+    cvec_grow_to_n(glyf_ReferenceList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn glyf_ReferenceList_free(mut x: *mut glyf_ReferenceList) {
@@ -2304,12 +2114,8 @@ unsafe extern "C" fn glyf_ReferenceList_create() -> *mut glyf_ReferenceList {
     return x;
 }
 #[inline]
-unsafe extern "C" fn glyf_ReferenceList_move(
-    mut dst: *mut glyf_ReferenceList,
-    mut src: *mut glyf_ReferenceList,
-) {
-    *dst = *src;
-    glyf_ReferenceList_init(src);
+unsafe extern "C" fn glyf_ReferenceList_move(dst: *mut glyf_ReferenceList, src: *mut glyf_ReferenceList) {
+    cvec_move(glyf_ReferenceList_as_cvec(dst), glyf_ReferenceList_as_cvec(src));
 }
 #[inline]
 unsafe extern "C" fn glyf_ReferenceList_shrinkToFit(mut arr: *mut glyf_ReferenceList) {
@@ -2399,10 +2205,12 @@ pub static mut glyf_iReferenceList: __caryll_vectorinterface_glyf_ReferenceList 
     }
 };
 #[inline]
-unsafe extern "C" fn glyf_ReferenceList_init(mut arr: *mut glyf_ReferenceList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<glyf_ComponentReference>();
+unsafe fn glyf_ReferenceList_as_cvec(arr: *mut glyf_ReferenceList) -> *mut CVecRaw<glyf_ComponentReference> {
+    arr as *mut CVecRaw<glyf_ComponentReference>
+}
+#[inline]
+unsafe extern "C" fn glyf_ReferenceList_init(arr: *mut glyf_ReferenceList) {
+    cvec_init(glyf_ReferenceList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn glyf_ReferenceList_filterEnv(
@@ -2438,24 +2246,8 @@ unsafe extern "C" fn glyf_ReferenceList_filterEnv(
     (*arr).length = j;
 }
 #[inline]
-unsafe extern "C" fn glyf_ReferenceList_resizeTo(
-    mut arr: *mut glyf_ReferenceList,
-    mut target: size_t,
-) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_ComponentReference>() as size_t),
-        ) as *mut glyf_ComponentReference;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_ComponentReference>() as size_t,
-        ) as *mut glyf_ComponentReference;
-    };
+unsafe extern "C" fn glyf_ReferenceList_resizeTo(arr: *mut glyf_ReferenceList, target: size_t) {
+    cvec_resize_to(glyf_ReferenceList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn glyf_ReferenceList_disposeItem(
@@ -2595,35 +2387,20 @@ unsafe extern "C" fn glyf_StemDefList_shrinkToFit(mut arr: *mut glyf_StemDefList
     glyf_StemDefList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn glyf_StemDefList_resizeTo(mut arr: *mut glyf_StemDefList, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_PostscriptStemDef>() as size_t),
-        ) as *mut glyf_PostscriptStemDef;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_PostscriptStemDef>() as size_t,
-        ) as *mut glyf_PostscriptStemDef;
-    };
+unsafe extern "C" fn glyf_StemDefList_resizeTo(arr: *mut glyf_StemDefList, target: size_t) {
+    cvec_resize_to(glyf_StemDefList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn glyf_StemDefList_move(
-    mut dst: *mut glyf_StemDefList,
-    mut src: *mut glyf_StemDefList,
-) {
-    *dst = *src;
-    glyf_StemDefList_init(src);
+unsafe extern "C" fn glyf_StemDefList_move(dst: *mut glyf_StemDefList, src: *mut glyf_StemDefList) {
+    cvec_move(glyf_StemDefList_as_cvec(dst), glyf_StemDefList_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn glyf_StemDefList_init(mut arr: *mut glyf_StemDefList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<glyf_PostscriptStemDef>();
+unsafe fn glyf_StemDefList_as_cvec(arr: *mut glyf_StemDefList) -> *mut CVecRaw<glyf_PostscriptStemDef> {
+    arr as *mut CVecRaw<glyf_PostscriptStemDef>
+}
+#[inline]
+unsafe extern "C" fn glyf_StemDefList_init(arr: *mut glyf_StemDefList) {
+    cvec_init(glyf_StemDefList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn glyf_StemDefList_filterEnv(
@@ -2717,55 +2494,20 @@ unsafe extern "C" fn glyf_StemDefList_fill(mut arr: *mut glyf_StemDefList, mut n
     }
 }
 #[inline]
-unsafe extern "C" fn glyf_StemDefList_push(
-    mut arr: *mut glyf_StemDefList,
-    mut elem: glyf_PostscriptStemDef,
-) {
-    glyf_StemDefList_grow(arr);
-    let fresh4 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh4 as isize) = elem;
+unsafe extern "C" fn glyf_StemDefList_push(arr: *mut glyf_StemDefList, elem: glyf_PostscriptStemDef) {
+    cvec_push(glyf_StemDefList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn glyf_StemDefList_grow(mut arr: *mut glyf_StemDefList) {
-    glyf_StemDefList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn glyf_StemDefList_grow(arr: *mut glyf_StemDefList) {
+    cvec_grow(glyf_StemDefList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn glyf_StemDefList_growTo(mut arr: *mut glyf_StemDefList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_PostscriptStemDef>() as size_t),
-        ) as *mut glyf_PostscriptStemDef;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_PostscriptStemDef>() as size_t,
-        ) as *mut glyf_PostscriptStemDef;
-    };
+unsafe extern "C" fn glyf_StemDefList_growTo(arr: *mut glyf_StemDefList, target: size_t) {
+    cvec_grow_to(glyf_StemDefList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn glyf_StemDefList_pop(
-    mut arr: *mut glyf_StemDefList,
-) -> glyf_PostscriptStemDef {
-    let mut t: glyf_PostscriptStemDef = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn glyf_StemDefList_pop(arr: *mut glyf_StemDefList) -> glyf_PostscriptStemDef {
+    cvec_pop(glyf_StemDefList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn glyf_StemDefList_copyReplace(
@@ -2846,29 +2588,8 @@ unsafe extern "C" fn glyf_StemDefList_initCapN(mut arr: *mut glyf_StemDefList, m
     glyf_StemDefList_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn glyf_StemDefList_growToN(mut arr: *mut glyf_StemDefList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_PostscriptStemDef>() as size_t),
-        ) as *mut glyf_PostscriptStemDef;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_PostscriptStemDef>() as size_t,
-        ) as *mut glyf_PostscriptStemDef;
-    };
+unsafe extern "C" fn glyf_StemDefList_growToN(arr: *mut glyf_StemDefList, target: size_t) {
+    cvec_grow_to_n(glyf_StemDefList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn glyf_StemDefList_initN(mut arr: *mut glyf_StemDefList, mut n: size_t) {
@@ -3168,32 +2889,20 @@ unsafe extern "C" fn glyf_MaskList_shrinkToFit(mut arr: *mut glyf_MaskList) {
     glyf_MaskList_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn glyf_MaskList_resizeTo(mut arr: *mut glyf_MaskList, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_PostscriptHintMask>() as size_t),
-        ) as *mut glyf_PostscriptHintMask;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_PostscriptHintMask>() as size_t,
-        ) as *mut glyf_PostscriptHintMask;
-    };
+unsafe extern "C" fn glyf_MaskList_resizeTo(arr: *mut glyf_MaskList, target: size_t) {
+    cvec_resize_to(glyf_MaskList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn glyf_MaskList_move(mut dst: *mut glyf_MaskList, mut src: *mut glyf_MaskList) {
-    *dst = *src;
-    glyf_MaskList_init(src);
+unsafe extern "C" fn glyf_MaskList_move(dst: *mut glyf_MaskList, src: *mut glyf_MaskList) {
+    cvec_move(glyf_MaskList_as_cvec(dst), glyf_MaskList_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn glyf_MaskList_init(mut arr: *mut glyf_MaskList) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<glyf_PostscriptHintMask>();
+unsafe fn glyf_MaskList_as_cvec(arr: *mut glyf_MaskList) -> *mut CVecRaw<glyf_PostscriptHintMask> {
+    arr as *mut CVecRaw<glyf_PostscriptHintMask>
+}
+#[inline]
+unsafe extern "C" fn glyf_MaskList_init(arr: *mut glyf_MaskList) {
+    cvec_init(glyf_MaskList_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn glyf_MaskList_filterEnv(
@@ -3288,53 +2997,20 @@ unsafe extern "C" fn glyf_MaskList_fill(mut arr: *mut glyf_MaskList, mut n: size
     }
 }
 #[inline]
-unsafe extern "C" fn glyf_MaskList_push(
-    mut arr: *mut glyf_MaskList,
-    mut elem: glyf_PostscriptHintMask,
-) {
-    glyf_MaskList_grow(arr);
-    let fresh6 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh6 as isize) = elem;
+unsafe extern "C" fn glyf_MaskList_push(arr: *mut glyf_MaskList, elem: glyf_PostscriptHintMask) {
+    cvec_push(glyf_MaskList_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn glyf_MaskList_grow(mut arr: *mut glyf_MaskList) {
-    glyf_MaskList_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn glyf_MaskList_grow(arr: *mut glyf_MaskList) {
+    cvec_grow(glyf_MaskList_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn glyf_MaskList_growTo(mut arr: *mut glyf_MaskList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_PostscriptHintMask>() as size_t),
-        ) as *mut glyf_PostscriptHintMask;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_PostscriptHintMask>() as size_t,
-        ) as *mut glyf_PostscriptHintMask;
-    };
+unsafe extern "C" fn glyf_MaskList_growTo(arr: *mut glyf_MaskList, target: size_t) {
+    cvec_grow_to(glyf_MaskList_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn glyf_MaskList_pop(mut arr: *mut glyf_MaskList) -> glyf_PostscriptHintMask {
-    let mut t: glyf_PostscriptHintMask = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn glyf_MaskList_pop(arr: *mut glyf_MaskList) -> glyf_PostscriptHintMask {
+    cvec_pop(glyf_MaskList_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn glyf_MaskList_copyReplace(mut dst: *mut glyf_MaskList, src: glyf_MaskList) {
@@ -3387,29 +3063,8 @@ unsafe extern "C" fn glyf_MaskList_dispose(mut arr: *mut glyf_MaskList) {
     (*arr).capacity = 0 as size_t;
 }
 #[inline]
-unsafe extern "C" fn glyf_MaskList_growToN(mut arr: *mut glyf_MaskList, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_PostscriptHintMask>() as size_t),
-        ) as *mut glyf_PostscriptHintMask;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_PostscriptHintMask>() as size_t,
-        ) as *mut glyf_PostscriptHintMask;
-    };
+unsafe extern "C" fn glyf_MaskList_growToN(arr: *mut glyf_MaskList, target: size_t) {
+    cvec_grow_to_n(glyf_MaskList_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn glyf_MaskList_create() -> *mut glyf_MaskList {
@@ -3534,32 +3189,20 @@ unsafe extern "C" fn table_glyf_shrinkToFit(mut arr: *mut table_glyf) {
     table_glyf_resizeTo(arr, (*arr).length);
 }
 #[inline]
-unsafe extern "C" fn table_glyf_resizeTo(mut arr: *mut table_glyf, mut target: size_t) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_GlyphPtr>() as size_t),
-        ) as *mut glyf_GlyphPtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_GlyphPtr>() as size_t,
-        ) as *mut glyf_GlyphPtr;
-    };
+unsafe extern "C" fn table_glyf_resizeTo(arr: *mut table_glyf, target: size_t) {
+    cvec_resize_to(table_glyf_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn table_glyf_move(mut dst: *mut table_glyf, mut src: *mut table_glyf) {
-    *dst = *src;
-    table_glyf_init(src);
+unsafe extern "C" fn table_glyf_move(dst: *mut table_glyf, src: *mut table_glyf) {
+    cvec_move(table_glyf_as_cvec(dst), table_glyf_as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn table_glyf_init(mut arr: *mut table_glyf) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<glyf_GlyphPtr>();
+unsafe fn table_glyf_as_cvec(arr: *mut table_glyf) -> *mut CVecRaw<glyf_GlyphPtr> {
+    arr as *mut CVecRaw<glyf_GlyphPtr>
+}
+#[inline]
+unsafe extern "C" fn table_glyf_init(arr: *mut table_glyf) {
+    cvec_init(table_glyf_as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn table_glyf_filterEnv(
@@ -3639,51 +3282,20 @@ unsafe extern "C" fn table_glyf_fill(mut arr: *mut table_glyf, mut n: size_t) {
     }
 }
 #[inline]
-unsafe extern "C" fn table_glyf_push(mut arr: *mut table_glyf, mut elem: glyf_GlyphPtr) {
-    table_glyf_grow(arr);
-    let fresh11 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    let ref mut fresh12 = *(*arr).items.offset(fresh11 as isize);
-    *fresh12 = elem;
+unsafe extern "C" fn table_glyf_push(arr: *mut table_glyf, elem: glyf_GlyphPtr) {
+    cvec_push(table_glyf_as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn table_glyf_grow(mut arr: *mut table_glyf) {
-    table_glyf_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn table_glyf_grow(arr: *mut table_glyf) {
+    cvec_grow(table_glyf_as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn table_glyf_growTo(mut arr: *mut table_glyf, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_GlyphPtr>() as size_t),
-        ) as *mut glyf_GlyphPtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_GlyphPtr>() as size_t,
-        ) as *mut glyf_GlyphPtr;
-    };
+unsafe extern "C" fn table_glyf_growTo(arr: *mut table_glyf, target: size_t) {
+    cvec_grow_to(table_glyf_as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn table_glyf_pop(mut arr: *mut table_glyf) -> glyf_GlyphPtr {
-    let mut t: glyf_GlyphPtr = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn table_glyf_pop(arr: *mut table_glyf) -> glyf_GlyphPtr {
+    cvec_pop(table_glyf_as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn table_glyf_copyReplace(mut dst: *mut table_glyf, src: table_glyf) {
@@ -3751,29 +3363,8 @@ unsafe extern "C" fn table_glyf_initCapN(mut arr: *mut table_glyf, mut n: size_t
     table_glyf_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn table_glyf_growToN(mut arr: *mut table_glyf, mut target: size_t) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<glyf_GlyphPtr>() as size_t),
-        ) as *mut glyf_GlyphPtr;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<glyf_GlyphPtr>() as size_t,
-        ) as *mut glyf_GlyphPtr;
-    };
+unsafe extern "C" fn table_glyf_growToN(arr: *mut table_glyf, target: size_t) {
+    cvec_grow_to_n(table_glyf_as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn table_glyf_free(mut x: *mut table_glyf) {
