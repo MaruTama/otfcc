@@ -58,12 +58,27 @@ didn't.
   silently zeroed negative `hmtx.lsb` / `vmtx.tsb` /
   `VORG.defaultVerticalOrigin` in the built font. Fixed at the 5 confirmed
   call sites.
-- `test.sh` — builds the transpiled crate and runs the same dump/build cycles
-  as `quick.make`'s round-trip targets, against every payload the C test
-  suite covers (minus two fonts that crash both C and Rust with a stack
-  overflow — see Status below).
+- `build-crate.sh` — builds the transpiled crate (release) and runs
+  `cargo test`. Needs only rustup + cargo (the pinned nightly in
+  `rust-toolchain.toml`), not c2rust/Docker — works on any architecture.
+- `run-cycles.sh` — runs the same dump/build cycles as `quick.make`'s
+  round-trip targets against an already-built crate, for every payload the C
+  test suite covers (minus two fonts that crash both C and Rust with a stack
+  overflow — see Status below), plus the `otfccdll` cdylib test if built.
+- `test.sh` — convenience wrapper: `build-crate.sh` + `run-cycles.sh` (what
+  local dev normally wants).
 - `compare-roundtrips.js` — runs `tests/ttf-roundtrip-test.js` over every
-  payload `test.sh` produced and reports a single pass/fail summary.
+  payload produced and reports a single pass/fail summary.
+- `compare-with-c.sh` — builds the C toolchain **with clang** and compares
+  its output against an already-built Rust crate byte-for-byte, on the same
+  machine. Defaults to clang, not gcc: c2rust's transpile is based on parsing
+  with clang's AST, and gcc vs clang produce measurably different
+  floating-point rounding in this codebase (verified: a gcc build differs
+  byte-for-byte from a clang build of the *identical* source on the
+  *identical* machine, while clang builds match byte-for-byte across
+  architectures and OSes — arm64 Linux, amd64 Linux, and arm64 macOS all
+  agree). Using gcc here would flag that gcc/clang difference as a false
+  Rust-vs-C mismatch.
 - `make-test-variable-font.py` — builds a minimal, self-contained variable
   font (fvar + gvar, one `wght` axis, two masters, via fontTools APIs — no
   external download) to exercise the gvar delta-application path, which none
@@ -142,6 +157,17 @@ Two fonts (`Cormorant-Medium.otf`, `WorkSans-Regular.otf`) crash both the C
 pre-existing bug in the C CFF interpreter (verified: the C binary also exits
 SIGSEGV on them), not something the Rust translation introduced or needs to
 fix here.
+
+**CI checks three things** (`.github/workflows/rust-migration.yml`): the
+crate builds and `cargo test` passes (currently 0 tests — c2rust generates
+none; Phase 2 is where real coverage gets added), its output is
+byte-identical to the C toolchain's (`compare-with-c.sh`), and the round-trip
+stability tests pass (`compare-roundtrips.js`). The transpile step (needs
+arm64 + Docker) and the build/test/compare steps (architecture-agnostic —
+verified building the arm64-transpiled source on amd64 produces
+byte-identical output to a clang-built C toolchain on the same amd64
+machine) are split into separate jobs so only the c2rust step needs the
+arm64 runner.
 
 **`otfccdll` (cdylib) coverage**: the C build (`premake5.lua`) builds
 `otfccdll.c`'s exported functions as a `SharedLib`; `transpile.sh` adds

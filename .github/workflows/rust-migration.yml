@@ -1,9 +1,10 @@
 name: Rust migration (c2rust)
 
 # Verifies the Rust transpile pipeline (rust-migration/) stays green: builds
-# the Rust crate from the C sources and runs the project's own round-trip
-# stability tests against it. See rust-migration/README.md for the full
-# rationale behind each step.
+# the Rust crate from the C sources, checks it against unit tests, checks its
+# output is byte-compatible with the C toolchain, and checks the project's
+# own round-trip stability tests pass against it. See rust-migration/README.md
+# for the full rationale behind each step.
 on:
   push:
     branches: [master]
@@ -35,7 +36,8 @@ jobs:
   # bundled), so the compile-database generation step runs on a standard
   # amd64 runner. The resulting compile_commands.json is portable text (paths
   # + clang flags) — transpile.sh already strips the one arch-specific flag
-  # (-m64) — so it's produced here and handed to the arm64 job as an artifact.
+  # (-m64) — so it's produced here and handed to the transpile job as an
+  # artifact.
   gen-compile-commands:
     runs-on: ubuntu-latest
     steps:
@@ -44,7 +46,7 @@ jobs:
         run: OS=linux ./rust-migration/gen-compile-commands.sh
       # c2rust chdir's into each entry's "directory" field (build/ninja) to
       # resolve the relative paths in its "command", so that directory must
-      # exist verbatim in the next job too, not just compile_commands.json.
+      # exist verbatim in the transpile job too, not just compile_commands.json.
       - uses: actions/upload-artifact@v4
         with:
           name: compile_commands
@@ -58,7 +60,13 @@ jobs:
   # fatal GNU Make jobserver bug building c2rust's vendored tinycbor (see
   # rust-migration/README.md). This runner architecture exactly matches the
   # Dockerfile's target, so no adaptation is needed versus local dev.
-  transpile-and-test:
+  #
+  # This job runs ONLY the c2rust transpile step (the one thing that actually
+  # needs arm64 + Docker) and uploads the resulting Rust *source* (not
+  # target/) as an artifact. Building/testing it happens in a separate,
+  # architecture-agnostic job below — `cargo build` of already-transpiled
+  # source needs only rustup, not c2rust.
+  transpile:
     needs: gen-compile-commands
     runs-on: ubuntu-24.04-arm
     steps:
@@ -85,10 +93,49 @@ jobs:
           docker run --rm -v "$PWD":"$PWD" -w "$PWD" \
             --entrypoint bash otfcc-c2rust rust-migration/transpile.sh
 
-      - name: Build the Rust crate and run dump/build cycles
-        run: |
-          docker run --rm -v "$PWD":"$PWD" -w "$PWD" \
-            --entrypoint bash otfcc-c2rust rust-migration/test.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: transpiled-source
+          path: |
+            rust-migration/transpiled/
+            !rust-migration/transpiled/target/
+          retention-days: 1
+
+  # Standard amd64 runner, no Docker: builds the transpiled Rust source with
+  # the pinned nightly (rust-toolchain.toml; rustup on the runner installs it
+  # automatically), runs `cargo test`, then builds the C toolchain natively
+  # (dep/bin-linux/{premake5,ninja} are x86_64, matching this runner) and
+  # compares its output against the Rust build byte-for-byte on the same
+  # machine — avoiding any cross-architecture ambiguity. Finally runs the
+  # project's own round-trip stability tests against the Rust binaries.
+  build-test-compare:
+    needs: transpile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: transpiled-source
+          path: rust-migration/transpiled
+
+      - name: Build the Rust crate and run cargo test
+        run: ./rust-migration/build-crate.sh
+
+      # compare-with-c.sh builds the C toolchain with clang, not gcc: c2rust's
+      # transpile is based on parsing with clang's AST, and gcc vs clang
+      # produce measurably different floating-point rounding in this codebase
+      # (verified locally: a gcc build differs byte-for-byte from a clang
+      # build of the identical source on the identical machine). ubuntu-latest
+      # doesn't have clang preinstalled.
+      - name: Install clang
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq clang
+
+      - name: Build the C toolchain and compare output byte-for-byte
+        run: ./rust-migration/compare-with-c.sh
+
+      - name: Run dump/build cycles (Rust only)
+        run: ./rust-migration/run-cycles.sh
 
       - uses: actions/setup-node@v4
         with:
