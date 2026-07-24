@@ -1526,29 +1526,20 @@ unsafe extern "C" fn __caryll_allocate_clean(
     return p;
 }
 unsafe extern "C" fn decideFontSubtypeOTF(
-    mut sfnt: *mut otfcc_SplineFontContainer,
-    mut index: uint32_t,
+    sfnt: *mut otfcc_SplineFontContainer,
+    index: uint32_t,
 ) -> otfcc_font_subtype {
-    let mut packet: otfcc_Packet = *(*sfnt).packets.offset(index as isize);
-    let mut __fortable_keep: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-    let mut __fortable_count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut __notfound: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-    while __notfound != 0
-        && __fortable_keep != 0
-        && __fortable_count < packet.numTables as ::core::ffi::c_int
-    {
-        let mut table: otfcc_PacketPiece = *packet.pieces.offset(__fortable_count as isize);
-        while __fortable_keep != 0 {
-            if table.tag == 1128678944i32 as uint32_t {
-                let mut __fortable_k2: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-                if __fortable_k2 != 0 {
-                    return FONTTYPE_CFF;
-                }
-            }
-            __fortable_keep = (__fortable_keep == 0) as ::core::ffi::c_int;
+    // c2rust's translation of a FOREACH_TABLE-style macro: the
+    // __fortable_keep/__notfound/__fortable_k2 flags simulate a
+    // single-iteration inner scope purely to give the original C a labeled
+    // break/continue target. Traced by hand: the whole thing reduces to
+    // "return FONTTYPE_CFF at the first 'CFF ' tag, else FONTTYPE_TTF".
+    let packet: otfcc_Packet = *(*sfnt).packets.offset(index as isize);
+    for i in 0..packet.numTables as ::core::ffi::c_int {
+        let table: otfcc_PacketPiece = *packet.pieces.offset(i as isize);
+        if table.tag == 1128678944i32 as uint32_t {
+            return FONTTYPE_CFF;
         }
-        __fortable_keep = (__fortable_keep == 0) as ::core::ffi::c_int;
-        __fortable_count += 1;
     }
     return FONTTYPE_TTF;
 }
@@ -1561,9 +1552,9 @@ unsafe extern "C" fn readOtf(
     if (*sfnt).count.wrapping_sub(1 as uint32_t) < index {
         return ::core::ptr::null_mut::<otfcc_Font>();
     } else {
-        let mut font: *mut otfcc_Font = (
+        let font: *mut otfcc_Font = (
             otfcc_iFont.create.expect("non-null function pointer"))();
-        let mut packet: otfcc_Packet = *(*sfnt).packets.offset(index as isize);
+        let packet: otfcc_Packet = *(*sfnt).packets.offset(index as isize);
         (*font).subtype = decideFontSubtypeOTF(sfnt, index);
         (*font).fvar = otfcc_readFvar(packet, options);
         (*font).head = otfcc_readHead(packet, options);
@@ -1574,9 +1565,7 @@ unsafe extern "C" fn readOtf(
         (*font).post = otfcc_readPost(packet, options);
         (*font).hhea = otfcc_readHhea(packet, options);
         (*font).cmap = otfcc_readCmap(packet, options);
-        if (*font).subtype as ::core::ffi::c_uint
-            == FONTTYPE_TTF as ::core::ffi::c_int as ::core::ffi::c_uint
-        {
+        if (*font).subtype == FONTTYPE_TTF {
             (*font).hmtx = otfcc_readHmtx(packet, options, (*font).hhea, (*font).maxp);
             (*font).vhea = otfcc_readVhea(packet, options);
             if !(*font).vhea.is_null() {
