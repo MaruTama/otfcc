@@ -1,6 +1,6 @@
 // Shared zero-initialized alloc/realloc helpers, factored out of the ~50
 // per-file private copies c2rust emitted (one per translation unit that
-// #included lib/support/mem.h's `NEW_CLEAN`/`RENEW_CLEAN` macros). These
+// #included c/lib/support/mem.h's `NEW_CLEAN`/`RENEW_CLEAN` macros). These
 // were never externally linked (no #[no_mangle]) even in their per-file
 // form, so consolidating them changes no ABI -- only support/bk (the files
 // already reviewed for the idiomatization pass) have been migrated to use

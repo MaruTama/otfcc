@@ -1,6 +1,6 @@
 // Shared big-endian byte readers, factored out of the ~40 per-file private
 // copies c2rust emitted (one per translation unit that #included
-// lib/support/bin-io.h's `static inline` helpers). Never externally linked
+// c/lib/support/bin-io.h's `static inline` helpers). Never externally linked
 // (no #[no_mangle]) even in their per-file form, so consolidating them
 // changes no ABI. Bodies rewritten to u*::from_be_bytes (matching the
 // idiom already used on the write side in support/buffer/buffer.rs), but

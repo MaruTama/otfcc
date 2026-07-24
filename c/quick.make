@@ -7,16 +7,18 @@ else
 NINJA_EXEC=../../$(BD_NINJA)
 endif
 
+PREMAKE5_FILE=--file=c/premake5.lua
+
 mf-vs2017 :
-	@$(PREMAKE5) vs2017
+	@$(PREMAKE5) $(PREMAKE5_FILE) vs2017
 mf-gmake :
-	@$(PREMAKE5) gmake
+	@$(PREMAKE5) $(PREMAKE5_FILE) gmake
 mf-ninja-windows :
-	@$(PREMAKE5) ninja --os=windows
+	@$(PREMAKE5) $(PREMAKE5_FILE) ninja --os=windows
 mf-ninja-linux :
-	@$(PREMAKE5) ninja --os=linux --cc=$(CC)
+	@$(PREMAKE5) $(PREMAKE5_FILE) ninja --os=linux --cc=$(CC)
 mf-ninja-macosx :
-	@$(PREMAKE5) ninja --os=macosx
+	@$(PREMAKE5) $(PREMAKE5_FILE) ninja --os=macosx
 
 mingw-debug-x64 : mf-gmake
 	@cd build/gmake && make config=debug_x64
@@ -48,18 +50,18 @@ macosx-release-x86 : mf-ninja-macosx
 # VC does not support debugging well
 # It is used for release versions only
 vc-release-x64 : mf-vs2017
-	@./_vc2017.bat build/vs/otfcc.sln /property:Configuration=release /property:Platform=x64
+	@./c/_vc2017.bat ../build/vs/otfcc.sln /property:Configuration=release /property:Platform=x64
 vc-release-x86 : mf-vs2017
-	@./_vc2017.bat build/vs/otfcc.sln /property:Configuration=release /property:Platform=win32
+	@./c/_vc2017.bat ../build/vs/otfcc.sln /property:Configuration=release /property:Platform=win32
 
 ninja-win-x64 : mf-ninja-windows
-	@./_vcbuildNinja.bat otfccdump_release_x64 otfccbuild_release_x64 otfccdll_release_x64
+	@./c/_vcbuildNinja.bat otfccdump_release_x64 otfccbuild_release_x64 otfccdll_release_x64
 ninja-win-x86 : mf-ninja-windows
-	@./_vcbuildNinja.bat otfccdump_release_x86 otfccbuild_release_x86 otfccdll_release_x86
+	@./c/_vcbuildNinja.bat otfccdump_release_x86 otfccbuild_release_x86 otfccdll_release_x86
 ninja-win-debug-x64 : mf-ninja-windows
-	@./_vcbuildNinja.bat otfccdump_debug_x64 otfccbuild_debug_x64 otfccdll_debug_x64
+	@./c/_vcbuildNinja.bat otfccdump_debug_x64 otfccbuild_debug_x64 otfccdll_debug_x64
 ninja-win-debug-x86 : mf-ninja-windows
-	@./_vcbuildNinja.bat otfccdump_debug_x86 otfccbuild_debug_x86 otfccdll_debug_x86
+	@./c/_vcbuildNinja.bat otfccdump_debug_x86 otfccbuild_debug_x86 otfccdll_debug_x86
 
 TEST_OPCODES = abs add div drop dup eq.(mul) exch ifelse index.(roll,drop) mul neg not or.(mul) put.get roll.(drop) sqrt.(mul) sub
 TEST_OPCODES_TARGETS = $(foreach op,$(TEST_OPCODES),cffopcodetest-$(op))

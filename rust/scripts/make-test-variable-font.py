@@ -1,7 +1,7 @@
 # Builds a minimal, self-contained variable font (fvar + gvar, one "wght"
 # axis, two masters interpolated) purely from fontTools APIs — no external
 # download. Used to exercise otfcc's gvar delta-application path
-# (applyPolymorphism in lib/table/glyf/read.c), which none of the existing
+# (applyPolymorphism in c/lib/table/glyf/read.c), which none of the existing
 # tests/payload/*.ttf fonts exercise (confirmed: none has an fvar table).
 import fontTools.fontBuilder as fb
 from fontTools.varLib import build
@@ -41,7 +41,7 @@ def make_master(path, a_contour, weight_class):
 
 
 def main():
-    out_dir = os.path.join(os.path.dirname(__file__), "..", "build")
+    out_dir = os.path.join(os.path.dirname(__file__), "..", "..", "build")
     os.makedirs(out_dir, exist_ok=True)
 
     # Two masters: a narrow "A" outline (light) and a wide one (bold). The

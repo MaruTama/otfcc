@@ -4,32 +4,49 @@ This directory holds the Rust port of otfcc, produced by transpiling the C
 sources with [c2rust](https://c2rust.com/) and tracked in
 [issue #2](https://github.com/MaruTama/otfcc/issues/2).
 
-**`rust-migration/transpiled/` is committed source, not a build artifact.**
+**`rust/` is committed source, not a build artifact.**
 The plan is to eventually delete the C implementation and let this Rust code
 be the real, standalone implementation — so unlike a typical generated-code
 directory, it's checked into the repo and (from Phase 2 onward) will be
-hand-edited directly. Only `rust-migration/transpiled/target/` (the actual
+hand-edited directly. Only `rust/target/` (the actual
 compiled binaries) is gitignored.
 
 The C-side fix for [issue #1](https://github.com/MaruTama/otfcc/issues/1)
 (large `gsub_alternate` corruption) landed separately and is carried into the
 committed Rust source, since it was part of the C sources at transpile time.
 
+**Repository layout**: the C implementation (`lib/`, `src/`, `dep/`,
+`include/`, `premake5.lua`, `quick.make`, `_vc*.bat`) lives under `c/` at the
+repo root, mirroring how the Rust port is self-contained under
+`rust/`. This is deliberate: once Rust is trusted as the sole
+implementation, retiring C is a single `rm -rf c/` (see "Next steps" below).
+`tests/`, `build/`, and `bin/` stay at the repo root — both sides build
+against and are verified against those same shared fixtures/outputs, so
+splitting them would mean duplicating the font payloads. `c/premake5.lua`
+and `c/quick.make` are written to still produce `build/` and `bin/` at the
+repo root (not nested under `c/`), so nothing downstream (this directory's
+scripts, CI) had to change its output-path assumptions. This directory is
+flattened: the crate root (`Cargo.toml`, `lib.rs`, `src/`) and the migration
+tooling (`compare-with-c.sh`, `Dockerfile`, this README, ...) live side by
+side directly in `rust/` — there is no separate `transpiled/` subdirectory.
+`transpile.sh` knows the difference and only touches the crate-owned files
+when regenerating (see "Regenerating the Rust source" below).
+
 ## Everyday use: just build and test
 
-CI (`.github/workflows/rust-migration.yml`) and local development do **not**
+CI (`.github/workflows/rust.yml`) and local development do **not**
 re-run c2rust. They just build the committed Rust source and check it:
 
 ```bash
-pip install fonttools && python3 rust-migration/make-test-variable-font.py
+pip install fonttools && python3 rust/scripts/make-test-variable-font.py
                                    # optional: adds the gvar payload below
-./rust-migration/build-crate.sh   # cargo build --release + cargo test
-./rust-migration/compare-with-c.sh # build C with clang, compare byte-for-byte
-./rust-migration/run-cycles.sh    # dump/build cycles against the Rust binaries
-node rust-migration/compare-roundtrips.js
+./rust/scripts/build-crate.sh   # cargo build --release + cargo test
+./rust/scripts/compare-with-c.sh # build C with clang, compare byte-for-byte
+./rust/scripts/run-cycles.sh    # dump/build cycles against the Rust binaries
+node rust/scripts/compare-roundtrips.js
 ```
 
-(`./rust-migration/test.sh` = `build-crate.sh` + `run-cycles.sh`, for
+(`./rust/scripts/test.sh` = `build-crate.sh` + `run-cycles.sh`, for
 convenience.) None of this needs Docker, c2rust, or a specific architecture —
 plain `rustup`/`cargo` plus a C compiler.
 
@@ -40,36 +57,38 @@ change, reviewed like any other diff, and committed. It is not automated in
 CI. Requires Docker and (see below) a **native arm64** host.
 
 **Since Phase 2 (idiomatization) started, re-running this will destroy hand-
-edited code.** `transpile.sh` does a wholesale `rm -rf` of
-`rust-migration/transpiled/` and regenerates it from the C sources, which
-would overwrite every idiomatized file (`lib/support/buffer/buffer.rs`,
-`lib/bk/bkblock.rs`, `lib/bk/bkgraph.rs`, `lib/support/alloc.rs`, `lib.rs`'s
-module list, ...) with fresh c2rust output. The steps below are kept for
-reference/audit purposes and for the C-only files that haven't been
-idiomatized yet, but from here on a C-side change should be ported to the
-Rust side by hand (mirroring whatever the equivalent C diff does), not by
-re-transpiling.
+edited code.** `transpile.sh` replaces the c2rust-owned crate files under
+`rust/` (`src/`, `Cargo.toml`, `Cargo.lock`, `build.rs`, `lib.rs` — not the
+hand-maintained scripts/Dockerfile/README that now share this flattened
+directory) with fresh c2rust output, which would overwrite every idiomatized
+file (`lib/support/buffer/buffer.rs`, `lib/bk/bkblock.rs`,
+`lib/bk/bkgraph.rs`, `lib/support/alloc.rs`, `lib.rs`'s module list, ...).
+The steps below are kept for reference/audit purposes and for the C-only
+files that haven't been idiomatized yet, but from here on a C-side change
+should be ported to the Rust side by hand (mirroring whatever the equivalent
+C diff does), not by re-transpiling.
 
 1. Generate the compilation database (macOS shown; `OS=linux` on Linux):
 
    ```bash
-   ./rust-migration/gen-compile-commands.sh
+   ./rust/scripts/gen-compile-commands.sh
    ```
 
 2. Build the transpiler image once (native arm64; slow — it compiles c2rust
    from source):
 
    ```bash
-   docker build -t otfcc-c2rust -f rust-migration/Dockerfile rust-migration/
+   docker build -t otfcc-c2rust -f rust/scripts/Dockerfile rust/scripts/
    ```
 
 3. Transpile. The repo is mounted at its **host path** so the absolute paths
-   in `compile_commands.json` resolve unchanged. This overwrites
-   `rust-migration/transpiled/` — review the diff before committing.
+   in `c/compile_commands.json` resolve unchanged. This overwrites the crate
+   files under `rust/` (not its hand-maintained scripts) — review the diff
+   before committing.
 
    ```bash
    docker run --rm -v "$PWD":"$PWD" -w "$PWD" \
-       --entrypoint bash otfcc-c2rust rust-migration/transpile.sh
+       --entrypoint bash otfcc-c2rust rust/scripts/transpile.sh
    ```
 
 4. Verify it still builds and matches C (see "Everyday use" above), then
@@ -139,7 +158,7 @@ transpile step itself needs arm64.
 - `build-crate.sh` — builds the committed crate (release) and runs
   `cargo test`. Needs only rustup + cargo (the pinned nightly in
   `rust-toolchain.toml`) — no c2rust/Docker, works on any architecture.
-- `run-cycles.sh` — runs the same dump/build cycles as `quick.make`'s
+- `run-cycles.sh` — runs the same dump/build cycles as `c/quick.make`'s
   round-trip targets against an already-built crate, for every payload the C
   test suite covers (minus two fonts that crash both C and Rust with a stack
   overflow — see Status below), plus the `otfccdll` cdylib test if built.
@@ -183,7 +202,7 @@ and its round-trips are byte-for-byte correct**:
   differing bytes) for all 8 directly-comparable payloads.
 - **Variable-font (gvar) coverage**: none of `tests/payload/*.ttf` has an
   `fvar` table, so the gvar delta-application path (`applyPolymorphism` in
-  `lib/table/glyf/read.c`) was untested by the payload matrix above.
+  `c/lib/table/glyf/read.c`) was untested by the payload matrix above.
   `make-test-variable-font.py` closes that gap — CI generates the font fresh
   every run and it's part of the regular byte-comparison and round-trip
   matrix. C and Rust are byte-identical at every stage of a full two-cycle
@@ -274,7 +293,7 @@ rewritten to idiomatic bodies:
   multi-rule "poly" chaining representation into one canonical subtable per
   rule — real ownership-transferring memory management, ~90 lines) had a
   first pass computing a `totalRules` count that's **never read afterward,
-  confirmed dead in the original C too** (`lib/otf-reader/unconsolidate.c`);
+  confirmed dead in the original C too** (`c/lib/otf-reader/unconsolidate.c`);
   removed. Every other bounded loop across the four files became `for`;
   linked-list-style hash-table traversals (`while !p.is_null() { ...; p =
   next }`) were left as `while`, consistent with the rest of this pass.
@@ -325,5 +344,7 @@ to the next file.
   issue #1 code path from the C side), then `consolidate`/`json_reader`/
   `json_writer`, then `libcff`/`glyf`/`vf`, per the original plan's ordering
   — keeping the round-trip tests green throughout.
-- Once Rust is trusted as the sole implementation, retire the C build
-  (`quick.make`, `premake5.lua`, `lib/`, `src/`, `dep/`) and `compare-with-c.sh`.
+- Once Rust is trusted as the sole implementation, retire the C build by
+  deleting `c/` (`quick.make`, `premake5.lua`, `lib/`, `src/`, `dep/`,
+  `include/` all live there now, precisely so this is a single directory
+  removal) and `compare-with-c.sh`.

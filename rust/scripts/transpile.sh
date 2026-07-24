@@ -5,21 +5,21 @@
 #
 # Invoke as:
 #   docker run --rm -v "$PWD":"$PWD" -w "$PWD" \
-#       --entrypoint bash otfcc-c2rust rust-migration/transpile.sh
+#       --entrypoint bash otfcc-c2rust rust/scripts/transpile.sh
 set -euo pipefail
 
-DEST="rust-migration/transpiled"
+DEST="rust"
 # CRITICAL: the compile database must live on the *mounted* filesystem, not on
 # the container's tmpfs. With the DB on /tmp, c2rust panics reliably and
 # reproducibly ("Type conversion not implemented for TagTypeUnknown") partway
 # through; with the byte-identical DB on the bind mount it always succeeds.
 # (Likely c2rust's clang AST-exporter writes intermediates relative to the DB.)
-DB="rust-migration/.compile_commands.native.json"
+DB="rust/.compile_commands.native.json"
 WORK=/tmp/otfcc-rust
 
-if [ ! -f compile_commands.json ]; then
-	echo "ERROR: compile_commands.json not found in $(pwd)." >&2
-	echo "Generate it on the host first (see rust-migration/README.md)." >&2
+if [ ! -f c/compile_commands.json ]; then
+	echo "ERROR: c/compile_commands.json not found in $(pwd)." >&2
+	echo "Generate it on the host first (see rust/README.md)." >&2
 	exit 1
 fi
 
@@ -28,7 +28,7 @@ fi
 # strip -m64 to let clang target the native arch. The image already neutralizes
 # aarch64's SIMD <bits/math-vector.h>, which c2rust cannot represent. x86_64 and
 # arm64 Linux are both LP64, so the transpiled Rust is equivalent.
-sed 's/ -m64//g' compile_commands.json > "${DB}"
+sed 's/ -m64//g' c/compile_commands.json > "${DB}"
 
 echo "==> Transpiling $(grep -c '"file"' "${DB}") translation units"
 rm -rf "${WORK}"
@@ -73,7 +73,7 @@ sed -i 's/kPow10\[-kappa as usize\]/kPow10[(-kappa as usize).min(9)]/; s/kPow10\
 # leading to `free(): invalid pointer` aborts). The wrapped expression already
 # has the correct `unsafe extern "C" fn(..) -> T` type, so the transmute is
 # both needless and the actual bug; strip it, calling the function pointer
-# directly. See rust-migration/fix-transmute-abi.py for the implementation.
+# directly. See rust/scripts/fix-transmute-abi.py for the implementation.
 python3 "$(dirname "$0")/fix-transmute-abi.py" "${WORK}"
 
 # Runtime: c2rust mistranslates the IMPLICIT `pos_t` (double) -> `uintN_t`
@@ -84,14 +84,18 @@ python3 "$(dirname "$0")/fix-transmute-abi.py" "${WORK}"
 # whereas C's actual runtime behavior converts through a signed integer first
 # then reinterprets the bits as unsigned (-41.0 -> 0xFFD7). Observed impact:
 # negative side-bearing / vertical-origin values silently corrupt to 0 in the
-# built binary. See rust-migration/fix-float-narrowing.py for the target list.
+# built binary. See rust/scripts/fix-float-narrowing.py for the target list.
 python3 "$(dirname "$0")/fix-float-narrowing.py" "${WORK}"
 
 echo "==> Copying finished crate to ${DEST}"
-rm -rf "${DEST}"
-mkdir -p "$(dirname "${DEST}")"
-cp -r "${WORK}" "${DEST}"
+# NOTE: ${DEST} (rust/) also holds hand-maintained tooling (this script,
+# compare-with-c.sh, the Dockerfile, README.md, ...) since the crate root and
+# the migration scripts share one flattened directory. Only replace the
+# c2rust-owned crate files, not the whole directory.
+rm -rf "${DEST}/src"
+rm -f "${DEST}/Cargo.toml" "${DEST}/Cargo.lock" "${DEST}/build.rs" "${DEST}/lib.rs"
+cp -r "${WORK}/src" "${WORK}/Cargo.toml" "${WORK}/Cargo.lock" "${WORK}/build.rs" "${WORK}/lib.rs" "${DEST}/"
 rm -f "${DB}"
 
 echo "==> Transpile complete. Crate at ${DEST}"
-echo "    modules: $(find "${DEST}" -name '*.rs' | wc -l)"
+echo "    modules: $(find "${DEST}/src" -name '*.rs' | wc -l)"

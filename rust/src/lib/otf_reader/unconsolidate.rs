@@ -1980,7 +1980,7 @@ unsafe extern "C" fn unconsolidate_chaining(
     lookup: *mut otl_Lookup,
     _table: *mut table_OTL,
 ) {
-    // The original C (lib/otf-reader/unconsolidate.c) computes a
+    // The original C (c/lib/otf-reader/unconsolidate.c) computes a
     // `totalRules` count in a first pass over the subtables and never uses
     // it afterward (no capacity-reservation call, no other reference) --
     // genuinely dead code upstream, not a c2rust artifact. Confirmed by

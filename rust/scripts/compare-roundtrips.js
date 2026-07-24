@@ -1,4 +1,4 @@
-// Runs tests/ttf-roundtrip-test.js over every payload rust-migration/test.sh
+// Runs tests/ttf-roundtrip-test.js over every payload rust/scripts/test.sh
 // produced under build/rust-test/, exiting non-zero if any fail.
 var cp = require("child_process");
 var fs = require("fs");
@@ -8,8 +8,8 @@ var TTF_PAYLOADS = "NotoNastaliqUrdu-Regular iosevka-r BungeeColor-Regular_colr_
 var CFF_PAYLOADS = "KRName-Regular".split(" ");
 var CFF_FJ_PAYLOADS = "WorkSans-Regular kltf-bugfont1".split(" ");
 
-var BUILD = path.join(__dirname, "..", "build", "rust-test");
-var TESTJS = path.join(__dirname, "..", "tests", "ttf-roundtrip-test.js");
+var BUILD = path.join(__dirname, "..", "..", "build", "rust-test");
+var TESTJS = path.join(__dirname, "..", "..", "tests", "ttf-roundtrip-test.js");
 
 var names = TTF_PAYLOADS.concat(CFF_PAYLOADS).map(function (n) { return { label: n, base: n }; })
 	.concat(CFF_FJ_PAYLOADS.map(function (n) { return { label: n + " (fj)", base: "fj-" + n }; }));

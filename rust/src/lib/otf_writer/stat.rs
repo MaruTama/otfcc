@@ -2478,7 +2478,7 @@ unsafe extern "C" fn statOS_2AverageWidth(
 }
 unsafe extern "C" fn statMaxContextOTL(table: *const table_OTL) -> uint16_t {
     // c2rust's translation of otfcc's own `foreach(item, vector) { ... }`
-    // macro (lib/otf-writer/stat.c): the __caryll_index*/keep* variables
+    // macro (c/lib/otf-writer/stat.c): the __caryll_index*/keep* variables
     // simulate a single-iteration inner while purely so the macro body can
     // `continue`/`break`; every occurrence here reduces to a plain indexed
     // for loop over the vector, confirmed against the original C source.

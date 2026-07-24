@@ -29,7 +29,7 @@ import re, sys, glob
 # where routing through a signed intermediate would wrongly saturate them.
 
 # (file, field-access regex fragment, bit width) — every pos_t-typed field
-# found (via grep across include/otfcc/table/*.h) to reach a bufwriteNNb call
+# found (via grep across c/include/otfcc/table/*.h) to reach a bufwriteNNb call
 # in the C sources without an explicit intermediate cast.
 TARGETS = [
     ("lib/table/hmtx.rs", r"\(\*\(\*hmtx\)\.metrics\.offset\(j as isize\)\)\.lsb", 16),

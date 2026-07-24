@@ -1,44 +1,34 @@
 name: Rust build & compatibility
 
-# Verifies the checked-in Rust port (rust-migration/transpiled/) stays green:
+# Verifies the checked-in Rust port (rust/) stays green:
 # it builds, its unit tests pass, and its output is byte-compatible with the
-# C toolchain built from the same tree. See rust-migration/README.md.
+# C toolchain built from the same tree. See rust/README.md.
 #
 # This does NOT re-run c2rust (the C -> Rust transpile). The transpiled
 # source is committed to the repo, not regenerated per CI run — re-transpile
-# locally with rust-migration/transpile.sh after a C-side change and commit
-# the diff. See "Regenerating the Rust source" in rust-migration/README.md.
+# locally with rust/scripts/transpile.sh after a C-side change and commit
+# the diff. See "Regenerating the Rust source" in rust/README.md.
 on:
   push:
     branches: [master]
     paths:
-      - "lib/**"
-      - "src/**"
-      - "dep/**"
-      - "include/**"
-      - "quick.make"
-      - "premake5.lua"
+      - "c/**"
       - "tests/**"
-      - "rust-migration/**"
-      - ".github/workflows/rust-migration.yml"
+      - "rust/**"
+      - ".github/workflows/rust.yml"
   pull_request:
     paths:
-      - "lib/**"
-      - "src/**"
-      - "dep/**"
-      - "include/**"
-      - "quick.make"
-      - "premake5.lua"
+      - "c/**"
       - "tests/**"
-      - "rust-migration/**"
-      - ".github/workflows/rust-migration.yml"
+      - "rust/**"
+      - ".github/workflows/rust.yml"
   workflow_dispatch: {}
 
 jobs:
   # Standard amd64 runner, no Docker, no c2rust: builds the committed Rust
   # source with the pinned nightly (rust-toolchain.toml; rustup on the
   # runner installs it automatically), runs `cargo test`, builds the C
-  # toolchain natively (dep/bin-linux/{premake5,ninja} are x86_64, matching
+  # toolchain natively (c/dep/bin-linux/{premake5,ninja} are x86_64, matching
   # this runner) with clang, and compares its output against the Rust build
   # byte-for-byte on the same machine — including the gvar (variable-font)
   # payload and the otfccdll cdylib, both built via ctypes against the same
@@ -56,10 +46,10 @@ jobs:
       - name: Generate the gvar (variable-font) test payload
         run: |
           pip install --quiet fonttools
-          python3 rust-migration/make-test-variable-font.py
+          python3 rust/scripts/make-test-variable-font.py
 
       - name: Build the Rust crate and run cargo test
-        run: ./rust-migration/build-crate.sh
+        run: ./rust/scripts/build-crate.sh
 
       # compare-with-c.sh builds the C toolchain with clang, not gcc: c2rust's
       # transpile is based on parsing with clang's AST, and gcc vs clang
@@ -71,14 +61,14 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq clang
 
       - name: Build the C toolchain and compare output byte-for-byte
-        run: ./rust-migration/compare-with-c.sh
+        run: ./rust/scripts/compare-with-c.sh
 
       - name: Run dump/build cycles (Rust only)
-        run: ./rust-migration/run-cycles.sh
+        run: ./rust/scripts/run-cycles.sh
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
 
       - name: Compare round-trip stability
-        run: node rust-migration/compare-roundtrips.js
+        run: node rust/scripts/compare-roundtrips.js

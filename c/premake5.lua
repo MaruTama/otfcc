@@ -54,7 +54,7 @@ workspace "otfcc"
 		platforms { "x64" }
 	filter {}
 	
-	location "build"
+	location "../build"
 	includedirs { "include" }
 	
 	defines {
@@ -70,27 +70,27 @@ workspace "otfcc"
 	filter {}
 	
 	filter "action:vs2017"
-		location "build/vs"
+		location "../build/vs"
 		toolset "v141_clang_c2"
 		defines { '_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_DEPRECATE' }
 		flags { "StaticRuntime" }
 		includedirs { "dep/polyfill-msvc" }
 	filter "action:vs2015"
-		location "build/vs"
+		location "../build/vs"
 		toolset "msc-llvm-vs2014"
 		defines { '_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_DEPRECATE' }
 		flags { "StaticRuntime" }
 		includedirs { "dep/polyfill-msvc" }
 	filter "action:ninja"
-		location "build/ninja"
+		location "../build/ninja"
 	filter {"system:windows", "action:ninja"}
 		defines { '_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_DEPRECATE' }
 		flags { "StaticRuntime" }
 		includedirs { "dep/polyfill-msvc" }
 	filter "action:gmake"
-		location "build/gmake"
+		location "../build/gmake"
 	filter "action:xcode4"
-		location "build/xcode"
+		location "../build/xcode"
 	filter {}
 	
 	filter "configurations:Debug"
@@ -138,7 +138,7 @@ project "otfccdump"
 	kind "ConsoleApp"
 	language "C"
 	cbuildoptions()
-	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
+	targetdir "../bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
 	links { "libotfcc", "deps" }
 	
@@ -155,7 +155,7 @@ project "otfccbuild"
 	kind "ConsoleApp"
 	language "C"
 	cbuildoptions()
-	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
+	targetdir "../bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
 	links { "libotfcc", "deps" }
 	
@@ -172,7 +172,7 @@ project "otfccdll"
 	kind "SharedLib"
 	language "C"
 	cbuildoptions()
-	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
+	targetdir "../bin/%{cfg.buildcfg}-%{cfg.platform}"
 
 	links { "libotfcc", "deps" }
 
