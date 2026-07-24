@@ -1,10 +1,13 @@
-name: Rust migration (c2rust)
+name: Rust build & compatibility
 
-# Verifies the Rust transpile pipeline (rust-migration/) stays green: builds
-# the Rust crate from the C sources, checks it against unit tests, checks its
-# output is byte-compatible with the C toolchain, and checks the project's
-# own round-trip stability tests pass against it. See rust-migration/README.md
-# for the full rationale behind each step.
+# Verifies the checked-in Rust port (rust-migration/transpiled/) stays green:
+# it builds, its unit tests pass, and its output is byte-compatible with the
+# C toolchain built from the same tree. See rust-migration/README.md.
+#
+# This does NOT re-run c2rust (the C -> Rust transpile). The transpiled
+# source is committed to the repo, not regenerated per CI run — re-transpile
+# locally with rust-migration/transpile.sh after a C-side change and commit
+# the diff. See "Regenerating the Rust source" in rust-migration/README.md.
 on:
   push:
     branches: [master]
@@ -32,92 +35,17 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  # dep/bin-linux/{premake5,ninja} are x86_64 ELF binaries (no arm64 build is
-  # bundled), so the compile-database generation step runs on a standard
-  # amd64 runner. The resulting compile_commands.json is portable text (paths
-  # + clang flags) — transpile.sh already strips the one arch-specific flag
-  # (-m64) — so it's produced here and handed to the transpile job as an
-  # artifact.
-  gen-compile-commands:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Generate compile_commands.json
-        run: OS=linux ./rust-migration/gen-compile-commands.sh
-      # c2rust chdir's into each entry's "directory" field (build/ninja) to
-      # resolve the relative paths in its "command", so that directory must
-      # exist verbatim in the transpile job too, not just compile_commands.json.
-      - uses: actions/upload-artifact@v4
-        with:
-          name: compile_commands
-          path: |
-            compile_commands.json
-            build/ninja/
-          retention-days: 1
-
-  # Native arm64 (GitHub-hosted, free for public repos): c2rust must run
-  # native, not emulated — an amd64 image under QEMU on an arm64 host hits a
-  # fatal GNU Make jobserver bug building c2rust's vendored tinycbor (see
-  # rust-migration/README.md). This runner architecture exactly matches the
-  # Dockerfile's target, so no adaptation is needed versus local dev.
-  #
-  # This job runs ONLY the c2rust transpile step (the one thing that actually
-  # needs arm64 + Docker) and uploads the resulting Rust *source* (not
-  # target/) as an artifact. Building/testing it happens in a separate,
-  # architecture-agnostic job below — `cargo build` of already-transpiled
-  # source needs only rustup, not c2rust.
-  transpile:
-    needs: gen-compile-commands
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: compile_commands
-
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Build (or restore cached) c2rust image
-        uses: docker/build-push-action@v6
-        with:
-          context: rust-migration
-          file: rust-migration/Dockerfile
-          tags: otfcc-c2rust:latest
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Transpile
-        run: |
-          docker run --rm -v "$PWD":"$PWD" -w "$PWD" \
-            --entrypoint bash otfcc-c2rust rust-migration/transpile.sh
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: transpiled-source
-          path: |
-            rust-migration/transpiled/
-            !rust-migration/transpiled/target/
-          retention-days: 1
-
-  # Standard amd64 runner, no Docker: builds the transpiled Rust source with
-  # the pinned nightly (rust-toolchain.toml; rustup on the runner installs it
-  # automatically), runs `cargo test`, then builds the C toolchain natively
-  # (dep/bin-linux/{premake5,ninja} are x86_64, matching this runner) and
-  # compares its output against the Rust build byte-for-byte on the same
-  # machine — avoiding any cross-architecture ambiguity. Finally runs the
-  # project's own round-trip stability tests against the Rust binaries.
+  # Standard amd64 runner, no Docker, no c2rust: builds the committed Rust
+  # source with the pinned nightly (rust-toolchain.toml; rustup on the
+  # runner installs it automatically), runs `cargo test`, builds the C
+  # toolchain natively (dep/bin-linux/{premake5,ninja} are x86_64, matching
+  # this runner) with clang, and compares its output against the Rust build
+  # byte-for-byte on the same machine. Finally runs the project's own
+  # round-trip stability tests against the Rust binaries.
   build-test-compare:
-    needs: transpile
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: transpiled-source
-          path: rust-migration/transpiled
 
       - name: Build the Rust crate and run cargo test
         run: ./rust-migration/build-crate.sh

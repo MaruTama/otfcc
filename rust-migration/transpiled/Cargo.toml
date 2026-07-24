@@ -1,0 +1,23 @@
+[workspace]
+members = [
+]
+[package]
+name = "otfcc_rust"
+authors = ["C2Rust"]
+version = "0.0.0"
+publish = false
+edition = "2021"
+autobins = false
+
+[lib]
+name = "otfcc_rust"
+path = "lib.rs"
+crate-type = ["staticlib", "rlib", "cdylib"]
+[[bin]]
+path = "src/src/otfccdump.rs"
+name = "otfccdump"
+[[bin]]
+path = "src/src/otfccbuild.rs"
+name = "otfccbuild"
+[dependencies]
+

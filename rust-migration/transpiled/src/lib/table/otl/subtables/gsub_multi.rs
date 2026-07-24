@@ -1,0 +1,1381 @@
+extern "C" {
+    pub type _IO_wide_data;
+    pub type _IO_codecvt;
+    pub type _IO_marker;
+    static mut stderr: *mut FILE;
+    fn fprintf(
+        __stream: *mut FILE,
+        __format: *const ::core::ffi::c_char,
+        ...
+    ) -> ::core::ffi::c_int;
+    fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
+    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
+    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
+    fn free(__ptr: *mut ::core::ffi::c_void);
+    fn exit(__status: ::core::ffi::c_int) -> !;
+    fn qsort(
+        __base: *mut ::core::ffi::c_void,
+        __nmemb: size_t,
+        __size: size_t,
+        __compar: __compar_fn_t,
+    );
+    fn memcpy(
+        __dest: *mut ::core::ffi::c_void,
+        __src: *const ::core::ffi::c_void,
+        __n: size_t,
+    ) -> *mut ::core::ffi::c_void;
+    fn memset(
+        __s: *mut ::core::ffi::c_void,
+        __c: ::core::ffi::c_int,
+        __n: size_t,
+    ) -> *mut ::core::ffi::c_void;
+    fn json_object_new(length: size_t) -> *mut json_value;
+    fn json_object_push(
+        object: *mut json_value,
+        name: *const ::core::ffi::c_char,
+        _: *mut json_value,
+    ) -> *mut json_value;
+    fn sdsnewlen(init: *const ::core::ffi::c_void, initlen: size_t) -> sds;
+    static otfcc_iHandle: otfcc_HandlePackage;
+    static otl_iCoverage: __otfcc_ICoverage;
+    fn bk_new_Block(type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
+    fn bk_push(b: *mut bk_Block, type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
+    fn bk_newBlockFromBuffer(buf: *mut caryll_Buffer) -> *mut bk_Block;
+    fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
+}
+pub type __uint8_t = u8;
+pub type __uint16_t = u16;
+pub type __uint32_t = u32;
+pub type __int64_t = i64;
+pub type __off_t = ::core::ffi::c_long;
+pub type __off64_t = ::core::ffi::c_long;
+pub type int64_t = __int64_t;
+pub type uint8_t = __uint8_t;
+pub type uint16_t = __uint16_t;
+pub type uint32_t = __uint32_t;
+pub type size_t = usize;
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct _IO_FILE {
+    pub _flags: ::core::ffi::c_int,
+    pub _IO_read_ptr: *mut ::core::ffi::c_char,
+    pub _IO_read_end: *mut ::core::ffi::c_char,
+    pub _IO_read_base: *mut ::core::ffi::c_char,
+    pub _IO_write_base: *mut ::core::ffi::c_char,
+    pub _IO_write_ptr: *mut ::core::ffi::c_char,
+    pub _IO_write_end: *mut ::core::ffi::c_char,
+    pub _IO_buf_base: *mut ::core::ffi::c_char,
+    pub _IO_buf_end: *mut ::core::ffi::c_char,
+    pub _IO_save_base: *mut ::core::ffi::c_char,
+    pub _IO_backup_base: *mut ::core::ffi::c_char,
+    pub _IO_save_end: *mut ::core::ffi::c_char,
+    pub _markers: *mut _IO_marker,
+    pub _chain: *mut _IO_FILE,
+    pub _fileno: ::core::ffi::c_int,
+    pub _flags2: ::core::ffi::c_int,
+    pub _old_offset: __off_t,
+    pub _cur_column: ::core::ffi::c_ushort,
+    pub _vtable_offset: ::core::ffi::c_schar,
+    pub _shortbuf: [::core::ffi::c_char; 1],
+    pub _lock: *mut ::core::ffi::c_void,
+    pub _offset: __off64_t,
+    pub _codecvt: *mut _IO_codecvt,
+    pub _wide_data: *mut _IO_wide_data,
+    pub _freeres_list: *mut _IO_FILE,
+    pub _freeres_buf: *mut ::core::ffi::c_void,
+    pub __pad5: size_t,
+    pub _mode: ::core::ffi::c_int,
+    pub _unused2: [::core::ffi::c_char; 20],
+}
+pub type _IO_lock_t = ();
+pub type FILE = _IO_FILE;
+pub type __compar_fn_t = Option<
+    unsafe extern "C" fn(
+        *const ::core::ffi::c_void,
+        *const ::core::ffi::c_void,
+    ) -> ::core::ffi::c_int,
+>;
+pub type json_type = ::core::ffi::c_uint;
+pub const json_pre_serialized: json_type = 8;
+pub const json_null: json_type = 7;
+pub const json_boolean: json_type = 6;
+pub const json_string: json_type = 5;
+pub const json_double: json_type = 4;
+pub const json_integer: json_type = 3;
+pub const json_array: json_type = 2;
+pub const json_object: json_type = 1;
+pub const json_none: json_type = 0;
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct _json_value {
+    pub parent: *mut _json_value,
+    pub type_0: json_type,
+    pub u: C2RustUnnamed_0,
+    pub _reserved: C2RustUnnamed,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub union C2RustUnnamed {
+    pub next_alloc: *mut _json_value,
+    pub object_mem: *mut ::core::ffi::c_void,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub union C2RustUnnamed_0 {
+    pub boolean: ::core::ffi::c_int,
+    pub integer: int64_t,
+    pub dbl: ::core::ffi::c_double,
+    pub string: C2RustUnnamed_3,
+    pub object: C2RustUnnamed_2,
+    pub array: C2RustUnnamed_1,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct C2RustUnnamed_1 {
+    pub length: ::core::ffi::c_uint,
+    pub values: *mut *mut _json_value,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct C2RustUnnamed_2 {
+    pub length: ::core::ffi::c_uint,
+    pub values: *mut json_object_entry,
+}
+pub type json_object_entry = _json_object_entry;
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct _json_object_entry {
+    pub name: *mut ::core::ffi::c_char,
+    pub name_length: ::core::ffi::c_uint,
+    pub value: *mut _json_value,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct C2RustUnnamed_3 {
+    pub length: ::core::ffi::c_uint,
+    pub ptr: *mut ::core::ffi::c_char,
+}
+pub type json_value = _json_value;
+pub type sds = *mut ::core::ffi::c_char;
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct caryll_Buffer {
+    pub cursor: size_t,
+    pub size: size_t,
+    pub free: size_t,
+    pub data: *mut uint8_t,
+}
+pub type glyphid_t = uint16_t;
+pub type glyphclass_t = uint16_t;
+pub type tableid_t = uint16_t;
+pub type pos_t = ::core::ffi::c_double;
+pub type handle_state = ::core::ffi::c_uint;
+pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
+pub const HANDLE_STATE_NAME: handle_state = 2;
+pub const HANDLE_STATE_INDEX: handle_state = 1;
+pub const HANDLE_STATE_EMPTY: handle_state = 0;
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otfcc_Handle {
+    pub state: handle_state,
+    pub index: glyphid_t,
+    pub name: sds,
+}
+pub type otfcc_GlyphHandle = otfcc_Handle;
+pub type otfcc_LookupHandle = otfcc_Handle;
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otfcc_HandlePackage {
+    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
+    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
+    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
+    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
+    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
+    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
+    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
+    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
+    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
+    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
+    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
+    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otfcc_ILoggerTarget {
+    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_ILoggerTarget) -> ()>,
+    pub push: Option<unsafe extern "C" fn(*mut otfcc_ILoggerTarget, sds) -> ()>,
+}
+pub type otfcc_LoggerType = ::core::ffi::c_uint;
+pub const log_type_progress: otfcc_LoggerType = 3;
+pub const log_type_info: otfcc_LoggerType = 2;
+pub const log_type_warning: otfcc_LoggerType = 1;
+pub const log_type_error: otfcc_LoggerType = 0;
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otfcc_ILogger {
+    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_ILogger) -> ()>,
+    pub indent: Option<unsafe extern "C" fn(*mut otfcc_ILogger, *const ::core::ffi::c_char) -> ()>,
+    pub indentSDS: Option<unsafe extern "C" fn(*mut otfcc_ILogger, sds) -> ()>,
+    pub start: Option<unsafe extern "C" fn(*mut otfcc_ILogger, *const ::core::ffi::c_char) -> ()>,
+    pub startSDS: Option<unsafe extern "C" fn(*mut otfcc_ILogger, sds) -> ()>,
+    pub log: Option<
+        unsafe extern "C" fn(
+            *mut otfcc_ILogger,
+            uint8_t,
+            otfcc_LoggerType,
+            *const ::core::ffi::c_char,
+        ) -> (),
+    >,
+    pub logSDS:
+        Option<unsafe extern "C" fn(*mut otfcc_ILogger, uint8_t, otfcc_LoggerType, sds) -> ()>,
+    pub dedent: Option<unsafe extern "C" fn(*mut otfcc_ILogger) -> ()>,
+    pub finish: Option<unsafe extern "C" fn(*mut otfcc_ILogger) -> ()>,
+    pub end: Option<unsafe extern "C" fn(*mut otfcc_ILogger) -> ()>,
+    pub setVerbosity: Option<unsafe extern "C" fn(*mut otfcc_ILogger, uint8_t) -> ()>,
+    pub getTarget: Option<unsafe extern "C" fn(*mut otfcc_ILogger) -> *mut otfcc_ILoggerTarget>,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otfcc_Options {
+    pub debug_wait_on_start: bool,
+    pub ignore_glyph_order: bool,
+    pub ignore_hints: bool,
+    pub has_vertical_metrics: bool,
+    pub export_fdselect: bool,
+    pub keep_average_char_width: bool,
+    pub keep_unicode_ranges: bool,
+    pub short_post: bool,
+    pub dummy_DSIG: bool,
+    pub keep_modified_time: bool,
+    pub instr_as_bytes: bool,
+    pub verbose: bool,
+    pub quiet: bool,
+    pub cff_short_vmtx: bool,
+    pub merge_lookups: bool,
+    pub merge_features: bool,
+    pub force_cid: bool,
+    pub cff_rollCharString: bool,
+    pub cff_doSubroutinize: bool,
+    pub stub_cmap4: bool,
+    pub decimal_cmap: bool,
+    pub name_glyphs_by_hash: bool,
+    pub name_glyphs_by_gid: bool,
+    pub glyph_name_prefix: *mut ::core::ffi::c_char,
+    pub logger: *mut otfcc_ILogger,
+}
+pub type font_file_pointer = *mut uint8_t;
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_Coverage {
+    pub numGlyphs: glyphid_t,
+    pub capacity: uint32_t,
+    pub glyphs: *mut otfcc_GlyphHandle,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct __otfcc_ICoverage {
+    pub init: Option<unsafe extern "C" fn(*mut otl_Coverage) -> ()>,
+    pub copy: Option<unsafe extern "C" fn(*mut otl_Coverage, *const otl_Coverage) -> ()>,
+    pub move_0: Option<unsafe extern "C" fn(*mut otl_Coverage, *mut otl_Coverage) -> ()>,
+    pub dispose: Option<unsafe extern "C" fn(*mut otl_Coverage) -> ()>,
+    pub replace: Option<unsafe extern "C" fn(*mut otl_Coverage, otl_Coverage) -> ()>,
+    pub copyReplace: Option<unsafe extern "C" fn(*mut otl_Coverage, otl_Coverage) -> ()>,
+    pub create: Option<unsafe extern "C" fn() -> *mut otl_Coverage>,
+    pub free: Option<unsafe extern "C" fn(*mut otl_Coverage) -> ()>,
+    pub clear: Option<unsafe extern "C" fn(*mut otl_Coverage, uint32_t) -> ()>,
+    pub read: Option<unsafe extern "C" fn(*const uint8_t, uint32_t, uint32_t) -> *mut otl_Coverage>,
+    pub dump: Option<unsafe extern "C" fn(*const otl_Coverage) -> *mut json_value>,
+    pub parse: Option<unsafe extern "C" fn(*const json_value) -> *mut otl_Coverage>,
+    pub build: Option<unsafe extern "C" fn(*const otl_Coverage) -> *mut caryll_Buffer>,
+    pub buildFormat:
+        Option<unsafe extern "C" fn(*const otl_Coverage, uint16_t) -> *mut caryll_Buffer>,
+    pub shrink: Option<unsafe extern "C" fn(*mut otl_Coverage, bool) -> ()>,
+    pub push: Option<unsafe extern "C" fn(*mut otl_Coverage, otfcc_GlyphHandle) -> ()>,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_ClassDef {
+    pub numGlyphs: glyphid_t,
+    pub capacity: uint32_t,
+    pub maxclass: glyphclass_t,
+    pub glyphs: *mut otfcc_GlyphHandle,
+    pub classes: *mut glyphclass_t,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct __caryll_bkblock {
+    pub _visitstate: bk_cell_visit_state,
+    pub _index: uint32_t,
+    pub _height: uint32_t,
+    pub _depth: uint32_t,
+    pub length: uint32_t,
+    pub free: uint32_t,
+    pub cells: *mut bk_Cell,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct bk_Cell {
+    pub t: bk_CellType,
+    pub c2rust_unnamed: C2RustUnnamed_4,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub union C2RustUnnamed_4 {
+    pub z: uint32_t,
+    pub p: *mut __caryll_bkblock,
+}
+pub type bk_CellType = ::core::ffi::c_uint;
+pub const bkembed: bk_CellType = 255;
+pub const bkcopy: bk_CellType = 254;
+pub const sp32: bk_CellType = 129;
+pub const sp16: bk_CellType = 128;
+pub const p32: bk_CellType = 17;
+pub const p16: bk_CellType = 16;
+pub const b32: bk_CellType = 3;
+pub const b16: bk_CellType = 2;
+pub const b8: bk_CellType = 1;
+pub const bkover: bk_CellType = 0;
+pub type bk_cell_visit_state = ::core::ffi::c_uint;
+pub const VISIT_BLACK: bk_cell_visit_state = 2;
+pub const VISIT_GRAY: bk_cell_visit_state = 1;
+pub const VISIT_WHITE: bk_cell_visit_state = 0;
+pub type bk_Block = __caryll_bkblock;
+pub type otl_LookupType = ::core::ffi::c_uint;
+pub const otl_type_gpos_extend: otl_LookupType = 41;
+pub const otl_type_gpos_chaining: otl_LookupType = 40;
+pub const otl_type_gpos_context: otl_LookupType = 39;
+pub const otl_type_gpos_markToMark: otl_LookupType = 38;
+pub const otl_type_gpos_markToLigature: otl_LookupType = 37;
+pub const otl_type_gpos_markToBase: otl_LookupType = 36;
+pub const otl_type_gpos_cursive: otl_LookupType = 35;
+pub const otl_type_gpos_pair: otl_LookupType = 34;
+pub const otl_type_gpos_single: otl_LookupType = 33;
+pub const otl_type_gpos_unknown: otl_LookupType = 32;
+pub const otl_type_gsub_reverse: otl_LookupType = 24;
+pub const otl_type_gsub_extend: otl_LookupType = 23;
+pub const otl_type_gsub_chaining: otl_LookupType = 22;
+pub const otl_type_gsub_context: otl_LookupType = 21;
+pub const otl_type_gsub_ligature: otl_LookupType = 20;
+pub const otl_type_gsub_alternate: otl_LookupType = 19;
+pub const otl_type_gsub_multiple: otl_LookupType = 18;
+pub const otl_type_gsub_single: otl_LookupType = 17;
+pub const otl_type_gsub_unknown: otl_LookupType = 16;
+pub const otl_type_unknown: otl_LookupType = 0;
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub union _otl_subtable {
+    pub gsub_single: subtable_gsub_single,
+    pub gsub_multi: subtable_gsub_multi,
+    pub gsub_ligature: subtable_gsub_ligature,
+    pub chaining: subtable_chaining,
+    pub gsub_reverse: subtable_gsub_reverse,
+    pub gpos_single: subtable_gpos_single,
+    pub gpos_pair: subtable_gpos_pair,
+    pub gpos_cursive: subtable_gpos_cursive,
+    pub gpos_markToSingle: subtable_gpos_markToSingle,
+    pub gpos_markToLigature: subtable_gpos_markToLigature,
+    pub extend: subtable_extend,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct subtable_extend {
+    pub type_0: otl_LookupType,
+    pub subtable: *mut otl_Subtable,
+}
+pub type otl_Subtable = _otl_subtable;
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct subtable_gpos_markToLigature {
+    pub classCount: glyphclass_t,
+    pub markArray: otl_MarkArray,
+    pub ligArray: otl_LigatureArray,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_LigatureArray {
+    pub length: size_t,
+    pub capacity: size_t,
+    pub items: *mut otl_LigatureBaseRecord,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_LigatureBaseRecord {
+    pub glyph: otfcc_GlyphHandle,
+    pub componentCount: glyphid_t,
+    pub anchors: *mut *mut otl_Anchor,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_Anchor {
+    pub present: bool,
+    pub x: pos_t,
+    pub y: pos_t,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_MarkArray {
+    pub length: size_t,
+    pub capacity: size_t,
+    pub items: *mut otl_MarkRecord,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_MarkRecord {
+    pub glyph: otfcc_GlyphHandle,
+    pub markClass: glyphclass_t,
+    pub anchor: otl_Anchor,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct subtable_gpos_markToSingle {
+    pub classCount: glyphclass_t,
+    pub markArray: otl_MarkArray,
+    pub baseArray: otl_BaseArray,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_BaseArray {
+    pub length: size_t,
+    pub capacity: size_t,
+    pub items: *mut otl_BaseRecord,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_BaseRecord {
+    pub glyph: otfcc_GlyphHandle,
+    pub anchors: *mut otl_Anchor,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct subtable_gpos_cursive {
+    pub length: size_t,
+    pub capacity: size_t,
+    pub items: *mut otl_GposCursiveEntry,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_GposCursiveEntry {
+    pub target: otfcc_GlyphHandle,
+    pub enter: otl_Anchor,
+    pub exit: otl_Anchor,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct subtable_gpos_pair {
+    pub first: *mut otl_ClassDef,
+    pub second: *mut otl_ClassDef,
+    pub firstValues: *mut *mut otl_PositionValue,
+    pub secondValues: *mut *mut otl_PositionValue,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_PositionValue {
+    pub dx: pos_t,
+    pub dy: pos_t,
+    pub dWidth: pos_t,
+    pub dHeight: pos_t,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct subtable_gpos_single {
+    pub length: size_t,
+    pub capacity: size_t,
+    pub items: *mut otl_GposSingleEntry,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_GposSingleEntry {
+    pub target: otfcc_GlyphHandle,
+    pub value: otl_PositionValue,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct subtable_gsub_reverse {
+    pub matchCount: tableid_t,
+    pub inputIndex: tableid_t,
+    pub match_0: *mut *mut otl_Coverage,
+    pub to: *mut otl_Coverage,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct subtable_chaining {
+    pub type_0: otl_chaining_type,
+    pub c2rust_unnamed: C2RustUnnamed_5,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub union C2RustUnnamed_5 {
+    pub rule: otl_ChainingRule,
+    pub c2rust_unnamed: C2RustUnnamed_6,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct C2RustUnnamed_6 {
+    pub rulesCount: tableid_t,
+    pub rules: *mut *mut otl_ChainingRule,
+    pub bc: *mut otl_ClassDef,
+    pub ic: *mut otl_ClassDef,
+    pub fc: *mut otl_ClassDef,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_ChainingRule {
+    pub matchCount: tableid_t,
+    pub inputBegins: tableid_t,
+    pub inputEnds: tableid_t,
+    pub match_0: *mut *mut otl_Coverage,
+    pub applyCount: tableid_t,
+    pub apply: *mut otl_ChainLookupApplication,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_ChainLookupApplication {
+    pub index: tableid_t,
+    pub lookup: otfcc_LookupHandle,
+}
+pub type otl_chaining_type = ::core::ffi::c_uint;
+pub const otl_chaining_classified: otl_chaining_type = 2;
+pub const otl_chaining_poly: otl_chaining_type = 1;
+pub const otl_chaining_canonical: otl_chaining_type = 0;
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct subtable_gsub_ligature {
+    pub length: size_t,
+    pub capacity: size_t,
+    pub items: *mut otl_GsubLigatureEntry,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_GsubLigatureEntry {
+    pub from: *mut otl_Coverage,
+    pub to: otfcc_GlyphHandle,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct subtable_gsub_multi {
+    pub length: size_t,
+    pub capacity: size_t,
+    pub items: *mut otl_GsubMultiEntry,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_GsubMultiEntry {
+    pub from: otfcc_GlyphHandle,
+    pub to: *mut otl_Coverage,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct subtable_gsub_single {
+    pub length: size_t,
+    pub capacity: size_t,
+    pub items: *mut otl_GsubSingleEntry,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct otl_GsubSingleEntry {
+    pub from: otfcc_GlyphHandle,
+    pub to: otfcc_GlyphHandle,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct __caryll_vectorinterface_subtable_gsub_multi {
+    pub init: Option<unsafe extern "C" fn(*mut subtable_gsub_multi) -> ()>,
+    pub copy:
+        Option<unsafe extern "C" fn(*mut subtable_gsub_multi, *const subtable_gsub_multi) -> ()>,
+    pub move_0:
+        Option<unsafe extern "C" fn(*mut subtable_gsub_multi, *mut subtable_gsub_multi) -> ()>,
+    pub dispose: Option<unsafe extern "C" fn(*mut subtable_gsub_multi) -> ()>,
+    pub replace: Option<unsafe extern "C" fn(*mut subtable_gsub_multi, subtable_gsub_multi) -> ()>,
+    pub copyReplace:
+        Option<unsafe extern "C" fn(*mut subtable_gsub_multi, subtable_gsub_multi) -> ()>,
+    pub create: Option<unsafe extern "C" fn() -> *mut subtable_gsub_multi>,
+    pub free: Option<unsafe extern "C" fn(*mut subtable_gsub_multi) -> ()>,
+    pub initN: Option<unsafe extern "C" fn(*mut subtable_gsub_multi, size_t) -> ()>,
+    pub initCapN: Option<unsafe extern "C" fn(*mut subtable_gsub_multi, size_t) -> ()>,
+    pub createN: Option<unsafe extern "C" fn(size_t) -> *mut subtable_gsub_multi>,
+    pub fill: Option<unsafe extern "C" fn(*mut subtable_gsub_multi, size_t) -> ()>,
+    pub clear: Option<unsafe extern "C" fn(*mut subtable_gsub_multi) -> ()>,
+    pub push: Option<unsafe extern "C" fn(*mut subtable_gsub_multi, otl_GsubMultiEntry) -> ()>,
+    pub shrinkToFit: Option<unsafe extern "C" fn(*mut subtable_gsub_multi) -> ()>,
+    pub pop: Option<unsafe extern "C" fn(*mut subtable_gsub_multi) -> otl_GsubMultiEntry>,
+    pub disposeItem: Option<unsafe extern "C" fn(*mut subtable_gsub_multi, size_t) -> ()>,
+    pub filterEnv: Option<
+        unsafe extern "C" fn(
+            *mut subtable_gsub_multi,
+            Option<
+                unsafe extern "C" fn(*const otl_GsubMultiEntry, *mut ::core::ffi::c_void) -> bool,
+            >,
+            *mut ::core::ffi::c_void,
+        ) -> (),
+    >,
+    pub sort: Option<
+        unsafe extern "C" fn(
+            *mut subtable_gsub_multi,
+            Option<
+                unsafe extern "C" fn(
+                    *const otl_GsubMultiEntry,
+                    *const otl_GsubMultiEntry,
+                ) -> ::core::ffi::c_int,
+            >,
+        ) -> (),
+    >,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct __caryll_elementinterface_otl_GsubMultiEntry {
+    pub init: Option<unsafe extern "C" fn(*mut otl_GsubMultiEntry) -> ()>,
+    pub copy:
+        Option<unsafe extern "C" fn(*mut otl_GsubMultiEntry, *const otl_GsubMultiEntry) -> ()>,
+    pub move_0:
+        Option<unsafe extern "C" fn(*mut otl_GsubMultiEntry, *mut otl_GsubMultiEntry) -> ()>,
+    pub dispose: Option<unsafe extern "C" fn(*mut otl_GsubMultiEntry) -> ()>,
+    pub replace: Option<unsafe extern "C" fn(*mut otl_GsubMultiEntry, otl_GsubMultiEntry) -> ()>,
+    pub copyReplace:
+        Option<unsafe extern "C" fn(*mut otl_GsubMultiEntry, otl_GsubMultiEntry) -> ()>,
+}
+pub type otl_BuildHeuristics = ::core::ffi::c_uint;
+pub const OTL_BH_GSUB_VERT: otl_BuildHeuristics = 1;
+pub const OTL_BH_NORMAL: otl_BuildHeuristics = 0;
+pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
+pub const EXIT_FAILURE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
+#[inline]
+unsafe extern "C" fn __caryll_allocate_clean(
+    mut n: size_t,
+    mut line: ::core::ffi::c_ulong,
+) -> *mut ::core::ffi::c_void {
+    if n == 0 {
+        return NULL;
+    }
+    let mut p: *mut ::core::ffi::c_void = calloc(n, 1 as size_t);
+    if p.is_null() {
+        fprintf(
+            stderr,
+            b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
+            line,
+            n as ::core::ffi::c_ulong,
+        );
+        exit(EXIT_FAILURE);
+    }
+    return p;
+}
+#[inline]
+unsafe extern "C" fn __caryll_reallocate(
+    mut ptr: *mut ::core::ffi::c_void,
+    mut n: size_t,
+    mut line: ::core::ffi::c_ulong,
+) -> *mut ::core::ffi::c_void {
+    if n == 0 {
+        free(ptr);
+        return NULL;
+    }
+    if ptr.is_null() {
+        return __caryll_allocate_clean(n, line);
+    } else {
+        let mut p: *mut ::core::ffi::c_void = realloc(ptr, n);
+        if p.is_null() {
+            fprintf(
+                stderr,
+                b"[%ld]Out of memory(%ld bytes)\n\0" as *const u8 as *const ::core::ffi::c_char,
+                line,
+                n as ::core::ffi::c_ulong,
+            );
+            exit(EXIT_FAILURE);
+        }
+        return p;
+    };
+}
+#[inline]
+unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {
+    let mut b0: uint16_t = ((*src.offset(0 as ::core::ffi::c_int as isize) as uint16_t
+        as ::core::ffi::c_int)
+        << 8 as ::core::ffi::c_int) as uint16_t;
+    let mut b1: uint16_t = *src.offset(1 as ::core::ffi::c_int as isize) as uint16_t;
+    return (b0 as ::core::ffi::c_int | b1 as ::core::ffi::c_int) as uint16_t;
+}
+unsafe extern "C" fn deleteGsubMultiEntry(mut entry: *mut otl_GsubMultiEntry) {
+    otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).from);
+    otl_iCoverage.free.expect("non-null function pointer")((*entry).to);
+    (*entry).to = ::core::ptr::null_mut::<otl_Coverage>();
+}
+static mut gsm_typeinfo: __caryll_elementinterface_otl_GsubMultiEntry = unsafe {
+    __caryll_elementinterface_otl_GsubMultiEntry {
+        init: None,
+        copy: None,
+        move_0: None,
+        dispose: Some(deleteGsubMultiEntry as unsafe extern "C" fn(*mut otl_GsubMultiEntry) -> ()),
+        replace: None,
+        copyReplace: None,
+    }
+};
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_growTo(
+    mut arr: *mut subtable_gsub_multi,
+    mut target: size_t,
+) {
+    if target <= (*arr).capacity {
+        return;
+    }
+    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
+        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
+    }
+    while (*arr).capacity < target {
+        (*arr).capacity = (*arr)
+            .capacity
+            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
+    }
+    if !(*arr).items.is_null() {
+        (*arr).items = realloc(
+            (*arr).items as *mut ::core::ffi::c_void,
+            (*arr)
+                .capacity
+                .wrapping_mul(::core::mem::size_of::<otl_GsubMultiEntry>() as size_t),
+        ) as *mut otl_GsubMultiEntry;
+    } else {
+        (*arr).items = calloc(
+            (*arr).capacity,
+            ::core::mem::size_of::<otl_GsubMultiEntry>() as size_t,
+        ) as *mut otl_GsubMultiEntry;
+    };
+}
+#[no_mangle]
+pub static mut iSubtable_gsub_multi: __caryll_vectorinterface_subtable_gsub_multi = unsafe {
+    __caryll_vectorinterface_subtable_gsub_multi {
+        init: Some(
+            subtable_gsub_multi_init as unsafe extern "C" fn(*mut subtable_gsub_multi) -> (),
+        ),
+        copy: Some(
+            subtable_gsub_multi_copy
+                as unsafe extern "C" fn(*mut subtable_gsub_multi, *const subtable_gsub_multi) -> (),
+        ),
+        move_0: Some(
+            subtable_gsub_multi_move
+                as unsafe extern "C" fn(*mut subtable_gsub_multi, *mut subtable_gsub_multi) -> (),
+        ),
+        dispose: Some(
+            subtable_gsub_multi_dispose as unsafe extern "C" fn(*mut subtable_gsub_multi) -> (),
+        ),
+        replace: Some(
+            subtable_gsub_multi_replace
+                as unsafe extern "C" fn(*mut subtable_gsub_multi, subtable_gsub_multi) -> (),
+        ),
+        copyReplace: Some(
+            subtable_gsub_multi_copyReplace
+                as unsafe extern "C" fn(*mut subtable_gsub_multi, subtable_gsub_multi) -> (),
+        ),
+        create: Some(subtable_gsub_multi_create),
+        free: Some(
+            subtable_gsub_multi_free as unsafe extern "C" fn(*mut subtable_gsub_multi) -> (),
+        ),
+        initN: Some(
+            subtable_gsub_multi_initN
+                as unsafe extern "C" fn(*mut subtable_gsub_multi, size_t) -> (),
+        ),
+        initCapN: Some(
+            subtable_gsub_multi_initCapN
+                as unsafe extern "C" fn(*mut subtable_gsub_multi, size_t) -> (),
+        ),
+        createN: Some(
+            subtable_gsub_multi_createN as unsafe extern "C" fn(size_t) -> *mut subtable_gsub_multi,
+        ),
+        fill: Some(
+            subtable_gsub_multi_fill
+                as unsafe extern "C" fn(*mut subtable_gsub_multi, size_t) -> (),
+        ),
+        clear: Some(
+            subtable_gsub_multi_dispose as unsafe extern "C" fn(*mut subtable_gsub_multi) -> (),
+        ),
+        push: Some(
+            subtable_gsub_multi_push
+                as unsafe extern "C" fn(*mut subtable_gsub_multi, otl_GsubMultiEntry) -> (),
+        ),
+        shrinkToFit: Some(
+            subtable_gsub_multi_shrinkToFit as unsafe extern "C" fn(*mut subtable_gsub_multi) -> (),
+        ),
+        pop: Some(
+            subtable_gsub_multi_pop
+                as unsafe extern "C" fn(*mut subtable_gsub_multi) -> otl_GsubMultiEntry,
+        ),
+        disposeItem: Some(
+            subtable_gsub_multi_disposeItem
+                as unsafe extern "C" fn(*mut subtable_gsub_multi, size_t) -> (),
+        ),
+        filterEnv: Some(
+            subtable_gsub_multi_filterEnv
+                as unsafe extern "C" fn(
+                    *mut subtable_gsub_multi,
+                    Option<
+                        unsafe extern "C" fn(
+                            *const otl_GsubMultiEntry,
+                            *mut ::core::ffi::c_void,
+                        ) -> bool,
+                    >,
+                    *mut ::core::ffi::c_void,
+                ) -> (),
+        ),
+        sort: Some(
+            subtable_gsub_multi_sort
+                as unsafe extern "C" fn(
+                    *mut subtable_gsub_multi,
+                    Option<
+                        unsafe extern "C" fn(
+                            *const otl_GsubMultiEntry,
+                            *const otl_GsubMultiEntry,
+                        ) -> ::core::ffi::c_int,
+                    >,
+                ) -> (),
+        ),
+    }
+};
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_shrinkToFit(mut arr: *mut subtable_gsub_multi) {
+    subtable_gsub_multi_resizeTo(arr, (*arr).length);
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_resizeTo(
+    mut arr: *mut subtable_gsub_multi,
+    mut target: size_t,
+) {
+    (*arr).capacity = target;
+    if !(*arr).items.is_null() {
+        (*arr).items = realloc(
+            (*arr).items as *mut ::core::ffi::c_void,
+            (*arr)
+                .capacity
+                .wrapping_mul(::core::mem::size_of::<otl_GsubMultiEntry>() as size_t),
+        ) as *mut otl_GsubMultiEntry;
+    } else {
+        (*arr).items = calloc(
+            (*arr).capacity,
+            ::core::mem::size_of::<otl_GsubMultiEntry>() as size_t,
+        ) as *mut otl_GsubMultiEntry;
+    };
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_move(
+    mut dst: *mut subtable_gsub_multi,
+    mut src: *mut subtable_gsub_multi,
+) {
+    *dst = *src;
+    subtable_gsub_multi_init(src);
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_disposeItem(
+    mut arr: *mut subtable_gsub_multi,
+    mut n: size_t,
+) {
+    if gsm_typeinfo.dispose.is_some() {
+        gsm_typeinfo.dispose.expect("non-null function pointer")(
+            (*arr).items.offset(n as isize) as *mut otl_GsubMultiEntry
+        );
+    } else {
+    };
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_sort(
+    mut arr: *mut subtable_gsub_multi,
+    mut fn_0: Option<
+        unsafe extern "C" fn(
+            *const otl_GsubMultiEntry,
+            *const otl_GsubMultiEntry,
+        ) -> ::core::ffi::c_int,
+    >,
+) {
+    qsort(
+        (*arr).items as *mut ::core::ffi::c_void,
+        (*arr).length,
+        ::core::mem::size_of::<otl_GsubMultiEntry>() as size_t,
+        ::core::mem::transmute::<
+            Option<
+                unsafe extern "C" fn(
+                    *const otl_GsubMultiEntry,
+                    *const otl_GsubMultiEntry,
+                ) -> ::core::ffi::c_int,
+            >,
+            __compar_fn_t,
+        >(fn_0),
+    );
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_fill(mut arr: *mut subtable_gsub_multi, mut n: size_t) {
+    while (*arr).length < n {
+        let mut x: otl_GsubMultiEntry = otl_GsubMultiEntry {
+            from: otfcc_Handle {
+                state: HANDLE_STATE_EMPTY,
+                index: 0,
+                name: ::core::ptr::null_mut::<::core::ffi::c_char>(),
+            },
+            to: ::core::ptr::null_mut::<otl_Coverage>(),
+        };
+        if gsm_typeinfo.init.is_some() {
+            gsm_typeinfo.init.expect("non-null function pointer")(&raw mut x);
+        } else {
+            memset(
+                &raw mut x as *mut ::core::ffi::c_void,
+                0 as ::core::ffi::c_int,
+                ::core::mem::size_of::<otl_GsubMultiEntry>() as size_t,
+            );
+        }
+        subtable_gsub_multi_push(arr, x);
+    }
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_push(
+    mut arr: *mut subtable_gsub_multi,
+    mut elem: otl_GsubMultiEntry,
+) {
+    subtable_gsub_multi_grow(arr);
+    let fresh0 = (*arr).length;
+    (*arr).length = (*arr).length.wrapping_add(1);
+    *(*arr).items.offset(fresh0 as isize) = elem;
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_grow(mut arr: *mut subtable_gsub_multi) {
+    subtable_gsub_multi_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_init(mut arr: *mut subtable_gsub_multi) {
+    (*arr).length = 0 as size_t;
+    (*arr).capacity = 0 as size_t;
+    (*arr).items = ::core::ptr::null_mut::<otl_GsubMultiEntry>();
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_copyReplace(
+    mut dst: *mut subtable_gsub_multi,
+    src: subtable_gsub_multi,
+) {
+    subtable_gsub_multi_dispose(dst);
+    subtable_gsub_multi_copy(dst, &raw const src);
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_pop(
+    mut arr: *mut subtable_gsub_multi,
+) -> otl_GsubMultiEntry {
+    let mut t: otl_GsubMultiEntry = *(*arr)
+        .items
+        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
+    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
+    return t;
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_copy(
+    mut dst: *mut subtable_gsub_multi,
+    mut src: *const subtable_gsub_multi,
+) {
+    subtable_gsub_multi_init(dst);
+    subtable_gsub_multi_growTo(dst, (*src).length);
+    (*dst).length = (*src).length;
+    if gsm_typeinfo.copy.is_some() {
+        let mut j: size_t = 0 as size_t;
+        while j < (*src).length {
+            gsm_typeinfo.copy.expect("non-null function pointer")(
+                (*dst).items.offset(j as isize) as *mut otl_GsubMultiEntry,
+                (*src).items.offset(j as isize) as *mut otl_GsubMultiEntry
+                    as *const otl_GsubMultiEntry,
+            );
+            j = j.wrapping_add(1);
+        }
+    } else {
+        let mut j_0: size_t = 0 as size_t;
+        while j_0 < (*src).length {
+            *(*dst).items.offset(j_0 as isize) = *(*src).items.offset(j_0 as isize);
+            j_0 = j_0.wrapping_add(1);
+        }
+    };
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_dispose(mut arr: *mut subtable_gsub_multi) {
+    if arr.is_null() {
+        return;
+    }
+    if gsm_typeinfo.dispose.is_some() {
+        let mut j: size_t = (*arr).length;
+        loop {
+            let fresh1 = j;
+            j = j.wrapping_sub(1);
+            if !(fresh1 != 0) {
+                break;
+            }
+            gsm_typeinfo.dispose.expect("non-null function pointer")(
+                (*arr).items.offset(j as isize) as *mut otl_GsubMultiEntry,
+            );
+        }
+    }
+    free((*arr).items as *mut ::core::ffi::c_void);
+    (*arr).items = ::core::ptr::null_mut::<otl_GsubMultiEntry>();
+    (*arr).length = 0 as size_t;
+    (*arr).capacity = 0 as size_t;
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_replace(
+    mut dst: *mut subtable_gsub_multi,
+    src: subtable_gsub_multi,
+) {
+    subtable_gsub_multi_dispose(dst);
+    memcpy(
+        dst as *mut ::core::ffi::c_void,
+        &raw const src as *const ::core::ffi::c_void,
+        ::core::mem::size_of::<subtable_gsub_multi>() as size_t,
+    );
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_initCapN(
+    mut arr: *mut subtable_gsub_multi,
+    mut n: size_t,
+) {
+    subtable_gsub_multi_init(arr);
+    subtable_gsub_multi_growToN(arr, n);
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_growToN(
+    mut arr: *mut subtable_gsub_multi,
+    mut target: size_t,
+) {
+    if target <= (*arr).capacity {
+        return;
+    }
+    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
+        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
+    }
+    if (*arr).capacity < target {
+        (*arr).capacity = target.wrapping_add(1 as size_t);
+    }
+    if !(*arr).items.is_null() {
+        (*arr).items = realloc(
+            (*arr).items as *mut ::core::ffi::c_void,
+            (*arr)
+                .capacity
+                .wrapping_mul(::core::mem::size_of::<otl_GsubMultiEntry>() as size_t),
+        ) as *mut otl_GsubMultiEntry;
+    } else {
+        (*arr).items = calloc(
+            (*arr).capacity,
+            ::core::mem::size_of::<otl_GsubMultiEntry>() as size_t,
+        ) as *mut otl_GsubMultiEntry;
+    };
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_initN(mut arr: *mut subtable_gsub_multi, mut n: size_t) {
+    subtable_gsub_multi_init(arr);
+    subtable_gsub_multi_growToN(arr, n);
+    subtable_gsub_multi_fill(arr, n);
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_free(mut x: *mut subtable_gsub_multi) {
+    if x.is_null() {
+        return;
+    }
+    subtable_gsub_multi_dispose(x);
+    free(x as *mut ::core::ffi::c_void);
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_createN(mut n: size_t) -> *mut subtable_gsub_multi {
+    let mut t: *mut subtable_gsub_multi =
+        malloc(::core::mem::size_of::<subtable_gsub_multi>() as size_t) as *mut subtable_gsub_multi;
+    subtable_gsub_multi_initN(t, n);
+    return t;
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_create() -> *mut subtable_gsub_multi {
+    let mut x: *mut subtable_gsub_multi =
+        malloc(::core::mem::size_of::<subtable_gsub_multi>() as size_t) as *mut subtable_gsub_multi;
+    subtable_gsub_multi_init(x);
+    return x;
+}
+#[inline]
+unsafe extern "C" fn subtable_gsub_multi_filterEnv(
+    mut arr: *mut subtable_gsub_multi,
+    mut fn_0: Option<
+        unsafe extern "C" fn(*const otl_GsubMultiEntry, *mut ::core::ffi::c_void) -> bool,
+    >,
+    mut env: *mut ::core::ffi::c_void,
+) {
+    let mut j: size_t = 0 as size_t;
+    let mut k: size_t = 0 as size_t;
+    while k < (*arr).length {
+        if fn_0.expect("non-null function pointer")(
+            (*arr).items.offset(k as isize) as *mut otl_GsubMultiEntry,
+            env,
+        ) {
+            if j != k {
+                *(*arr).items.offset(j as isize) = *(*arr).items.offset(k as isize);
+            }
+            j = j.wrapping_add(1);
+        } else {
+            if gsm_typeinfo.dispose.is_some() {
+                gsm_typeinfo.dispose.expect("non-null function pointer")(
+                    (*arr).items.offset(k as isize) as *mut otl_GsubMultiEntry,
+                );
+            } else {
+            };
+        }
+        k = k.wrapping_add(1);
+    }
+    (*arr).length = j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn otl_read_gsub_multi(
+    mut data: font_file_pointer,
+    mut tableLength: uint32_t,
+    mut offset: uint32_t,
+    maxGlyphs: glyphid_t,
+    mut options: *const otfcc_Options,
+) -> *mut otl_Subtable {
+    let mut seqCount: glyphid_t = 0;
+    let mut subtable: *mut subtable_gsub_multi =
+        (
+            iSubtable_gsub_multi
+                .create
+                .expect("non-null function pointer"))();
+    let mut from: *mut otl_Coverage = ::core::ptr::null_mut::<otl_Coverage>();
+    if !(tableLength < offset.wrapping_add(6 as uint32_t)) {
+        from = otl_iCoverage.read.expect("non-null function pointer")(
+            data as *const uint8_t,
+            tableLength,
+            offset.wrapping_add(read_16u(
+                data.offset(offset as isize)
+                    .offset(2 as ::core::ffi::c_int as isize) as *const uint8_t,
+            ) as uint32_t),
+        );
+        seqCount = read_16u(
+            data.offset(offset as isize)
+                .offset(4 as ::core::ffi::c_int as isize) as *const uint8_t,
+        ) as glyphid_t;
+        if !(seqCount as ::core::ffi::c_int != (*from).numGlyphs as ::core::ffi::c_int) {
+            if !(tableLength
+                < offset.wrapping_add(6 as uint32_t).wrapping_add(
+                    (seqCount as ::core::ffi::c_int * 2 as ::core::ffi::c_int) as uint32_t,
+                ))
+            {
+                let mut j: glyphid_t = 0 as glyphid_t;
+                while (j as ::core::ffi::c_int) < seqCount as ::core::ffi::c_int {
+                    let mut seqOffset: uint32_t = offset.wrapping_add(read_16u(
+                        data.offset(offset as isize)
+                            .offset(6 as ::core::ffi::c_int as isize)
+                            .offset((j as ::core::ffi::c_int * 2 as ::core::ffi::c_int) as isize)
+                            as *const uint8_t,
+                    )
+                        as uint32_t);
+                    let mut cov: *mut otl_Coverage =
+                        (
+                            otl_iCoverage.create.expect("non-null function pointer"))();
+                    let mut n: glyphid_t =
+                        read_16u(data.offset(seqOffset as isize) as *const uint8_t) as glyphid_t;
+                    let mut k: glyphid_t = 0 as glyphid_t;
+                    while (k as ::core::ffi::c_int) < n as ::core::ffi::c_int {
+                        otl_iCoverage.push.expect("non-null function pointer")(
+                            cov,
+                            otfcc_iHandle.fromIndex.expect("non-null function pointer")(read_16u(
+                                data.offset(seqOffset as isize)
+                                    .offset(2 as ::core::ffi::c_int as isize)
+                                    .offset(
+                                        (k as ::core::ffi::c_int * 2 as ::core::ffi::c_int)
+                                            as isize,
+                                    ) as *const uint8_t,
+                            )
+                                as glyphid_t) as otfcc_GlyphHandle,
+                        );
+                        k = k.wrapping_add(1);
+                    }
+                    iSubtable_gsub_multi
+                        .push
+                        .expect("non-null function pointer")(
+                        subtable,
+                        otl_GsubMultiEntry {
+                            from: otfcc_iHandle.dup.expect("non-null function pointer")(
+                                *(*from).glyphs.offset(j as isize) as otfcc_Handle,
+                            ) as otfcc_GlyphHandle,
+                            to: cov,
+                        },
+                    );
+                    j = j.wrapping_add(1);
+                }
+                otl_iCoverage.free.expect("non-null function pointer")(from);
+                return subtable as *mut otl_Subtable;
+            }
+        }
+    }
+    if !from.is_null() {
+        otl_iCoverage.free.expect("non-null function pointer")(from);
+    }
+    iSubtable_gsub_multi
+        .free
+        .expect("non-null function pointer")(subtable);
+    return ::core::ptr::null_mut::<otl_Subtable>();
+}
+#[no_mangle]
+pub unsafe extern "C" fn otl_gsub_dump_multi(
+    mut _subtable: *const otl_Subtable,
+) -> *mut json_value {
+    let mut subtable: *const subtable_gsub_multi = &raw const (*_subtable).gsub_multi;
+    let mut st: *mut json_value = json_object_new((*subtable).length);
+    let mut j: glyphid_t = 0 as glyphid_t;
+    while (j as size_t) < (*subtable).length {
+        json_object_push(
+            st,
+            (*(*subtable).items.offset(j as isize)).from.name as *const ::core::ffi::c_char,
+            otl_iCoverage.dump.expect("non-null function pointer")(
+                (*(*subtable).items.offset(j as isize)).to,
+            ),
+        );
+        j = j.wrapping_add(1);
+    }
+    return st;
+}
+#[no_mangle]
+pub unsafe extern "C" fn otl_gsub_parse_multi(
+    mut _subtable: *const json_value,
+    mut options: *const otfcc_Options,
+) -> *mut otl_Subtable {
+    let mut st: *mut subtable_gsub_multi =
+        (
+            iSubtable_gsub_multi
+                .create
+                .expect("non-null function pointer"))();
+    let mut k: glyphid_t = 0 as glyphid_t;
+    while (k as ::core::ffi::c_uint) < (*_subtable).u.object.length {
+        let mut _to: *mut json_value =
+            (*(*_subtable).u.object.values.offset(k as isize)).value as *mut json_value;
+        if !(_to.is_null()
+            || (*_to).type_0 as ::core::ffi::c_uint
+                != json_array as ::core::ffi::c_int as ::core::ffi::c_uint)
+        {
+            iSubtable_gsub_multi
+                .push
+                .expect("non-null function pointer")(
+                st,
+                otl_GsubMultiEntry {
+                    from: otfcc_iHandle.fromName.expect("non-null function pointer")(sdsnewlen(
+                        (*(*_subtable).u.object.values.offset(k as isize)).name
+                            as *const ::core::ffi::c_void,
+                        (*(*_subtable).u.object.values.offset(k as isize)).name_length as size_t,
+                    )) as otfcc_GlyphHandle,
+                    to: otl_iCoverage.parse.expect("non-null function pointer")(_to),
+                },
+            );
+        }
+        k = k.wrapping_add(1);
+    }
+    return st as *mut otl_Subtable;
+}
+unsafe extern "C" fn buildGsubMultiSubtableRange(
+    mut subtable: *const subtable_gsub_multi,
+    mut start: glyphid_t,
+    mut end: glyphid_t,
+) -> *mut caryll_Buffer {
+    let mut cov: *mut otl_Coverage = (
+        otl_iCoverage.create.expect("non-null function pointer"))();
+    let mut j: glyphid_t = start;
+    while (j as ::core::ffi::c_int) < end as ::core::ffi::c_int {
+        otl_iCoverage.push.expect("non-null function pointer")(
+            cov,
+            otfcc_iHandle.dup.expect("non-null function pointer")(
+                (*(*subtable).items.offset(j as isize)).from as otfcc_Handle,
+            ) as otfcc_GlyphHandle,
+        );
+        j = j.wrapping_add(1);
+    }
+    let mut root: *mut bk_Block = bk_new_Block(
+        b16 as ::core::ffi::c_int,
+        1 as ::core::ffi::c_int,
+        p16 as ::core::ffi::c_int,
+        bk_newBlockFromBuffer(otl_iCoverage.build.expect("non-null function pointer")(cov)),
+        b16 as ::core::ffi::c_int,
+        end as ::core::ffi::c_int - start as ::core::ffi::c_int,
+        bkover as ::core::ffi::c_int,
+    );
+    let mut j_0: glyphid_t = start;
+    while (j_0 as ::core::ffi::c_int) < end as ::core::ffi::c_int {
+        let mut b: *mut bk_Block = bk_new_Block(
+            b16 as ::core::ffi::c_int,
+            (*(*(*subtable).items.offset(j_0 as isize)).to).numGlyphs as ::core::ffi::c_int,
+            bkover as ::core::ffi::c_int,
+        );
+        let mut k: glyphid_t = 0 as glyphid_t;
+        while (k as ::core::ffi::c_int)
+            < (*(*(*subtable).items.offset(j_0 as isize)).to).numGlyphs as ::core::ffi::c_int
+        {
+            bk_push(
+                b,
+                b16 as ::core::ffi::c_int,
+                (*(*(*(*subtable).items.offset(j_0 as isize)).to)
+                    .glyphs
+                    .offset(k as isize))
+                .index as ::core::ffi::c_int,
+                bkover as ::core::ffi::c_int,
+            );
+            k = k.wrapping_add(1);
+        }
+        bk_push(
+            root,
+            p16 as ::core::ffi::c_int,
+            b,
+            bkover as ::core::ffi::c_int,
+        );
+        j_0 = j_0.wrapping_add(1);
+    }
+    otl_iCoverage.free.expect("non-null function pointer")(cov);
+    return bk_build_Block(root);
+}
+pub const GSUB_MULTI_SUBTABLE_SIZE_LIMIT: ::core::ffi::c_int = 0xff00 as ::core::ffi::c_int;
+#[no_mangle]
+pub unsafe extern "C" fn otfcc_build_gsub_multi_subtable_split(
+    mut _subtable: *const otl_Subtable,
+    mut heuristics: otl_BuildHeuristics,
+    mut count: *mut tableid_t,
+) -> *mut *mut caryll_Buffer {
+    let mut subtable: *const subtable_gsub_multi = &raw const (*_subtable).gsub_multi;
+    let mut parts: *mut *mut caryll_Buffer = ::core::ptr::null_mut::<*mut caryll_Buffer>();
+    let mut nParts: tableid_t = 0 as tableid_t;
+    let mut start: glyphid_t = 0 as glyphid_t;
+    while (start as size_t) < (*subtable).length {
+        let mut size: size_t = (6 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as size_t;
+        let mut end: glyphid_t = start;
+        while (end as size_t) < (*subtable).length {
+            let mut entrySize: size_t = ((2 as ::core::ffi::c_int
+                + 2 as ::core::ffi::c_int
+                + 2 as ::core::ffi::c_int) as size_t)
+                .wrapping_add(
+                    ((*(*(*subtable).items.offset(end as isize)).to).numGlyphs as size_t)
+                        .wrapping_mul(2 as size_t),
+                );
+            if end as ::core::ffi::c_int > start as ::core::ffi::c_int
+                && size.wrapping_add(entrySize) > GSUB_MULTI_SUBTABLE_SIZE_LIMIT as size_t
+            {
+                break;
+            }
+            size = size.wrapping_add(entrySize);
+            end = end.wrapping_add(1);
+        }
+        parts = __caryll_reallocate(
+            parts as *mut ::core::ffi::c_void,
+            (::core::mem::size_of::<*mut caryll_Buffer>() as size_t)
+                .wrapping_mul((nParts as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as size_t),
+            125 as ::core::ffi::c_ulong,
+        ) as *mut *mut caryll_Buffer;
+        let ref mut fresh2 = *parts.offset(nParts as isize);
+        *fresh2 = buildGsubMultiSubtableRange(subtable, start, end);
+        nParts = nParts.wrapping_add(1);
+        start = end;
+    }
+    if nParts == 0 {
+        parts = __caryll_reallocate(
+            parts as *mut ::core::ffi::c_void,
+            (::core::mem::size_of::<*mut caryll_Buffer>() as size_t).wrapping_mul(1 as size_t),
+            132 as ::core::ffi::c_ulong,
+        ) as *mut *mut caryll_Buffer;
+        let ref mut fresh3 = *parts.offset(0 as ::core::ffi::c_int as isize);
+        *fresh3 = buildGsubMultiSubtableRange(subtable, 0 as glyphid_t, 0 as glyphid_t);
+        nParts = 1 as tableid_t;
+    }
+    *count = nParts;
+    return parts;
+}
+#[no_mangle]
+pub unsafe extern "C" fn otfcc_build_gsub_multi_subtable(
+    mut _subtable: *const otl_Subtable,
+    mut heuristics: otl_BuildHeuristics,
+) -> *mut caryll_Buffer {
+    let mut subtable: *const subtable_gsub_multi = &raw const (*_subtable).gsub_multi;
+    return buildGsubMultiSubtableRange(subtable, 0 as glyphid_t, (*subtable).length as glyphid_t);
+}
+pub const __CARYLL_VECTOR_INITIAL_SIZE: ::core::ffi::c_int = 2 as ::core::ffi::c_int;

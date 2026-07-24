@@ -32,9 +32,11 @@ bin/
 .vscode/
 _test
 
-# c2rust migration: generated / machine-specific artifacts
+# c2rust migration: rust-migration/transpiled/ (the Rust source) IS committed
+# — it's the checked-in Rust port, not a build artifact regenerated per CI
+# run. Only its build output and the host-specific compile database aren't.
 compile_commands.json
-rust-migration/transpiled/
+rust-migration/transpiled/target/
 
 # Makefile is for local dev only
 makefile
