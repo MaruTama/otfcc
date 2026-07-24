@@ -26,9 +26,9 @@ extern "C" {
     fn sdsempty() -> sds;
     fn sdsfree(s: sds);
     fn sdscatprintf(s: sds, fmt: *const ::core::ffi::c_char, ...) -> sds;
-    static otfcc_iHandle: otfcc_HandlePackage;
 }
 
+use crate::src::lib::support::handle::{handle_consolidateTo, otfcc_Handle, otfcc_GlyphHandle, HANDLE_STATE_CONSOLIDATED, HANDLE_STATE_NAME, HANDLE_STATE_INDEX};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint8_t = u8;
@@ -109,35 +109,6 @@ pub struct UT_hash_table {
     pub signature: uint32_t,
 }
 pub type glyphid_t = uint16_t;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 pub type glyph_handle = otfcc_GlyphHandle;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -3712,9 +3683,7 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
             }
         }
         if !t.is_null() {
-            otfcc_iHandle
-                .consolidateTo
-                .expect("non-null function pointer")(
+            handle_consolidateTo(
                 h as *mut otfcc_Handle, (*t).gid, (*t).name
             );
             return true;
@@ -4037,9 +4006,7 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
             }
         }
         if !t.is_null() {
-            otfcc_iHandle
-                .consolidateTo
-                .expect("non-null function pointer")(
+            handle_consolidateTo(
                 h as *mut otfcc_Handle, (*t).gid, (*t).name
             );
             return true;
@@ -4363,9 +4330,7 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
             }
         }
         if !t_0.is_null() {
-            otfcc_iHandle
-                .consolidateTo
-                .expect("non-null function pointer")(
+            handle_consolidateTo(
                 h as *mut otfcc_Handle,
                 (*t_0).gid,
                 (*t_0).name,
@@ -4378,9 +4343,7 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
         let mut name: sds = ::core::ptr::null_mut::<::core::ffi::c_char>();
         otfcc_gordNameAFieldShared(go, (*h).index, &raw mut name);
         if !name.is_null() {
-            otfcc_iHandle
-                .consolidateTo
-                .expect("non-null function pointer")(
+            handle_consolidateTo(
                 h as *mut otfcc_Handle, (*h).index, name
             );
             return true;

@@ -46,7 +46,6 @@ extern "C" {
     fn bufwrite24b(buf: *mut caryll_Buffer, x: uint32_t);
     fn bufwrite32b(buf: *mut caryll_Buffer, x: uint32_t);
     fn bufwrite_buf(buf: *mut caryll_Buffer, that: *mut caryll_Buffer);
-    static otfcc_iHandle: otfcc_HandlePackage;
     fn json_object_new(length: size_t) -> *mut json_value;
     fn json_object_push(
         object: *mut json_value,
@@ -64,6 +63,7 @@ extern "C" {
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
 }
 
+use crate::src::lib::support::handle::{handle_fromIndex, handle_fromName, otfcc_Handle_dispose, otfcc_GlyphHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_8u, read_16u, read_24u, read_32u};
@@ -186,35 +186,6 @@ pub type ptrdiff_t = isize;
 pub type glyphid_t = uint16_t;
 pub type tableid_t = uint16_t;
 pub type unicode_t = uint32_t;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct UT_hash_bucket {
@@ -500,7 +471,7 @@ unsafe extern "C" fn disposeCmap(mut cmap: *mut table_cmap) {
         NULL_0
     }) as *mut cmap_Entry as *mut cmap_Entry;
     while !s.is_null() {
-        otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*s).glyph);
+        otfcc_Handle_dispose(&raw mut (*s).glyph);
         let mut _hd_hh_del: *mut UT_hash_handle = &raw mut (*s).hh;
         if (*_hd_hh_del).prev.is_null() && (*_hd_hh_del).next.is_null() {
             free((*(*(*cmap).unicodes).hh.tbl).buckets as *mut ::core::ffi::c_void);
@@ -569,7 +540,7 @@ unsafe extern "C" fn disposeCmap(mut cmap: *mut table_cmap) {
         NULL_0
     }) as *mut cmap_UVS_Entry as *mut cmap_UVS_Entry;
     while !s_0.is_null() {
-        otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*s_0).glyph);
+        otfcc_Handle_dispose(&raw mut (*s_0).glyph);
         let mut _hd_hh_del_0: *mut UT_hash_handle = &raw mut (*s_0).hh;
         if (*_hd_hh_del_0).prev.is_null() && (*_hd_hh_del_0).next.is_null() {
             free((*(*(*cmap).uvs).hh.tbl).buckets as *mut ::core::ffi::c_void);
@@ -996,7 +967,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapByIndex(
             ::core::mem::size_of::<cmap_Entry>() as size_t,
             38 as ::core::ffi::c_ulong,
         ) as *mut cmap_Entry;
-        (*s).glyph = otfcc_iHandle.fromIndex.expect("non-null function pointer")(gid as glyphid_t)
+        (*s).glyph = handle_fromIndex(gid as glyphid_t)
             as otfcc_GlyphHandle;
         (*s).unicode = c;
         let mut _ha_hashv: ::core::ffi::c_uint = 0;
@@ -1749,7 +1720,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapByName(
             51 as ::core::ffi::c_ulong,
         ) as *mut cmap_Entry;
         (*s).glyph =
-            otfcc_iHandle.fromName.expect("non-null function pointer")(name) as otfcc_GlyphHandle;
+            handle_fromName(name) as otfcc_GlyphHandle;
         (*s).unicode = c;
         let mut _ha_hashv: ::core::ffi::c_uint = 0;
         let mut _hj_i_0: ::core::ffi::c_uint = 0;
@@ -2495,7 +2466,7 @@ pub unsafe extern "C" fn otfcc_unmapCmap(
         }
     }
     if !s.is_null() {
-        otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*s).glyph);
+        otfcc_Handle_dispose(&raw mut (*s).glyph);
         let mut _hd_hh_del: *mut UT_hash_handle = &raw mut (*s).hh;
         if (*_hd_hh_del).prev.is_null() && (*_hd_hh_del).next.is_null() {
             free((*(*(*cmap).unicodes).hh.tbl).buckets as *mut ::core::ffi::c_void);
@@ -3178,7 +3149,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByIndex(
             ::core::mem::size_of::<cmap_UVS_Entry>() as size_t,
             87 as ::core::ffi::c_ulong,
         ) as *mut cmap_UVS_Entry;
-        (*s).glyph = otfcc_iHandle.fromIndex.expect("non-null function pointer")(gid as glyphid_t)
+        (*s).glyph = handle_fromIndex(gid as glyphid_t)
             as otfcc_GlyphHandle;
         (*s).key = c;
         let mut _ha_hashv: ::core::ffi::c_uint = 0;
@@ -3923,7 +3894,7 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByName(
             100 as ::core::ffi::c_ulong,
         ) as *mut cmap_UVS_Entry;
         (*s).glyph =
-            otfcc_iHandle.fromName.expect("non-null function pointer")(name) as otfcc_GlyphHandle;
+            handle_fromName(name) as otfcc_GlyphHandle;
         (*s).key = c;
         let mut _ha_hashv: ::core::ffi::c_uint = 0;
         let mut _hj_i_0: ::core::ffi::c_uint = 0;
@@ -4661,7 +4632,7 @@ pub unsafe extern "C" fn otfcc_unmapCmapUVS(
         }
     }
     if !s.is_null() {
-        otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*s).glyph);
+        otfcc_Handle_dispose(&raw mut (*s).glyph);
         let mut _hd_hh_del: *mut UT_hash_handle = &raw mut (*s).hh;
         if (*_hd_hh_del).prev.is_null() && (*_hd_hh_del).next.is_null() {
             free((*(*(*cmap).uvs).hh.tbl).buckets as *mut ::core::ffi::c_void);

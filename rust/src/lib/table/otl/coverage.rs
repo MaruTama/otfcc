@@ -46,9 +46,9 @@ extern "C" {
     fn buflen(buf: *mut caryll_Buffer) -> size_t;
     fn bufwrite16b(buf: *mut caryll_Buffer, x: uint16_t);
     fn bufwrite_bufdel(buf: *mut caryll_Buffer, that: *mut caryll_Buffer);
-    static otfcc_iHandle: otfcc_HandlePackage;
 }
 
+use crate::src::lib::support::handle::{handle_fromIndex, handle_fromName, otfcc_Handle_dispose, otfcc_Handle, otfcc_GlyphHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 use crate::src::lib::support::binio::{read_16u};
@@ -180,35 +180,6 @@ pub struct caryll_Buffer {
     pub data: *mut uint8_t,
 }
 pub type glyphid_t = uint16_t;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 pub type glyph_handle = otfcc_GlyphHandle;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -256,7 +227,7 @@ pub const HASH_SIGNATURE: ::core::ffi::c_uint = 0xa0111fe1 as ::core::ffi::c_uin
 unsafe extern "C" fn disposeCoverage(mut coverage: *mut otl_Coverage) {
     let mut j: glyphid_t = 0 as glyphid_t;
     while (j as ::core::ffi::c_int) < (*coverage).numGlyphs as ::core::ffi::c_int {
-        otfcc_iHandle.dispose.expect("non-null function pointer")(
+        otfcc_Handle_dispose(
             (*coverage).glyphs.offset(j as isize) as *mut otfcc_Handle,
         );
         j = j.wrapping_add(1);
@@ -349,7 +320,7 @@ unsafe extern "C" fn clearCoverage(mut coverage: *mut otl_Coverage, mut n: uint3
     }
     let mut j: glyphid_t = 0 as glyphid_t;
     while (j as ::core::ffi::c_int) < (*coverage).numGlyphs as ::core::ffi::c_int {
-        otfcc_iHandle.dispose.expect("non-null function pointer")(
+        otfcc_Handle_dispose(
             (*coverage).glyphs.offset(j as isize) as *mut otfcc_Handle,
         );
         j = j.wrapping_add(1);
@@ -1341,7 +1312,7 @@ unsafe extern "C" fn readCoverage(
             while !e.is_null() {
                 pushToCoverage(
                     coverage,
-                    otfcc_iHandle.fromIndex.expect("non-null function pointer")(
+                    handle_fromIndex(
                         (*e).gid as glyphid_t,
                     ) as otfcc_GlyphHandle,
                 );
@@ -2400,7 +2371,7 @@ unsafe extern "C" fn readCoverage(
             while !e_0.is_null() {
                 pushToCoverage(
                     coverage,
-                    otfcc_iHandle.fromIndex.expect("non-null function pointer")(
+                    handle_fromIndex(
                         (*e_0).gid as glyphid_t,
                     ) as otfcc_GlyphHandle,
                 );
@@ -2497,7 +2468,7 @@ unsafe extern "C" fn parseCoverage(mut cov: *const json_value) -> *mut otl_Cover
         {
             pushToCoverage(
                 c,
-                otfcc_iHandle.fromName.expect("non-null function pointer")(sdsnewlen(
+                handle_fromName(sdsnewlen(
                     (**(*cov).u.array.values.offset(j as isize)).u.string.ptr
                         as *const ::core::ffi::c_void,
                     (**(*cov).u.array.values.offset(j as isize)).u.string.length as size_t,
@@ -2650,7 +2621,7 @@ unsafe extern "C" fn shrinkCoverage(mut coverage: *mut otl_Coverage, mut dosort:
             k = k.wrapping_add(1);
             *(*coverage).glyphs.offset(fresh0 as isize) = *(*coverage).glyphs.offset(j as isize);
         } else {
-            otfcc_iHandle.dispose.expect("non-null function pointer")(
+            otfcc_Handle_dispose(
                 (*coverage).glyphs.offset(j as isize) as *mut otfcc_Handle,
             );
         }
@@ -2680,7 +2651,7 @@ unsafe extern "C" fn shrinkCoverage(mut coverage: *mut otl_Coverage, mut dosort:
                 ))
                 .index as ::core::ffi::c_int
             {
-                otfcc_iHandle.dispose.expect("non-null function pointer")(
+                otfcc_Handle_dispose(
                     (*coverage).glyphs.offset(rear as isize) as *mut otfcc_Handle,
                 );
                 skip = (skip as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as glyphid_t;

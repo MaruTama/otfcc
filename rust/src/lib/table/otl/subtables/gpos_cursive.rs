@@ -35,7 +35,6 @@ extern "C" {
     fn json_serialize_ex(buf: *mut ::core::ffi::c_char, _: *mut json_value, _: json_serialize_opts);
     fn json_builder_free(_: *mut json_value);
     fn sdsnewlen(init: *const ::core::ffi::c_void, initlen: size_t) -> sds;
-    static otfcc_iHandle: otfcc_HandlePackage;
     static otl_iCoverage: __otfcc_ICoverage;
     fn bk_new_Block(type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
     fn bk_push(b: *mut bk_Block, type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
@@ -51,6 +50,7 @@ extern "C" {
     fn otl_parse_anchor(v: *mut json_value) -> otl_Anchor;
     fn bkFromAnchor(a: otl_Anchor) -> *mut bk_Block;
 }
+use crate::src::lib::support::handle::{handle_fromName, otfcc_Handle_dispose, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle, HANDLE_STATE_EMPTY};
 use crate::src::lib::support::binio::{read_16u};
 use crate::src::lib::support::cvec::{
     cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
@@ -152,36 +152,6 @@ pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
 pub type tableid_t = uint16_t;
 pub type pos_t = ::core::ffi::c_double;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-pub type otfcc_LookupHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_ILoggerTarget {
@@ -664,7 +634,7 @@ unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {
     return xx;
 }
 unsafe extern "C" fn deleteGposCursiveEntry(mut entry: *mut otl_GposCursiveEntry) {
-    otfcc_iHandle.dispose.expect("non-null function pointer")(&raw mut (*entry).target);
+    otfcc_Handle_dispose(&raw mut (*entry).target);
 }
 static mut gss_typeinfo: __caryll_elementinterface_otl_GposCursiveEntry = {
     __caryll_elementinterface_otl_GposCursiveEntry {
@@ -1105,7 +1075,7 @@ pub unsafe extern "C" fn otl_read_gpos_cursive(
                             .expect("non-null function pointer")(
                             subtable,
                             otl_GposCursiveEntry {
-                                target: otfcc_iHandle.dup.expect("non-null function pointer")(
+                                target: otfcc_Handle_dup(
                                     *(*targets).glyphs.offset(j as isize) as otfcc_Handle,
                                 ) as otfcc_GlyphHandle,
                                 enter: enter,
@@ -1187,7 +1157,7 @@ pub unsafe extern "C" fn otl_gpos_parse_cursive(
                 .expect("non-null function pointer")(
                 subtable,
                 otl_GposCursiveEntry {
-                    target: otfcc_iHandle.fromName.expect("non-null function pointer")(gname)
+                    target: handle_fromName(gname)
                         as otfcc_GlyphHandle,
                     enter: otl_parse_anchor(json_obj_get(
                         (*(*_subtable).u.object.values.offset(j as isize)).value,
@@ -1216,7 +1186,7 @@ pub unsafe extern "C" fn otfcc_build_gpos_cursive(
     while (j as size_t) < (*subtable).length {
         otl_iCoverage.push.expect("non-null function pointer")(
             cov,
-            otfcc_iHandle.dup.expect("non-null function pointer")(
+            otfcc_Handle_dup(
                 (*(*subtable).items.offset(j as isize)).target as otfcc_Handle,
             ) as otfcc_GlyphHandle,
         );

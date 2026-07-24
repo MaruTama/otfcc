@@ -24,6 +24,8 @@ pub struct otfcc_Handle {
     pub index: glyphid_t,
     pub name: sds,
 }
+pub type otfcc_GlyphHandle = otfcc_Handle;
+pub type otfcc_LookupHandle = otfcc_Handle;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_HandlePackage {
@@ -66,7 +68,7 @@ unsafe extern "C" fn copyHandle(mut dst: *mut otfcc_Handle, mut src: *const otfc
     };
 }
 #[inline]
-unsafe extern "C" fn otfcc_Handle_empty() -> otfcc_Handle {
+pub(crate) unsafe extern "C" fn otfcc_Handle_empty() -> otfcc_Handle {
     let mut x: otfcc_Handle = otfcc_Handle {
         state: HANDLE_STATE_EMPTY,
         index: 0,
@@ -76,16 +78,16 @@ unsafe extern "C" fn otfcc_Handle_empty() -> otfcc_Handle {
     return x;
 }
 #[inline]
-unsafe extern "C" fn otfcc_Handle_copy(mut dst: *mut otfcc_Handle, mut src: *const otfcc_Handle) {
+pub(crate) unsafe extern "C" fn otfcc_Handle_copy(mut dst: *mut otfcc_Handle, mut src: *const otfcc_Handle) {
     copyHandle(dst, src);
 }
 #[inline]
-unsafe extern "C" fn otfcc_Handle_copyReplace(mut dst: *mut otfcc_Handle, src: otfcc_Handle) {
+pub(crate) unsafe extern "C" fn otfcc_Handle_copyReplace(mut dst: *mut otfcc_Handle, src: otfcc_Handle) {
     otfcc_Handle_dispose(dst);
     otfcc_Handle_copy(dst, &raw const src);
 }
 #[inline]
-unsafe extern "C" fn otfcc_Handle_dup(src: otfcc_Handle) -> otfcc_Handle {
+pub(crate) unsafe extern "C" fn otfcc_Handle_dup(src: otfcc_Handle) -> otfcc_Handle {
     let mut dst: otfcc_Handle = otfcc_Handle {
         state: HANDLE_STATE_EMPTY,
         index: 0,
@@ -95,15 +97,15 @@ unsafe extern "C" fn otfcc_Handle_dup(src: otfcc_Handle) -> otfcc_Handle {
     return dst;
 }
 #[inline]
-unsafe extern "C" fn otfcc_Handle_init(mut x: *mut otfcc_Handle) {
+pub(crate) unsafe extern "C" fn otfcc_Handle_init(mut x: *mut otfcc_Handle) {
     initHandle(x);
 }
 #[inline]
-unsafe extern "C" fn otfcc_Handle_dispose(mut x: *mut otfcc_Handle) {
+pub(crate) unsafe extern "C" fn otfcc_Handle_dispose(mut x: *mut otfcc_Handle) {
     disposeHandle(x as *mut otfcc_Handle);
 }
 #[inline]
-unsafe extern "C" fn otfcc_Handle_replace(mut dst: *mut otfcc_Handle, src: otfcc_Handle) {
+pub(crate) unsafe extern "C" fn otfcc_Handle_replace(mut dst: *mut otfcc_Handle, src: otfcc_Handle) {
     otfcc_Handle_dispose(dst);
     memcpy(
         dst as *mut ::core::ffi::c_void,
@@ -112,7 +114,7 @@ unsafe extern "C" fn otfcc_Handle_replace(mut dst: *mut otfcc_Handle, src: otfcc
     );
 }
 #[inline]
-unsafe extern "C" fn otfcc_Handle_move(mut dst: *mut otfcc_Handle, mut src: *mut otfcc_Handle) {
+pub(crate) unsafe extern "C" fn otfcc_Handle_move(mut dst: *mut otfcc_Handle, mut src: *mut otfcc_Handle) {
     memcpy(
         dst as *mut ::core::ffi::c_void,
         src as *const ::core::ffi::c_void,
@@ -120,7 +122,7 @@ unsafe extern "C" fn otfcc_Handle_move(mut dst: *mut otfcc_Handle, mut src: *mut
     );
     otfcc_Handle_init(src);
 }
-unsafe extern "C" fn handle_fromIndex(mut id: glyphid_t) -> otfcc_Handle {
+pub(crate) unsafe extern "C" fn handle_fromIndex(mut id: glyphid_t) -> otfcc_Handle {
     let mut h: otfcc_Handle = otfcc_Handle {
         state: HANDLE_STATE_INDEX,
         index: id,
@@ -128,7 +130,7 @@ unsafe extern "C" fn handle_fromIndex(mut id: glyphid_t) -> otfcc_Handle {
     };
     return h;
 }
-unsafe extern "C" fn handle_fromName(mut s: sds) -> otfcc_Handle {
+pub(crate) unsafe extern "C" fn handle_fromName(mut s: sds) -> otfcc_Handle {
     let mut h: otfcc_Handle = otfcc_Handle {
         state: HANDLE_STATE_EMPTY,
         index: 0 as glyphid_t,
@@ -140,7 +142,7 @@ unsafe extern "C" fn handle_fromName(mut s: sds) -> otfcc_Handle {
     }
     return h;
 }
-unsafe extern "C" fn handle_fromConsolidated(mut id: glyphid_t, mut s: sds) -> otfcc_Handle {
+pub(crate) unsafe extern "C" fn handle_fromConsolidated(mut id: glyphid_t, mut s: sds) -> otfcc_Handle {
     let mut h: otfcc_Handle = otfcc_Handle {
         state: HANDLE_STATE_CONSOLIDATED,
         index: id,
@@ -148,12 +150,12 @@ unsafe extern "C" fn handle_fromConsolidated(mut id: glyphid_t, mut s: sds) -> o
     };
     return h;
 }
-unsafe extern "C" fn handle_consolidateTo(
+pub(crate) unsafe extern "C" fn handle_consolidateTo(
     mut h: *mut otfcc_Handle,
     mut id: glyphid_t,
     mut name: sds,
 ) {
-    otfcc_iHandle.dispose.expect("non-null function pointer")(h as *mut otfcc_Handle);
+    otfcc_Handle_dispose(h as *mut otfcc_Handle);
     (*h).state = HANDLE_STATE_CONSOLIDATED;
     (*h).index = id;
     (*h).name = sdsdup(name);

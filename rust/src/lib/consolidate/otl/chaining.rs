@@ -5,7 +5,6 @@ extern "C" {
         __s1: *const ::core::ffi::c_char,
         __s2: *const ::core::ffi::c_char,
     ) -> ::core::ffi::c_int;
-    static otfcc_iHandle: otfcc_HandlePackage;
     static otl_iCoverage: __otfcc_ICoverage;
     fn fontop_consolidateCoverage(
         font: *mut otfcc_Font,
@@ -13,6 +12,7 @@ extern "C" {
         options: *const otfcc_Options,
     );
 }
+use crate::src::lib::support::handle::{handle_consolidateTo, otfcc_Handle_dispose, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle, HANDLE_STATE_INDEX};
 pub type __int8_t = i8;
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
@@ -130,19 +130,6 @@ pub struct table_TSI5 {
     pub classes: *mut glyphclass_t,
 }
 pub type glyphclass_t = uint16_t;
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct table_TSI {
@@ -572,7 +559,6 @@ pub struct otl_ChainLookupApplication {
     pub index: tableid_t,
     pub lookup: otfcc_LookupHandle,
 }
-pub type otfcc_LookupHandle = otfcc_Handle;
 pub type otl_chaining_type = ::core::ffi::c_uint;
 pub const otl_chaining_classified: otl_chaining_type = 2;
 pub const otl_chaining_poly: otl_chaining_type = 1;
@@ -1329,22 +1315,6 @@ pub struct C2RustUnnamed_7 {
 pub type json_value = _json_value;
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
 pub struct otfcc_ILoggerTarget {
     pub dispose: Option<unsafe extern "C" fn(*mut otfcc_ILoggerTarget) -> ()>,
     pub push: Option<unsafe extern "C" fn(*mut otfcc_ILoggerTarget, sds) -> ()>,
@@ -1498,9 +1468,7 @@ pub unsafe extern "C" fn consolidate_chaining(
                         ) != 0 as ::core::ffi::c_int)
                         {
                             foundLookup = true;
-                            otfcc_iHandle
-                                .consolidateTo
-                                .expect("non-null function pointer")(
+                            handle_consolidateTo(
                                 h as *mut otfcc_Handle,
                                 k as glyphid_t,
                                 (**(*table).lookups.items.offset(k as isize)).name,
@@ -1526,7 +1494,7 @@ pub unsafe extern "C" fn consolidate_chaining(
                         (*(*rule).apply.offset(j_0 as isize)).lookup.name,
                     ),
                 );
-                otfcc_iHandle.dispose.expect("non-null function pointer")(
+                otfcc_Handle_dispose(
                     &raw mut (*(*rule).apply.offset(j_0 as isize)).lookup,
                 );
             }
@@ -1549,9 +1517,7 @@ pub unsafe extern "C" fn consolidate_chaining(
                 );
                 (*h).index = 0 as glyphid_t;
             }
-            otfcc_iHandle
-                .consolidateTo
-                .expect("non-null function pointer")(
+            handle_consolidateTo(
                 h as *mut otfcc_Handle,
                 (*h).index,
                 (**(*table).lookups.items.offset((*h).index as isize)).name,

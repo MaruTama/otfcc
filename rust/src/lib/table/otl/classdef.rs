@@ -48,9 +48,9 @@ extern "C" {
     fn bufnew() -> *mut caryll_Buffer;
     fn bufwrite16b(buf: *mut caryll_Buffer, x: uint16_t);
     fn bufwrite_bufdel(buf: *mut caryll_Buffer, that: *mut caryll_Buffer);
-    static otfcc_iHandle: otfcc_HandlePackage;
 }
 
+use crate::src::lib::support::handle::{handle_fromIndex, handle_fromName, otfcc_Handle_dispose, otfcc_Handle, otfcc_GlyphHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 use crate::src::lib::support::binio::{read_16u};
@@ -183,35 +183,6 @@ pub struct caryll_Buffer {
 }
 pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 pub type glyph_handle = otfcc_GlyphHandle;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -275,7 +246,7 @@ unsafe extern "C" fn disposeClassDef(mut cd: *mut otl_ClassDef) {
     if !(*cd).glyphs.is_null() {
         let mut j: glyphid_t = 0 as glyphid_t;
         while (j as ::core::ffi::c_int) < (*cd).numGlyphs as ::core::ffi::c_int {
-            otfcc_iHandle.dispose.expect("non-null function pointer")(
+            otfcc_Handle_dispose(
                 (*cd).glyphs.offset(j as isize) as *mut otfcc_Handle,
             );
             j = j.wrapping_add(1);
@@ -427,7 +398,7 @@ unsafe extern "C" fn readClassDef(
             while (j as ::core::ffi::c_int) < count as ::core::ffi::c_int {
                 pushClassDef(
                     cd,
-                    otfcc_iHandle.fromIndex.expect("non-null function pointer")(
+                    handle_fromIndex(
                         (startGID as ::core::ffi::c_int + j as ::core::ffi::c_int) as glyphid_t,
                     ) as otfcc_GlyphHandle,
                     read_16u(
@@ -1410,7 +1381,7 @@ unsafe extern "C" fn readClassDef(
         while !e.is_null() {
             pushClassDef(
                 cd,
-                otfcc_iHandle.fromIndex.expect("non-null function pointer")((*e).gid as glyphid_t)
+                handle_fromIndex((*e).gid as glyphid_t)
                     as otfcc_GlyphHandle,
                 (*e).covIndex as glyphclass_t,
             );
@@ -3011,7 +2982,7 @@ unsafe extern "C" fn expandClassDef(
     while !e.is_null() {
         pushClassDef(
             cd,
-            otfcc_iHandle.fromIndex.expect("non-null function pointer")((*e).gid as glyphid_t)
+            handle_fromIndex((*e).gid as glyphid_t)
                 as otfcc_GlyphHandle,
             (*e).covIndex as glyphclass_t,
         );
@@ -3096,7 +3067,7 @@ unsafe extern "C" fn parseClassDef(mut _cd: *const json_value) -> *mut otl_Class
     let mut j: glyphid_t = 0 as glyphid_t;
     while (j as ::core::ffi::c_uint) < (*_cd).u.object.length {
         let mut h: glyph_handle =
-            otfcc_iHandle.fromName.expect("non-null function pointer")(sdsnewlen(
+            handle_fromName(sdsnewlen(
                 (*(*_cd).u.object.values.offset(j as isize)).name as *const ::core::ffi::c_void,
                 (*(*_cd).u.object.values.offset(j as isize)).name_length as size_t,
             )) as glyph_handle;
@@ -3213,7 +3184,7 @@ unsafe extern "C" fn shrinkClassDef(mut cd: *mut otl_ClassDef) {
             *(*cd).classes.offset(k as isize) = *(*cd).classes.offset(j as isize);
             k = k.wrapping_add(1);
         } else {
-            otfcc_iHandle.dispose.expect("non-null function pointer")(
+            otfcc_Handle_dispose(
                 (*cd).glyphs.offset(j as isize) as *mut otfcc_Handle,
             );
         }

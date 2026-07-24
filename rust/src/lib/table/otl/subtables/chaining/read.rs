@@ -9,12 +9,12 @@ extern "C" {
     fn exit(__status: ::core::ffi::c_int) -> !;
     fn sdsempty() -> sds;
     fn sdscatprintf(s: sds, fmt: *const ::core::ffi::c_char, ...) -> sds;
-    static otfcc_iHandle: otfcc_HandlePackage;
     static otl_iCoverage: __otfcc_ICoverage;
     static otl_iClassDef: __otfcc_IClassDef;
     static iSubtable_chaining: __caryll_elementinterface_subtable_chaining;
 }
 
+use crate::src::lib::support::handle::{handle_fromIndex, otfcc_Handle_dispose, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_16u};
@@ -101,36 +101,6 @@ pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
 pub type tableid_t = uint16_t;
 pub type pos_t = ::core::ffi::c_double;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-pub type otfcc_LookupHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_ILoggerTarget {
@@ -549,7 +519,7 @@ pub unsafe extern "C" fn singleCoverage(
         16 as ::core::ffi::c_ulong,
     ) as *mut otfcc_GlyphHandle;
     *(*cov).glyphs.offset(0 as ::core::ffi::c_int as isize) =
-        otfcc_iHandle.fromIndex.expect("non-null function pointer")(gid) as otfcc_GlyphHandle;
+        handle_fromIndex(gid) as otfcc_GlyphHandle;
     return cov;
 }
 #[no_mangle]
@@ -640,7 +610,7 @@ pub unsafe extern "C" fn classCoverage(
                 let fresh12 = jj;
                 jj = jj.wrapping_add(1);
                 *(*cov).glyphs.offset(fresh12 as isize) =
-                    otfcc_iHandle.fromIndex.expect("non-null function pointer")(k_0)
+                    handle_fromIndex(k_0)
                         as otfcc_GlyphHandle;
             }
             k_0 = k_0.wrapping_add(1);
@@ -654,7 +624,7 @@ pub unsafe extern "C" fn classCoverage(
                 let fresh13 = jj;
                 jj = jj.wrapping_add(1);
                 *(*cov).glyphs.offset(fresh13 as isize) =
-                    otfcc_iHandle.dup.expect("non-null function pointer")(
+                    otfcc_Handle_dup(
                         *(*cd).glyphs.offset(j_2 as isize) as otfcc_Handle,
                     ) as otfcc_GlyphHandle;
             }
@@ -790,7 +760,7 @@ pub unsafe extern "C" fn GeneralReadContextualRule(
                     ) as ::core::ffi::c_int)
                     as tableid_t;
                 (*(*rule).apply.offset(j_0 as isize)).lookup =
-                    otfcc_iHandle.fromIndex.expect("non-null function pointer")(read_16u(
+                    handle_fromIndex(read_16u(
                         data.offset(offset as isize)
                             .offset(4 as ::core::ffi::c_int as isize)
                             .offset(
@@ -1419,7 +1389,7 @@ pub unsafe extern "C" fn GeneralReadChainingRule(
                                 ) as ::core::ffi::c_int)
                                 as tableid_t;
                             (*(*rule).apply.offset(j_2 as isize)).lookup =
-                                otfcc_iHandle.fromIndex.expect("non-null function pointer")(
+                                handle_fromIndex(
                                     read_16u(
                                         data.offset(offset as isize)
                                             .offset(8 as ::core::ffi::c_int as isize)
@@ -1847,7 +1817,7 @@ unsafe extern "C" fn closeRule(mut rule: *mut otl_ChainingRule) {
     if !rule.is_null() && !(*rule).apply.is_null() {
         let mut j: tableid_t = 0 as tableid_t;
         while (j as ::core::ffi::c_int) < (*rule).applyCount as ::core::ffi::c_int {
-            otfcc_iHandle.dispose.expect("non-null function pointer")(
+            otfcc_Handle_dispose(
                 &raw mut (*(*rule).apply.offset(j as isize)).lookup,
             );
             j = j.wrapping_add(1);

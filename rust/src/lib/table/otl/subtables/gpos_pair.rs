@@ -51,7 +51,6 @@ extern "C" {
     fn json_measure_ex(_: *mut json_value, _: json_serialize_opts) -> size_t;
     fn json_serialize_ex(buf: *mut ::core::ffi::c_char, _: *mut json_value, _: json_serialize_opts);
     fn json_builder_free(_: *mut json_value);
-    static otfcc_iHandle: otfcc_HandlePackage;
     static otl_iCoverage: __otfcc_ICoverage;
     static otl_iClassDef: __otfcc_IClassDef;
     fn bk_new_Block(type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
@@ -78,6 +77,7 @@ extern "C" {
     fn gpos_parse_value(pos: *mut json_value) -> otl_PositionValue;
 }
 
+use crate::src::lib::support::handle::{handle_fromIndex, otfcc_Handle_dup, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_16u};
@@ -212,36 +212,6 @@ pub type glyphid_t = uint16_t;
 pub type glyphclass_t = uint16_t;
 pub type tableid_t = uint16_t;
 pub type pos_t = ::core::ffi::c_double;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
-pub type otfcc_LookupHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_ILoggerTarget {
@@ -2468,7 +2438,7 @@ pub unsafe extern "C" fn otl_read_gpos_pair(
                                 as *mut pair_classifier_hash;
                             while !s_1.is_null() {
                                 *(*(*subtable).second).glyphs.offset(jj as isize) =
-                                    otfcc_iHandle.fromIndex.expect("non-null function pointer")(
+                                    handle_fromIndex(
                                         (*s_1).gid as glyphid_t,
                                     ) as otfcc_GlyphHandle;
                                 *(*(*subtable).second).classes.offset(jj as isize) =
@@ -2908,7 +2878,7 @@ unsafe extern "C" fn covFromCD(mut cd: *mut otl_ClassDef) -> *mut otl_Coverage {
     ) as *mut otfcc_GlyphHandle;
     let mut j: glyphid_t = 0 as glyphid_t;
     while (j as ::core::ffi::c_int) < (*cd).numGlyphs as ::core::ffi::c_int {
-        *(*cov).glyphs.offset(j as isize) = otfcc_iHandle.dup.expect("non-null function pointer")(
+        *(*cov).glyphs.offset(j as isize) = otfcc_Handle_dup(
             *(*cd).glyphs.offset(j as isize) as otfcc_Handle,
         ) as otfcc_GlyphHandle;
         j = j.wrapping_add(1);

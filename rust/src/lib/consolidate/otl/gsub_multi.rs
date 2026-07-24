@@ -22,7 +22,6 @@ extern "C" {
         __s2: *const ::core::ffi::c_void,
         __n: size_t,
     ) -> ::core::ffi::c_int;
-    static otfcc_iHandle: otfcc_HandlePackage;
     static otfcc_pkgGlyphOrder: otfcc_GlyphOrderPackage;
     static iSubtable_gsub_multi: __caryll_vectorinterface_subtable_gsub_multi;
     static otl_iCoverage: __otfcc_ICoverage;
@@ -33,6 +32,7 @@ extern "C" {
     );
 }
 
+use crate::src::lib::support::handle::{handle_fromConsolidated, otfcc_Handle, otfcc_GlyphHandle, otfcc_LookupHandle};
 use crate::src::lib::support::stdio::FILE;
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __int8_t = i8;
@@ -152,19 +152,6 @@ pub struct table_TSI5 {
     pub classes: *mut glyphclass_t,
 }
 pub type glyphclass_t = uint16_t;
-pub type otfcc_GlyphHandle = otfcc_Handle;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct table_TSI {
@@ -594,7 +581,6 @@ pub struct otl_ChainLookupApplication {
     pub index: tableid_t,
     pub lookup: otfcc_LookupHandle,
 }
-pub type otfcc_LookupHandle = otfcc_Handle;
 pub type otl_chaining_type = ::core::ffi::c_uint;
 pub const otl_chaining_classified: otl_chaining_type = 2;
 pub const otl_chaining_poly: otl_chaining_type = 1;
@@ -1349,22 +1335,6 @@ pub struct C2RustUnnamed_7 {
     pub ptr: *mut ::core::ffi::c_char,
 }
 pub type json_value = _json_value;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_HandlePackage {
-    pub init: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub copy: Option<unsafe extern "C" fn(*mut otfcc_Handle, *const otfcc_Handle) -> ()>,
-    pub move_0: Option<unsafe extern "C" fn(*mut otfcc_Handle, *mut otfcc_Handle) -> ()>,
-    pub dispose: Option<unsafe extern "C" fn(*mut otfcc_Handle) -> ()>,
-    pub replace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub copyReplace: Option<unsafe extern "C" fn(*mut otfcc_Handle, otfcc_Handle) -> ()>,
-    pub empty: Option<unsafe extern "C" fn() -> otfcc_Handle>,
-    pub dup: Option<unsafe extern "C" fn(otfcc_Handle) -> otfcc_Handle>,
-    pub fromIndex: Option<unsafe extern "C" fn(glyphid_t) -> otfcc_Handle>,
-    pub fromName: Option<unsafe extern "C" fn(sds) -> otfcc_Handle>,
-    pub fromConsolidated: Option<unsafe extern "C" fn(glyphid_t, sds) -> otfcc_Handle>,
-    pub consolidateTo: Option<unsafe extern "C" fn(*mut otfcc_Handle, glyphid_t, sds) -> ()>,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct otfcc_ILoggerTarget {
@@ -2533,9 +2503,7 @@ pub unsafe extern "C" fn consolidate_gsub_multi(
             .expect("non-null function pointer")(
             subtable,
             otl_GsubMultiEntry {
-                from: otfcc_iHandle
-                    .fromConsolidated
-                    .expect("non-null function pointer")(
+                from: handle_fromConsolidated(
                     (*s_0).fromid as glyphid_t,
                     (*s_0).fromname,
                 ) as otfcc_GlyphHandle,

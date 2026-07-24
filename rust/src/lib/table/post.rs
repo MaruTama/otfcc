@@ -39,6 +39,7 @@ extern "C" {
     fn json_double_new(_: ::core::ffi::c_double) -> *mut json_value;
     fn json_boolean_new(_: ::core::ffi::c_int) -> *mut json_value;
 }
+use crate::src::lib::support::handle::{otfcc_GlyphHandle};
 use crate::src::lib::support::binio::{read_16u, read_32u, read_32s};
 pub type __uint8_t = u8;
 pub type __int16_t = i16;
@@ -160,19 +161,6 @@ pub struct caryll_Buffer {
 pub type ptrdiff_t = isize;
 pub type f16dot16 = int32_t;
 pub type glyphid_t = uint16_t;
-pub type handle_state = ::core::ffi::c_uint;
-pub const HANDLE_STATE_CONSOLIDATED: handle_state = 3;
-pub const HANDLE_STATE_NAME: handle_state = 2;
-pub const HANDLE_STATE_INDEX: handle_state = 1;
-pub const HANDLE_STATE_EMPTY: handle_state = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct otfcc_Handle {
-    pub state: handle_state,
-    pub index: glyphid_t,
-    pub name: sds,
-}
-pub type otfcc_GlyphHandle = otfcc_Handle;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct UT_hash_bucket {
