@@ -861,7 +861,7 @@ pub unsafe extern "C" fn otfcc_dumpBASE(
             b"BASE\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _base: *mut json_value = json_object_new(2 as size_t);
         if !(*base).horizontal.is_null() {
@@ -883,7 +883,7 @@ pub unsafe extern "C" fn otfcc_dumpBASE(
             b"BASE\0" as *const u8 as *const ::core::ffi::c_char,
             _base,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1001,7 +1001,7 @@ pub unsafe extern "C" fn otfcc_parseBASE(
                 b"BASE\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             base = __caryll_allocate_clean(
                 ::core::mem::size_of::<table_BASE>() as size_t,
@@ -1017,7 +1017,7 @@ pub unsafe extern "C" fn otfcc_parseBASE(
                 b"vertical\0" as *const u8 as *const ::core::ffi::c_char,
                 json_object,
             ));
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -1049,11 +1049,11 @@ pub unsafe extern "C" fn axisToBk(mut axis: *const otl_BaseAxis) -> *mut bk_Bloc
         let mut entry: *mut otl_BaseScriptEntry =
             (*axis).entries.offset(j as isize) as *mut otl_BaseScriptEntry;
         if (*entry).defaultBaselineTag != 0 {
-            let mut found: bool = false_0 != 0;
+            let mut found: bool = false;
             let mut jk: tableid_t = 0 as tableid_t;
             while (jk as ::core::ffi::c_int) < taglist.size as ::core::ffi::c_int {
                 if *taglist.items.offset(jk as isize) == (*entry).defaultBaselineTag {
-                    found = true_0 != 0;
+                    found = true;
                     break;
                 } else {
                     jk = jk.wrapping_add(1);
@@ -1076,11 +1076,11 @@ pub unsafe extern "C" fn axisToBk(mut axis: *const otl_BaseAxis) -> *mut bk_Bloc
         let mut k: tableid_t = 0 as tableid_t;
         while (k as ::core::ffi::c_int) < (*entry).baseValuesCount as ::core::ffi::c_int {
             let mut tag: uint32_t = (*(*entry).baseValues.offset(k as isize)).tag;
-            let mut found_0: bool = false_0 != 0;
+            let mut found_0: bool = false;
             let mut jk_0: tableid_t = 0 as tableid_t;
             while (jk_0 as ::core::ffi::c_int) < taglist.size as ::core::ffi::c_int {
                 if *taglist.items.offset(jk_0 as isize) == tag {
-                    found_0 = true_0 != 0;
+                    found_0 = true;
                     break;
                 } else {
                     jk_0 = jk_0.wrapping_add(1);
@@ -1164,14 +1164,14 @@ pub unsafe extern "C" fn axisToBk(mut axis: *const otl_BaseAxis) -> *mut bk_Bloc
         );
         let mut m_0: size_t = 0 as size_t;
         while m_0 < taglist.size as size_t {
-            let mut found_1: bool = false_0 != 0;
+            let mut found_1: bool = false;
             let mut foundIndex: tableid_t = 0 as tableid_t;
             let mut k_0: tableid_t = 0 as tableid_t;
             while (k_0 as ::core::ffi::c_int) < (*entry_0).baseValuesCount as ::core::ffi::c_int {
                 if (*(*entry_0).baseValues.offset(k_0 as isize)).tag
                     == *taglist.items.offset(m_0 as isize)
                 {
-                    found_1 = true_0 != 0;
+                    found_1 = true;
                     foundIndex = k_0;
                     break;
                 } else {

@@ -1084,7 +1084,7 @@ unsafe extern "C" fn json_obj_getbool(
         || (*obj).type_0 as ::core::ffi::c_uint
             != json_object as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return false_0 != 0;
+        return false;
     }
     let mut _k: uint32_t = 0 as uint32_t;
     while _k < (*obj).u.object.length as uint32_t {
@@ -1101,7 +1101,7 @@ unsafe extern "C" fn json_obj_getbool(
         }
         _k = _k.wrapping_add(1);
     }
-    return false_0 != 0;
+    return false;
 }
 #[inline]
 unsafe extern "C" fn otfcc_parse_flags(
@@ -1141,7 +1141,7 @@ unsafe extern "C" fn _parse_lookup(
     mut options: *const otfcc_Options,
     mut lh: *mut *mut lookup_hash,
 ) -> bool {
-    let mut parsed: bool = false_0 != 0;
+    let mut parsed: bool = false;
     if !parsed {
         parsed = _declareLookupParser(
             *(&raw mut tableNames as *mut *const ::core::ffi::c_char)
@@ -1410,7 +1410,7 @@ unsafe extern "C" fn _declareLookupParser(
                 ),
             );
         }
-        return false_0 != 0;
+        return false;
     }
     let mut item: *mut lookup_hash = ::core::ptr::null_mut::<lookup_hash>();
     let mut _hf_hashv: ::core::ffi::c_uint = 0;
@@ -1723,7 +1723,7 @@ unsafe extern "C" fn _declareLookupParser(
                 lookupName,
             ),
         );
-        return false_0 != 0;
+        return false;
     }
     let mut _subtables: *mut json_value = json_obj_get_type(
         _lookup,
@@ -1744,7 +1744,7 @@ unsafe extern "C" fn _declareLookupParser(
                 lookupName,
             ),
         );
-        return false_0 != 0;
+        return false;
     }
     let mut lookup: *mut otl_Lookup = ::core::ptr::null_mut::<otl_Lookup>();
     otl_iLookupPtr.init.expect("non-null function pointer")(&raw mut lookup);
@@ -1776,7 +1776,7 @@ unsafe extern "C" fn _declareLookupParser(
             lookupName,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut j: tableid_t = 0 as tableid_t;
         while (j as ::core::ffi::c_int) < subtableCount as ::core::ffi::c_int {
@@ -1795,7 +1795,7 @@ unsafe extern "C" fn _declareLookupParser(
             }
             j = j.wrapping_add(1);
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1815,7 +1815,7 @@ unsafe extern "C" fn _declareLookupParser(
             ),
         );
         otfcc_delete_lookup(lookup);
-        return false_0 != 0;
+        return false;
     }
     item = __caryll_allocate_clean(
         ::core::mem::size_of::<lookup_hash>() as size_t,
@@ -2243,7 +2243,7 @@ unsafe extern "C" fn _declareLookupParser(
             }
         }
     }
-    return true_0 != 0;
+    return true;
 }
 unsafe extern "C" fn figureOutLookupsFromJSON(
     mut lookups: *mut json_value,
@@ -3133,7 +3133,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
     if (*options).merge_features {
         feature_merger_activate(
             features,
-            true_0 != 0,
+            true,
             b"feature\0" as *const u8 as *const ::core::ffi::c_char,
             options,
         );
@@ -3840,7 +3840,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                         194 as ::core::ffi::c_ulong,
                     ) as *mut feature_hash;
                     (*s).name = sdsnew(featureName) as *mut ::core::ffi::c_char;
-                    (*s).alias = false_0 != 0;
+                    (*s).alias = false;
                     otl_iFeaturePtr.init.expect("non-null function pointer")(&raw mut (*s).feature);
                     (*(*s).feature).name = sdsdup((*s).name as sds);
                     otl_iLookupRefList
@@ -4671,7 +4671,7 @@ unsafe extern "C" fn figureOutFeaturesFromJSON(
                     ::core::mem::size_of::<feature_hash>() as size_t,
                     220 as ::core::ffi::c_ulong,
                 ) as *mut feature_hash;
-                (*dup).alias = true_0 != 0;
+                (*dup).alias = true;
                 (*dup).name = sdsnew(featureName) as *mut ::core::ffi::c_char;
                 (*dup).feature = (*s_0).feature;
                 let mut _ha_hashv_0: ::core::ffi::c_uint = 0;
@@ -6753,7 +6753,7 @@ pub unsafe extern "C" fn otfcc_parseOtl(
                     tag,
                 ),
             );
-            let mut ___loggedstep_v: bool = true_0 != 0;
+            let mut ___loggedstep_v: bool = true;
             loop {
                 if !___loggedstep_v {
                     current_block = 5279571973604048562;
@@ -7783,7 +7783,7 @@ pub unsafe extern "C" fn otfcc_parseOtl(
                         }) as *mut language_hash
                             as *mut language_hash;
                     }
-                    ___loggedstep_v = false_0 != 0;
+                    ___loggedstep_v = false;
                     (*(*options).logger)
                         .finish
                         .expect("non-null function pointer")(

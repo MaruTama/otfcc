@@ -2714,7 +2714,7 @@ pub unsafe extern "C" fn otfcc_dumpFvar(
             b"fvar\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut t: *mut json_value = json_object_new(2 as size_t);
         let mut _axes: *mut json_value = json_object_new((*table).axes.length);
@@ -2836,7 +2836,7 @@ pub unsafe extern "C" fn otfcc_dumpFvar(
             b"fvar\0" as *const u8 as *const ::core::ffi::c_char,
             t,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

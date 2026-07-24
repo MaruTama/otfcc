@@ -1983,7 +1983,7 @@ unsafe extern "C" fn classCompatible(
             }
             j_0 = j_0.wrapping_add(1);
         }
-        let mut allcheck: bool = true_0 != 0;
+        let mut allcheck: bool = true;
         ss = *h;
         while !ss.is_null() {
             if (*ss).cls == (*s).cls {
@@ -2314,7 +2314,7 @@ unsafe extern "C" fn classCompatible(
                     }
                 }
                 if rss_0.is_null() {
-                    allcheck = false_0 != 0;
+                    allcheck = false;
                     break;
                 }
             }
@@ -4105,7 +4105,7 @@ pub unsafe extern "C" fn tryClassifyAround(
                         .chaining
                         .c2rust_unnamed
                         .rule;
-                let mut allcheck: bool = true_0 != 0;
+                let mut allcheck: bool = true;
                 let mut m_0: tableid_t = 0 as tableid_t;
                 while (m_0 as ::core::ffi::c_int) < (*rule).matchCount as ::core::ffi::c_int {
                     let mut check_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -4130,7 +4130,7 @@ pub unsafe extern "C" fn tryClassifyAround(
                         );
                     }
                     if check_0 == 0 {
-                        allcheck = false_0 != 0;
+                        allcheck = false;
                         break 's_74;
                     } else {
                         m_0 = m_0.wrapping_add(1);

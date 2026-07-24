@@ -1902,7 +1902,7 @@ pub unsafe extern "C" fn otl_parseMarkArray(
                     sdsfree(className);
                 }
                 mark.markClass = (*s).classID;
-                mark.anchor.present = true_0 != 0;
+                mark.anchor.present = true;
                 mark.anchor.x = json_obj_getnum(
                     anchorRecord,
                     b"x\0" as *const u8 as *const ::core::ffi::c_char,
@@ -2409,7 +2409,7 @@ pub unsafe extern "C" fn otl_parseMarkArray(
 #[no_mangle]
 pub unsafe extern "C" fn otl_anchor_absent() -> otl_Anchor {
     let mut anchor: otl_Anchor = otl_Anchor {
-        present: false_0 != 0,
+        present: false,
         x: 0 as ::core::ffi::c_int as pos_t,
         y: 0 as ::core::ffi::c_int as pos_t,
     };
@@ -2422,17 +2422,17 @@ pub unsafe extern "C" fn otl_read_anchor(
     mut offset: uint32_t,
 ) -> otl_Anchor {
     let mut anchor: otl_Anchor = otl_Anchor {
-        present: false_0 != 0,
+        present: false,
         x: 0 as ::core::ffi::c_int as pos_t,
         y: 0 as ::core::ffi::c_int as pos_t,
     };
     if tableLength < offset.wrapping_add(6 as uint32_t) {
-        anchor.present = false_0 != 0;
+        anchor.present = false;
         anchor.x = 0 as ::core::ffi::c_int as pos_t;
         anchor.y = 0 as ::core::ffi::c_int as pos_t;
         return anchor;
     } else {
-        anchor.present = true_0 != 0;
+        anchor.present = true;
         anchor.x = read_16s(
             data.offset(offset as isize)
                 .offset(2 as ::core::ffi::c_int as isize) as *const uint8_t,
@@ -2466,7 +2466,7 @@ pub unsafe extern "C" fn otl_dump_anchor(mut a: otl_Anchor) -> *mut json_value {
 #[no_mangle]
 pub unsafe extern "C" fn otl_parse_anchor(mut v: *mut json_value) -> otl_Anchor {
     let mut anchor: otl_Anchor = otl_Anchor {
-        present: false_0 != 0,
+        present: false,
         x: 0 as ::core::ffi::c_int as pos_t,
         y: 0 as ::core::ffi::c_int as pos_t,
     };
@@ -2476,7 +2476,7 @@ pub unsafe extern "C" fn otl_parse_anchor(mut v: *mut json_value) -> otl_Anchor 
     {
         return anchor;
     }
-    anchor.present = true_0 != 0;
+    anchor.present = true;
     anchor.x = json_obj_getnum_fallback(
         v,
         b"x\0" as *const u8 as *const ::core::ffi::c_char,

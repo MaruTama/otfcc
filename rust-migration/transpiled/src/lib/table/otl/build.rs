@@ -834,10 +834,10 @@ unsafe extern "C" fn _declare_lookup_writer(
         }
         if totalBufSizeShort > LARGE_SUBTABLE_LIMIT as size_t {
             *lastOffset = (*lastOffset).wrapping_add(totalBufSizeExt);
-            *preferExtensionForThisLUT = true_0 != 0;
+            *preferExtensionForThisLUT = true;
         } else {
             *lastOffset = (*lastOffset).wrapping_add(totalBufSizeShort);
-            *preferExtensionForThisLUT = false_0 != 0;
+            *preferExtensionForThisLUT = false;
         }
         return (*lookup).subtables.length as tableid_t;
     }
@@ -888,10 +888,10 @@ unsafe extern "C" fn _declare_lookup_writer_split(
         if totalBufSizeShort > LARGE_SUBTABLE_LIMIT as size_t {
             *lastOffset = (*lastOffset)
                 .wrapping_add((8 as ::core::ffi::c_int * total as ::core::ffi::c_int) as size_t);
-            *preferExtensionForThisLUT = true_0 != 0;
+            *preferExtensionForThisLUT = true;
         } else {
             *lastOffset = (*lastOffset).wrapping_add(totalBufSizeShort);
-            *preferExtensionForThisLUT = false_0 != 0;
+            *preferExtensionForThisLUT = false;
         }
         return total;
     }
@@ -2408,7 +2408,7 @@ pub unsafe extern "C" fn otfcc_buildOtl(
             tag,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut lookups: *mut bk_Block = writeOTLLookups(table, options, tag);
         let mut features: *mut bk_Block = writeOTLFeatures(table, options);
@@ -2425,7 +2425,7 @@ pub unsafe extern "C" fn otfcc_buildOtl(
             bkover as ::core::ffi::c_int,
         );
         buf = bk_build_Block(root);
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

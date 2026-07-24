@@ -1781,7 +1781,7 @@ pub unsafe extern "C" fn otfcc_dumpCPAL(
             b"CPAL\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _t: *mut json_value = json_object_new(2 as size_t);
         json_object_push(
@@ -1808,7 +1808,7 @@ pub unsafe extern "C" fn otfcc_dumpCPAL(
             b"CPAL\0" as *const u8 as *const ::core::ffi::c_char,
             _t,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1874,7 +1874,7 @@ pub unsafe extern "C" fn otfcc_parseCPAL(
             b"CPAL\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _palettes: *mut json_value = json_obj_get_type(
             table,
@@ -1939,7 +1939,7 @@ pub unsafe extern "C" fn otfcc_parseCPAL(
             }
             j = j.wrapping_add(1);
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1948,11 +1948,11 @@ pub unsafe extern "C" fn otfcc_parseCPAL(
 }
 #[inline]
 unsafe extern "C" fn buildPaletteType(mut cpal: *const table_CPAL) -> *mut bk_Block {
-    let mut needsPaletteType: bool = false_0 != 0;
+    let mut needsPaletteType: bool = false;
     let mut j: tableid_t = 0 as tableid_t;
     while (j as size_t) < (*cpal).palettes.length {
         if (*(*cpal).palettes.items.offset(j as isize)).type_0 != 0 {
-            needsPaletteType = true_0 != 0;
+            needsPaletteType = true;
         }
         j = j.wrapping_add(1);
     }
@@ -1974,11 +1974,11 @@ unsafe extern "C" fn buildPaletteType(mut cpal: *const table_CPAL) -> *mut bk_Bl
 }
 #[inline]
 unsafe extern "C" fn buildPaletteLabel(mut cpal: *const table_CPAL) -> *mut bk_Block {
-    let mut needsPaletteLabel: bool = false_0 != 0;
+    let mut needsPaletteLabel: bool = false;
     let mut j: tableid_t = 0 as tableid_t;
     while (j as size_t) < (*cpal).palettes.length {
         if (*(*cpal).palettes.items.offset(j as isize)).label != 0xffff as uint32_t {
-            needsPaletteLabel = true_0 != 0;
+            needsPaletteLabel = true;
         }
         j = j.wrapping_add(1);
     }
@@ -2000,7 +2000,7 @@ unsafe extern "C" fn buildPaletteLabel(mut cpal: *const table_CPAL) -> *mut bk_B
 }
 #[inline]
 unsafe extern "C" fn buildPaletteEntryLabel(mut cpal: *const table_CPAL) -> *mut bk_Block {
-    let mut needsPaletteEntryLabel: bool = false_0 != 0;
+    let mut needsPaletteEntryLabel: bool = false;
     let mut palette: *mut cpal_Palette = (*cpal)
         .palettes
         .items
@@ -2011,7 +2011,7 @@ unsafe extern "C" fn buildPaletteEntryLabel(mut cpal: *const table_CPAL) -> *mut
         if (*(*palette).colorset.items.offset(j as isize)).label as ::core::ffi::c_int
             != 0xffff as ::core::ffi::c_int
         {
-            needsPaletteEntryLabel = true_0 != 0;
+            needsPaletteEntryLabel = true;
         }
         j = j.wrapping_add(1);
     }

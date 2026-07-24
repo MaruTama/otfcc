@@ -2639,7 +2639,7 @@ unsafe extern "C" fn consolidateFDSelect(
             (**(*cff).fdArray.offset((*h).index as isize)).fontName,
         );
     } else if !(*h).name.is_null() {
-        let mut found: bool = false_0 != 0;
+        let mut found: bool = false;
         let mut j: tableid_t = 0 as tableid_t;
         while (j as ::core::ffi::c_int) < (*cff).fdArrayCount as ::core::ffi::c_int {
             if strcmp(
@@ -2647,7 +2647,7 @@ unsafe extern "C" fn consolidateFDSelect(
                 (**(*cff).fdArray.offset(j as isize)).fontName as *const ::core::ffi::c_char,
             ) == 0 as ::core::ffi::c_int
             {
-                found = true_0 != 0;
+                found = true;
                 otfcc_iHandle
                     .consolidateTo
                     .expect("non-null function pointer")(
@@ -2733,7 +2733,7 @@ pub unsafe extern "C" fn getPointCoordinates(
                         (*p).y,
                     ) as VQ,
                 );
-                return true_0 != 0;
+                return true;
             }
             *stated = (*stated as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as shapeid_t;
             pj = pj.wrapping_add(1);
@@ -2783,11 +2783,11 @@ pub unsafe extern "C" fn getPointCoordinates(
             .dispose
             .expect("non-null function pointer")(&raw mut ref_0);
         if success {
-            return true_0 != 0;
+            return true;
         }
         r = r.wrapping_add(1);
     }
-    return false_0 != 0;
+    return false;
 }
 #[no_mangle]
 pub unsafe extern "C" fn consolidateAnchorRef(
@@ -2801,7 +2801,7 @@ pub unsafe extern "C" fn consolidateAnchorRef(
         || (*rr).isAnchored as ::core::ffi::c_uint
             == REF_XY as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return true_0 != 0;
+        return true;
     }
     if (*rr).isAnchored as ::core::ffi::c_uint
         == REF_ANCHOR_CONSOLIDATING_ANCHOR as ::core::ffi::c_int as ::core::ffi::c_uint
@@ -2821,7 +2821,7 @@ pub unsafe extern "C" fn consolidateAnchorRef(
             ),
         );
         (*rr).isAnchored = REF_XY;
-        return false_0 != 0;
+        return false;
     }
     if (*rr).isAnchored as ::core::ffi::c_uint
         == REF_ANCHOR_ANCHOR as ::core::ffi::c_int as ::core::ffi::c_uint
@@ -2952,7 +2952,7 @@ pub unsafe extern "C" fn consolidateAnchorRef(
     iVQ.dispose.expect("non-null function pointer")(&raw mut innerY);
     iVQ.dispose.expect("non-null function pointer")(&raw mut outerX);
     iVQ.dispose.expect("non-null function pointer")(&raw mut outerY);
-    return false_0 != 0;
+    return false;
 }
 #[no_mangle]
 pub unsafe extern "C" fn consolidateGlyf(
@@ -2989,7 +2989,7 @@ pub unsafe extern "C" fn consolidateGlyf(
                 (*g).name,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             let mut gr: glyf_ComponentReference =
                 (
@@ -3008,7 +3008,7 @@ pub unsafe extern "C" fn consolidateGlyf(
             glyf_iComponentReference
                 .dispose
                 .expect("non-null function pointer")(&raw mut gr);
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -3108,7 +3108,7 @@ unsafe extern "C" fn __declare_otl_consolidation(
             (*lookup).name,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut j: tableid_t = 0 as tableid_t;
         while (j as size_t) < (*lookup).subtables.length {
@@ -3187,7 +3187,7 @@ unsafe extern "C" fn __declare_otl_consolidation(
                 ),
             );
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -3586,10 +3586,10 @@ unsafe extern "C" fn consolidateOTL(mut font: *mut otfcc_Font, mut options: *con
             b"GSUB\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         consolidateOTLTable(font, (*font).GSUB, options);
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -3603,10 +3603,10 @@ unsafe extern "C" fn consolidateOTL(mut font: *mut otfcc_Font, mut options: *con
             b"GPOS\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_0: bool = true_0 != 0;
+    let mut ___loggedstep_v_0: bool = true;
     while ___loggedstep_v_0 {
         consolidateOTLTable(font, (*font).GPOS, options);
-        ___loggedstep_v_0 = false_0 != 0;
+        ___loggedstep_v_0 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -3620,10 +3620,10 @@ unsafe extern "C" fn consolidateOTL(mut font: *mut otfcc_Font, mut options: *con
             b"GDEF\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_1: bool = true_0 != 0;
+    let mut ___loggedstep_v_1: bool = true;
     while ___loggedstep_v_1 {
         consolidate_GDEF(font, (*font).GDEF, options);
-        ___loggedstep_v_1 = false_0 != 0;
+        ___loggedstep_v_1 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -3911,7 +3911,7 @@ pub unsafe extern "C" fn otfcc_consolidateFont(
                     ),
                 );
                 let mut suffix: uint32_t = 2 as uint32_t;
-                let mut success: bool = false_0 != 0;
+                let mut success: bool = false;
                 loop {
                     let mut newname: sds = sdscatfmt(
                         sdsempty(),
@@ -3965,10 +3965,10 @@ pub unsafe extern "C" fn otfcc_consolidateFont(
             b"glyf\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         consolidateGlyf(font, options);
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -3982,10 +3982,10 @@ pub unsafe extern "C" fn otfcc_consolidateFont(
             b"cmap\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_0: bool = true_0 != 0;
+    let mut ___loggedstep_v_0: bool = true;
     while ___loggedstep_v_0 {
         consolidateCmap(font, options);
-        ___loggedstep_v_0 = false_0 != 0;
+        ___loggedstep_v_0 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -4002,10 +4002,10 @@ pub unsafe extern "C" fn otfcc_consolidateFont(
             b"COLR\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_1: bool = true_0 != 0;
+    let mut ___loggedstep_v_1: bool = true;
     while ___loggedstep_v_1 {
         consolidateCOLR(font, options);
-        ___loggedstep_v_1 = false_0 != 0;
+        ___loggedstep_v_1 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -4019,10 +4019,10 @@ pub unsafe extern "C" fn otfcc_consolidateFont(
             b"TSI_01\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_2: bool = true_0 != 0;
+    let mut ___loggedstep_v_2: bool = true;
     while ___loggedstep_v_2 {
         consolidateTSI(font, &raw mut (*font).TSI_01, options);
-        ___loggedstep_v_2 = false_0 != 0;
+        ___loggedstep_v_2 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -4036,10 +4036,10 @@ pub unsafe extern "C" fn otfcc_consolidateFont(
             b"TSI_23\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_3: bool = true_0 != 0;
+    let mut ___loggedstep_v_3: bool = true;
     while ___loggedstep_v_3 {
         consolidateTSI(font, &raw mut (*font).TSI_23, options);
-        ___loggedstep_v_3 = false_0 != 0;
+        ___loggedstep_v_3 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -4053,10 +4053,10 @@ pub unsafe extern "C" fn otfcc_consolidateFont(
             b"TSI5\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_4: bool = true_0 != 0;
+    let mut ___loggedstep_v_4: bool = true;
     while ___loggedstep_v_4 {
         fontop_consolidateClassDef(font, (*font).TSI5 as *mut otl_ClassDef, options);
-        ___loggedstep_v_4 = false_0 != 0;
+        ___loggedstep_v_4 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

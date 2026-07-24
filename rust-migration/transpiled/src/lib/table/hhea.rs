@@ -493,7 +493,7 @@ pub unsafe extern "C" fn otfcc_dumpHhea(
             b"hhea\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut hhea: *mut json_value = json_object_new(13 as size_t);
         json_object_push(
@@ -556,7 +556,7 @@ pub unsafe extern "C" fn otfcc_dumpHhea(
             b"hhea\0" as *const u8 as *const ::core::ffi::c_char,
             hhea,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -585,7 +585,7 @@ pub unsafe extern "C" fn otfcc_parseHhea(
                 b"hhea\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             (*hhea).version = otfcc_to_fixed(json_obj_getnum_fallback(
                 table,
@@ -642,7 +642,7 @@ pub unsafe extern "C" fn otfcc_parseHhea(
                 b"caretOffset\0" as *const u8 as *const ::core::ffi::c_char,
                 0 as ::core::ffi::c_int as ::core::ffi::c_double,
             ) as int16_t;
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(

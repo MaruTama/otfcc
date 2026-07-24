@@ -447,7 +447,7 @@ pub unsafe extern "C" fn otfcc_dumpMaxp(
             b"maxp\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut maxp: *mut json_value = json_object_new(15 as size_t);
         json_object_push(
@@ -530,7 +530,7 @@ pub unsafe extern "C" fn otfcc_dumpMaxp(
             b"maxp\0" as *const u8 as *const ::core::ffi::c_char,
             maxp,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -559,7 +559,7 @@ pub unsafe extern "C" fn otfcc_parseMaxp(
                 b"maxp\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             (*maxp).version = otfcc_to_fixed(json_obj_getnum(
                 table,
@@ -593,7 +593,7 @@ pub unsafe extern "C" fn otfcc_parseMaxp(
                 table,
                 b"maxStackElements\0" as *const u8 as *const ::core::ffi::c_char,
             ) as uint16_t;
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(

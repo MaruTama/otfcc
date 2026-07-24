@@ -961,7 +961,7 @@ pub unsafe extern "C" fn otfcc_dumpTSI(
             tag,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _tsi: *mut json_value = json_object_new(2 as size_t);
         let mut _glyphs: *mut json_value = json_object_new((*tsi).length);
@@ -1041,7 +1041,7 @@ pub unsafe extern "C" fn otfcc_dumpTSI(
             _extra,
         );
         json_object_push(root, tag, _tsi);
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1070,7 +1070,7 @@ pub unsafe extern "C" fn otfcc_parseTSI(
             tag,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _glyphs: *mut json_value = json_obj_get_type(
             _tsi,
@@ -1173,7 +1173,7 @@ pub unsafe extern "C" fn otfcc_parseTSI(
                 j_0 = j_0.wrapping_add(1);
             }
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

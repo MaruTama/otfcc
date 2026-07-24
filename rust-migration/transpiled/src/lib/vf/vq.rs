@@ -1269,10 +1269,10 @@ unsafe extern "C" fn vqNeutral() -> VQ {
 }
 unsafe extern "C" fn vqsCompatible(a: vq_Segment, b: vq_Segment) -> bool {
     if a.type_0 as ::core::ffi::c_uint != b.type_0 as ::core::ffi::c_uint {
-        return false_0 != 0;
+        return false;
     }
     match a.type_0 as ::core::ffi::c_uint {
-        0 => return true_0 != 0,
+        0 => return true,
         1 => {
             return 0 as ::core::ffi::c_int
                 == vq_compareRegion(a.val.delta.region, b.val.delta.region);
@@ -1513,11 +1513,11 @@ unsafe extern "C" fn vqIsStill(v: VQ) -> bool {
     while j < v.shift.length {
         match (*v.shift.items.offset(j as isize)).type_0 as ::core::ffi::c_uint {
             0 => {}
-            _ => return false_0 != 0,
+            _ => return false,
         }
         j = j.wrapping_add(1);
     }
-    return true_0 != 0;
+    return true;
 }
 unsafe extern "C" fn vqIsZero(v: VQ, err: pos_t) -> bool {
     return vqIsStill(v) as ::core::ffi::c_int != 0

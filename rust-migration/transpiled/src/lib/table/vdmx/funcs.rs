@@ -554,7 +554,7 @@ pub unsafe extern "C" fn otfcc_dumpVDMX(
             b"VDMX\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _vdmx: *mut json_value = json_object_new(2 as size_t);
         json_object_push(
@@ -639,7 +639,7 @@ pub unsafe extern "C" fn otfcc_dumpVDMX(
             b"VDMX\0" as *const u8 as *const ::core::ffi::c_char,
             _vdmx,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -670,7 +670,7 @@ pub unsafe extern "C" fn otfcc_parseVDMX(
             b"VDMX\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         (*vdmx).version = json_obj_getnum(
             _vdmx,
@@ -761,7 +761,7 @@ pub unsafe extern "C" fn otfcc_parseVDMX(
             }
             j = j.wrapping_add(1);
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

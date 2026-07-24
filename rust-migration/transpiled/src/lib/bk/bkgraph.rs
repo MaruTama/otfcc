@@ -359,45 +359,45 @@ unsafe extern "C" fn gethash(mut b: *mut bk_Block) -> uint32_t {
 }
 unsafe extern "C" fn compareblock(mut a: *mut bk_Block, mut b: *mut bk_Block) -> bool {
     if a.is_null() && b.is_null() {
-        return true_0 != 0;
+        return true;
     }
     if a.is_null() || b.is_null() {
-        return false_0 != 0;
+        return false;
     }
     if (*a).length != (*b).length {
-        return false_0 != 0;
+        return false;
     }
     let mut j: uint32_t = 0 as uint32_t;
     while j < (*a).length {
         if (*(*a).cells.offset(j as isize)).t as ::core::ffi::c_uint
             != (*(*b).cells.offset(j as isize)).t as ::core::ffi::c_uint
         {
-            return false_0 != 0;
+            return false;
         }
         match (*(*a).cells.offset(j as isize)).t as ::core::ffi::c_uint {
             1 | 2 | 3 => {
                 if (*(*a).cells.offset(j as isize)).c2rust_unnamed.z
                     != (*(*b).cells.offset(j as isize)).c2rust_unnamed.z
                 {
-                    return false_0 != 0;
+                    return false;
                 }
             }
             16 | 17 | 128 | 129 => {
                 if (*(*a).cells.offset(j as isize)).c2rust_unnamed.p
                     != (*(*b).cells.offset(j as isize)).c2rust_unnamed.p
                 {
-                    return false_0 != 0;
+                    return false;
                 }
             }
             _ => {}
         }
         j = j.wrapping_add(1);
     }
-    return true_0 != 0;
+    return true;
 }
 unsafe extern "C" fn compareEntry(mut a: *mut bk_GraphNode, mut b: *mut bk_GraphNode) -> bool {
     if (*a).hash != (*b).hash {
-        return false_0 != 0;
+        return false;
     }
     return compareblock((*a).block, (*b).block);
 }
@@ -618,7 +618,7 @@ unsafe extern "C" fn try_untabgle_block(
     mut offsets: *mut size_t,
     mut _passes: uint16_t,
 ) -> bool {
-    let mut didCopy: bool = false_0 != 0;
+    let mut didCopy: bool = false;
     let mut j: uint32_t = 0 as uint32_t;
     while j < (*b).length {
         match (*(*b).cells.offset(j as isize)).t as ::core::ffi::c_uint {
@@ -641,7 +641,7 @@ unsafe extern "C" fn try_untabgle_block(
                         (*(*b).cells.offset(j as isize)).t = sp16;
                         let ref mut fresh2 = (*(*b).cells.offset(j as isize)).c2rust_unnamed.p;
                         *fresh2 = (*e).block as *mut __caryll_bkblock;
-                        didCopy = true_0 != 0;
+                        didCopy = true;
                     }
                 }
             }
@@ -672,7 +672,7 @@ unsafe extern "C" fn try_untangle(mut f: *mut bk_Graph, mut passes: uint16_t) ->
         j = j.wrapping_add(1);
     }
     let mut totalBlocks: uint32_t = (*f).length;
-    let mut didUntangle: bool = false_0 != 0;
+    let mut didUntangle: bool = false;
     let mut j_0: uint32_t = 0 as uint32_t;
     while j_0 < totalBlocks {
         if (*(*(*f).entries.offset(j_0 as isize)).block)._visitstate as ::core::ffi::c_uint
@@ -815,7 +815,7 @@ pub unsafe extern "C" fn bk_estimateSizeOfGraph(mut f: *mut bk_Graph) -> size_t 
 #[no_mangle]
 pub unsafe extern "C" fn bk_untangleGraph(mut f: *mut bk_Graph) {
     let mut passes: uint16_t = 0 as uint16_t;
-    let mut tangled: bool = false_0 != 0;
+    let mut tangled: bool = false;
     attract_bkgraph(f);
     loop {
         tangled = try_untangle(f, passes);

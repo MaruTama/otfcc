@@ -1465,9 +1465,9 @@ pub unsafe extern "C" fn otfcc_encodeCmapByIndex(
                 }
             }
         }
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -2217,9 +2217,9 @@ pub unsafe extern "C" fn otfcc_encodeCmapByName(
                 }
             }
         }
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -2585,9 +2585,9 @@ pub unsafe extern "C" fn otfcc_unmapCmap(
         }
         free(s as *mut ::core::ffi::c_void);
         s = ::core::ptr::null_mut::<cmap_Entry>();
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -3644,9 +3644,9 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByIndex(
                 }
             }
         }
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -4388,9 +4388,9 @@ pub unsafe extern "C" fn otfcc_encodeCmapUVSByName(
                 }
             }
         }
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -4748,9 +4748,9 @@ pub unsafe extern "C" fn otfcc_unmapCmapUVS(
         }
         free(s as *mut ::core::ffi::c_void);
         s = ::core::ptr::null_mut::<cmap_Entry>();
-        return true_0 != 0;
+        return true;
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -5918,7 +5918,7 @@ pub unsafe extern "C" fn otfcc_dumpCmap(
             b"cmap\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         if !(*table).unicodes.is_null() {
             let mut cmap: *mut json_value = json_object_new(
@@ -6006,7 +6006,7 @@ pub unsafe extern "C" fn otfcc_dumpCmap(
                 uvs,
             );
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -6174,7 +6174,7 @@ pub unsafe extern "C" fn otfcc_parseCmap(
             b"cmap\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         parseCmapUnicodes(
             cmap,
@@ -6185,7 +6185,7 @@ pub unsafe extern "C" fn otfcc_parseCmap(
             ),
             options,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -6199,7 +6199,7 @@ pub unsafe extern "C" fn otfcc_parseCmap(
             b"cmap_uvs\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_0: bool = true_0 != 0;
+    let mut ___loggedstep_v_0: bool = true;
     while ___loggedstep_v_0 {
         parseCmapUVS(
             cmap,
@@ -6210,7 +6210,7 @@ pub unsafe extern "C" fn otfcc_parseCmap(
             ),
             options,
         );
-        ___loggedstep_v_0 = false_0 != 0;
+        ___loggedstep_v_0 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -6494,25 +6494,25 @@ unsafe extern "C" fn otfcc_buildCmap_format4(mut cmap: *const table_cmap) -> *mu
     let mut idDelta: *mut caryll_Buffer = bufnew();
     let mut idRangeOffset: *mut caryll_Buffer = bufnew();
     let mut glyphIdArray: *mut caryll_Buffer = bufnew();
-    let mut started: bool = false_0 != 0;
+    let mut started: bool = false;
     let mut lastUnicodeStart: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastUnicodeEnd: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastGIDStart: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastGIDEnd: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastGlyphIdArrayOffset: size_t = 0 as size_t;
-    let mut isSequencial: bool = true_0 != 0;
+    let mut isSequencial: bool = true;
     let mut segmentsCount: uint16_t = 0 as uint16_t;
     let mut item: *mut cmap_Entry = ::core::ptr::null_mut::<cmap_Entry>();
     item = (*cmap).unicodes;
     while !item.is_null() {
         if (*item).unicode <= 0xffff as ::core::ffi::c_int {
             if !started {
-                started = true_0 != 0;
+                started = true;
                 lastUnicodeEnd = (*item).unicode;
                 lastUnicodeStart = lastUnicodeEnd;
                 lastGIDEnd = (*item).glyph.index as ::core::ffi::c_int;
                 lastGIDStart = lastGIDEnd;
-                isSequencial = true_0 != 0;
+                isSequencial = true;
             } else if (*item).unicode == lastUnicodeEnd + 1 as ::core::ffi::c_int
                 && !((*item).glyph.index as ::core::ffi::c_int
                     != lastGIDEnd + 1 as ::core::ffi::c_int
@@ -6557,7 +6557,7 @@ unsafe extern "C" fn otfcc_buildCmap_format4(mut cmap: *const table_cmap) -> *mu
                 lastUnicodeStart = lastUnicodeEnd;
                 lastGIDEnd = (*item).glyph.index as ::core::ffi::c_int;
                 lastGIDStart = lastGIDEnd;
-                isSequencial = true_0 != 0;
+                isSequencial = true;
             }
         }
         item = (*item).hh.next as *mut cmap_Entry;
@@ -6653,7 +6653,7 @@ unsafe extern "C" fn otfcc_buildCmap_format12(mut cmap: *const table_cmap) -> *m
     bufwrite32b(buf, 0 as uint32_t);
     bufwrite32b(buf, 0 as uint32_t);
     let mut nGroups: uint32_t = 0 as uint32_t;
-    let mut started: bool = false_0 != 0;
+    let mut started: bool = false;
     let mut lastUnicodeStart: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastUnicodeEnd: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
     let mut lastGIDStart: ::core::ffi::c_int = 0xffffff as ::core::ffi::c_int;
@@ -6662,7 +6662,7 @@ unsafe extern "C" fn otfcc_buildCmap_format12(mut cmap: *const table_cmap) -> *m
     item = (*cmap).unicodes;
     while !item.is_null() {
         if !started {
-            started = true_0 != 0;
+            started = true;
             lastUnicodeEnd = (*item).unicode;
             lastUnicodeStart = lastUnicodeEnd;
             lastGIDEnd = (*item).glyph.index as ::core::ffi::c_int;
@@ -6827,7 +6827,7 @@ unsafe extern "C" fn otfcc_buildCmap_format14(mut cmap: *const table_cmap) -> *m
     item = (*cmap).uvs;
     while !item.is_null() {
         if (*item).key.selector < MAX_UNICODE as uint32_t {
-            *validSelectors.offset((*item).key.selector as isize) = true_0 != 0;
+            *validSelectors.offset((*item).key.selector as isize) = true;
         }
         item = (*item).hh.next as *mut cmap_UVS_Entry;
     }
@@ -6893,7 +6893,7 @@ pub unsafe extern "C" fn otfcc_buildCmap(
         return ::core::ptr::null_mut::<caryll_Buffer>();
     }
     let mut entry: *mut cmap_Entry = ::core::ptr::null_mut::<cmap_Entry>();
-    let mut requiresFormat12: bool = false_0 != 0;
+    let mut requiresFormat12: bool = false;
     let mut hasUVS: bool = !(*cmap).uvs.is_null()
         && (if !(*cmap).uvs.is_null() {
             (*(*(*cmap).uvs).hh.tbl).num_items
@@ -6903,7 +6903,7 @@ pub unsafe extern "C" fn otfcc_buildCmap(
     entry = (*cmap).unicodes;
     while !entry.is_null() {
         if (*entry).unicode > 0xffff as ::core::ffi::c_int {
-            requiresFormat12 = true_0 != 0;
+            requiresFormat12 = true;
         }
         entry = (*entry).hh.next as *mut cmap_Entry;
     }
@@ -6911,7 +6911,7 @@ pub unsafe extern "C" fn otfcc_buildCmap(
     if !requiresFormat12 || !(*options).stub_cmap4 {
         format4 = otfcc_tryBuildCmap_format4(cmap);
         if format4.is_null() {
-            requiresFormat12 = true_0 != 0;
+            requiresFormat12 = true;
         }
     }
     let mut nTables: uint8_t = (if requiresFormat12 as ::core::ffi::c_int != 0 {

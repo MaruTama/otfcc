@@ -408,7 +408,7 @@ pub unsafe extern "C" fn otfcc_dumpCvt(
             b"cvt\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut arr: *mut json_value = json_array_new((*table).length as size_t);
         let mut j: uint16_t = 0 as uint16_t;
@@ -420,7 +420,7 @@ pub unsafe extern "C" fn otfcc_dumpCvt(
             j = j.wrapping_add(1);
         }
         json_object_push(root, tag, arr);
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -445,7 +445,7 @@ pub unsafe extern "C" fn otfcc_parseCvt(
                 b"cvt\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             t = __caryll_allocate_clean(
                 ::core::mem::size_of::<table_cvt>() as size_t,
@@ -474,7 +474,7 @@ pub unsafe extern "C" fn otfcc_parseCvt(
                 }
                 j = j.wrapping_add(1);
             }
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -493,7 +493,7 @@ pub unsafe extern "C" fn otfcc_parseCvt(
                     b"cvt\0" as *const u8 as *const ::core::ffi::c_char,
                 ),
             );
-            let mut ___loggedstep_v_0: bool = true_0 != 0;
+            let mut ___loggedstep_v_0: bool = true;
             while ___loggedstep_v_0 {
                 t = __caryll_allocate_clean(
                     ::core::mem::size_of::<table_cvt>() as size_t,
@@ -520,7 +520,7 @@ pub unsafe extern "C" fn otfcc_parseCvt(
                 }
                 free(raw as *mut ::core::ffi::c_void);
                 raw = ::core::ptr::null_mut::<uint8_t>();
-                ___loggedstep_v_0 = false_0 != 0;
+                ___loggedstep_v_0 = false;
                 (*(*options).logger)
                     .finish
                     .expect("non-null function pointer")(

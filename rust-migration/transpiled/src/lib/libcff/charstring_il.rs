@@ -1015,18 +1015,18 @@ unsafe extern "C" fn il_matchtype(
     mut t: cff_InstructionType,
 ) -> bool {
     if k >= (*il).length {
-        return false_0 != 0;
+        return false;
     }
     let mut m: uint32_t = j;
     while m < k {
         if (*(*il).instr.offset(m as isize)).type_0 as ::core::ffi::c_uint
             != t as ::core::ffi::c_uint
         {
-            return false_0 != 0;
+            return false;
         }
         m = m.wrapping_add(1);
     }
-    return true_0 != 0;
+    return true;
 }
 unsafe extern "C" fn il_matchop(
     mut il: *mut cff_CharstringIL,
@@ -1036,12 +1036,12 @@ unsafe extern "C" fn il_matchop(
     if (*(*il).instr.offset(j as isize)).type_0 as ::core::ffi::c_uint
         != IL_ITEM_OPERATOR as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return false_0 != 0;
+        return false;
     }
     if (*(*il).instr.offset(j as isize)).c2rust_unnamed.i != op {
-        return false_0 != 0;
+        return false;
     }
-    return true_0 != 0;
+    return true;
 }
 unsafe extern "C" fn zroll(
     mut il: *mut cff_CharstringIL,
@@ -1696,7 +1696,7 @@ pub unsafe extern "C" fn instruction_eq(
             return (*z1).c2rust_unnamed.i == (*z2).c2rust_unnamed.i;
         }
     } else {
-        return false_0 != 0;
+        return false;
     };
 }
 #[no_mangle]
@@ -1705,19 +1705,19 @@ pub unsafe extern "C" fn cff_ilEqual(
     mut b: *mut cff_CharstringIL,
 ) -> bool {
     if a.is_null() || b.is_null() {
-        return false_0 != 0;
+        return false;
     }
     if (*a).length != (*b).length {
-        return false_0 != 0;
+        return false;
     }
     let mut j: uint32_t = 0 as uint32_t;
     while j < (*a).length {
         if !instruction_eq((*a).instr.offset(j as isize), (*b).instr.offset(j as isize)) {
-            return false_0 != 0;
+            return false;
         }
         j = j.wrapping_add(1);
     }
-    return true_0 != 0;
+    return true;
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

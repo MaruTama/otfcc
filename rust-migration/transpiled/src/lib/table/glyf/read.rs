@@ -1047,7 +1047,7 @@ unsafe extern "C" fn otfcc_read_composite_glyph(
     let mut g: *mut glyf_Glyph = otfcc_newGlyf_glyph();
     let mut flags: uint16_t = 0 as uint16_t;
     let mut offset: uint32_t = 0 as uint32_t;
-    let mut glyphHasInstruction: bool = false_0 != 0;
+    let mut glyphHasInstruction: bool = false;
     loop {
         flags = read_16u(start.offset(offset as isize) as *const uint8_t);
         let mut index: glyphid_t = read_16u(
@@ -1175,7 +1175,7 @@ unsafe extern "C" fn otfcc_read_composite_glyph(
             );
         }
         if flags as ::core::ffi::c_int & WE_HAVE_INSTRUCTIONS as ::core::ffi::c_int != 0 {
-            glyphHasInstruction = true_0 != 0;
+            glyphHasInstruction = true;
         }
         glyf_iReferenceList.push.expect("non-null function pointer")(
             &raw mut (*g).references,
@@ -1294,7 +1294,7 @@ unsafe extern "C" fn parsePointNumbers(
     if nPoints as ::core::ffi::c_int > 0 as ::core::ffi::c_int {
         let mut run: C2RustUnnamed_3 = C2RustUnnamed_3 {
             length: 0 as shapeid_t,
-            wide: false_0 != 0,
+            wide: false,
         };
         let mut filled: shapeid_t = 0 as shapeid_t;
         let mut jPoint: shapeid_t = 0 as shapeid_t;
@@ -1354,8 +1354,8 @@ unsafe extern "C" fn readPackedDelta(
 ) -> font_file_pointer {
     let mut run: C2RustUnnamed_2 = C2RustUnnamed_2 {
         length: 0 as shapeid_t,
-        wide: false_0 != 0,
-        zero: false_0 != 0,
+        wide: false,
+        zero: false,
     };
     let mut filled: shapeid_t = 0 as shapeid_t;
     while (filled as ::core::ffi::c_int) < nPoints as ::core::ffi::c_int {
@@ -1493,7 +1493,7 @@ unsafe extern "C" fn applyCoords(
     let mut j: shapeid_t = 0 as shapeid_t;
     while (j as ::core::ffi::c_int) < totalPoints as ::core::ffi::c_int {
         (*nudges.offset(j as isize)).type_0 = VQ_DELTA;
-        (*nudges.offset(j as isize)).val.delta.touched = false_0 != 0;
+        (*nudges.offset(j as isize)).val.delta.touched = false;
         (*nudges.offset(j as isize)).val.delta.quantity = 0 as ::core::ffi::c_int as pos_t;
         let ref mut fresh4 = (*nudges.offset(j as isize)).val.delta.region;
         *fresh4 = r;
@@ -1507,7 +1507,7 @@ unsafe extern "C" fn applyCoords(
             (*nudges.offset(*points.offset(j_0 as isize) as isize))
                 .val
                 .delta
-                .touched = true_0 != 0;
+                .touched = true;
             (*nudges.offset(*points.offset(j_0 as isize) as isize))
                 .val
                 .delta
@@ -1631,13 +1631,13 @@ unsafe extern "C" fn applyPolymorphism(
     {
         iVQ.addDelta.expect("non-null function pointer")(
             &raw mut (*glyph).horizontalOrigin,
-            true_0 != 0,
+            true,
             r,
             *deltaX.offset(totalPoints as isize),
         );
         iVQ.addDelta.expect("non-null function pointer")(
             &raw mut (*glyph).advanceWidth,
-            true_0 != 0,
+            true,
             r,
             *deltaX.offset((totalPoints as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize)
                 - *deltaX.offset(totalPoints as isize),
@@ -1648,13 +1648,13 @@ unsafe extern "C" fn applyPolymorphism(
     {
         iVQ.addDelta.expect("non-null function pointer")(
             &raw mut (*glyph).verticalOrigin,
-            true_0 != 0,
+            true,
             r,
             *deltaY.offset((totalPoints as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as isize),
         );
         iVQ.addDelta.expect("non-null function pointer")(
             &raw mut (*glyph).advanceHeight,
-            true_0 != 0,
+            true,
             r,
             *deltaY.offset((totalPoints as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as isize)
                 - *deltaY
@@ -1952,7 +1952,7 @@ pub unsafe extern "C" fn otfcc_readGlyf(
         649 as ::core::ffi::c_ulong,
     ) as *mut uint32_t;
     if !offsets.is_null() {
-        foundLoca = false_0 != 0;
+        foundLoca = false;
         let mut __fortable_keep: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
         let mut __fortable_count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         let mut __notfound: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
@@ -2008,7 +2008,7 @@ pub unsafe extern "C" fn otfcc_readGlyf(
                             match current_block {
                                 15756379620357860923 => {}
                                 _ => {
-                                    foundLoca = true_0 != 0;
+                                    foundLoca = true;
                                     break;
                                 }
                             }

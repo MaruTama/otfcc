@@ -2481,6 +2481,6 @@ pub unsafe extern "C" fn consolidate_gsub_reverse(
         tmp = (if !tmp.is_null() { (*tmp).hh.next } else { NULL }) as *mut gsub_single_map_hash
             as *mut gsub_single_map_hash;
     }
-    return false_0 != 0;
+    return false;
 }
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

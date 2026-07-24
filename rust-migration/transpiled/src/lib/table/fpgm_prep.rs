@@ -450,14 +450,14 @@ pub unsafe extern "C" fn table_dumpTableFpgmPrep(
             tag,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         json_object_push(
             root,
             tag,
             dump_ttinstr((*table).bytes, (*table).length, options),
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -500,7 +500,7 @@ pub unsafe extern "C" fn otfcc_parseFpgmPrep(
                 tag,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             t = (
                 table_iFpgm_prep.create.expect("non-null function pointer"))();
@@ -525,7 +525,7 @@ pub unsafe extern "C" fn otfcc_parseFpgmPrep(
                         ) -> (),
                 ),
             );
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(

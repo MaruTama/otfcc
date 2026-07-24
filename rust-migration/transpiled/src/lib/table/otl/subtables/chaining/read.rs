@@ -646,14 +646,14 @@ pub unsafe extern "C" fn classCoverage(
     if cls as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         let mut k: glyphid_t = 0 as glyphid_t;
         while (k as ::core::ffi::c_int) < maxGlyphs as ::core::ffi::c_int {
-            let mut found: bool = false_0 != 0;
+            let mut found: bool = false;
             let mut j: glyphid_t = 0 as glyphid_t;
             while (j as ::core::ffi::c_int) < (*cd).numGlyphs as ::core::ffi::c_int {
                 if *(*cd).classes.offset(j as isize) as ::core::ffi::c_int > 0 as ::core::ffi::c_int
                     && (*(*cd).glyphs.offset(j as isize)).index as ::core::ffi::c_int
                         == k as ::core::ffi::c_int
                 {
-                    found = true_0 != 0;
+                    found = true;
                     break;
                 } else {
                     j = j.wrapping_add(1);
@@ -687,7 +687,7 @@ pub unsafe extern "C" fn classCoverage(
     if cls as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         let mut k_0: glyphid_t = 0 as glyphid_t;
         while (k_0 as ::core::ffi::c_int) < maxGlyphs as ::core::ffi::c_int {
-            let mut found_0: bool = false_0 != 0;
+            let mut found_0: bool = false;
             let mut j_1: glyphid_t = 0 as glyphid_t;
             while (j_1 as ::core::ffi::c_int) < (*cd).numGlyphs as ::core::ffi::c_int {
                 if *(*cd).classes.offset(j_1 as isize) as ::core::ffi::c_int
@@ -695,7 +695,7 @@ pub unsafe extern "C" fn classCoverage(
                     && (*(*cd).glyphs.offset(j_1 as isize)).index as ::core::ffi::c_int
                         == k_0 as ::core::ffi::c_int
                 {
-                    found_0 = true_0 != 0;
+                    found_0 = true;
                     break;
                 } else {
                     j_1 = j_1.wrapping_add(1);
@@ -997,7 +997,7 @@ unsafe extern "C" fn readContextualFormat1(
                                     srOffset,
                                     (*(*firstCoverage).glyphs.offset(j_0 as isize)).index
                                         as uint16_t,
-                                    true_0 != 0,
+                                    true,
                                     Some(
                                         singleCoverage
                                             as unsafe extern "C" fn(
@@ -1126,7 +1126,7 @@ unsafe extern "C" fn readContextualFormat2(
                             tableLength,
                             srOffset,
                             j_0 as uint16_t,
-                            true_0 != 0,
+                            true,
                             Some(
                                 classCoverage
                                     as unsafe extern "C" fn(
@@ -1209,7 +1209,7 @@ pub unsafe extern "C" fn otl_read_contextual(
                 tableLength,
                 offset.wrapping_add(2 as uint32_t),
                 0 as uint16_t,
-                false_0 != 0,
+                false,
                 Some(
                     format3Coverage
                         as unsafe extern "C" fn(
@@ -1634,7 +1634,7 @@ unsafe extern "C" fn readChainingFormat1(
                                     srOffset,
                                     (*(*firstCoverage).glyphs.offset(j_0 as isize)).index
                                         as uint16_t,
-                                    true_0 != 0,
+                                    true,
                                     Some(
                                         singleCoverage
                                             as unsafe extern "C" fn(
@@ -1776,7 +1776,7 @@ unsafe extern "C" fn readChainingFormat2(
                             tableLength,
                             srOffset,
                             j_0 as uint16_t,
-                            true_0 != 0,
+                            true,
                             Some(
                                 classCoverage
                                     as unsafe extern "C" fn(
@@ -1859,7 +1859,7 @@ pub unsafe extern "C" fn otl_read_chaining(
                 tableLength,
                 offset.wrapping_add(2 as uint32_t),
                 0 as uint16_t,
-                false_0 != 0,
+                false,
                 Some(
                     format3Coverage
                         as unsafe extern "C" fn(

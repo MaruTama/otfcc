@@ -1830,7 +1830,7 @@ unsafe extern "C" fn statHmtx(mut font: *mut otfcc_Font, mut _options: *const ot
     ) as *mut table_hmtx;
     let mut count_a: glyphid_t = (*(*font).glyf).length as glyphid_t;
     let mut count_k: glyphid_t = 0 as glyphid_t;
-    let mut lsbAtX_0: bool = true_0 != 0;
+    let mut lsbAtX_0: bool = true;
     if !((*font).subtype as ::core::ffi::c_uint
         == FONTTYPE_CFF as ::core::ffi::c_int as ::core::ffi::c_uint)
     {
@@ -1874,7 +1874,7 @@ unsafe extern "C" fn statHmtx(mut font: *mut otfcc_Font, mut _options: *const ot
                     iVQ.neutral.expect("non-null function pointer"))() as VQ,
             );
         } else {
-            lsbAtX_0 = false_0 != 0;
+            lsbAtX_0 = false;
         }
         let hori: pos_t =
             iVQ.getStill.expect("non-null function pointer")((*g).horizontalOrigin) as pos_t;
@@ -2763,13 +2763,13 @@ unsafe extern "C" fn statLTSH(mut font: *mut otfcc_Font) {
     if (*font).glyf.is_null() {
         return;
     }
-    let mut needLTSH: bool = false_0 != 0;
+    let mut needLTSH: bool = false;
     let mut j: glyphid_t = 0 as glyphid_t;
     while (j as size_t) < (*(*font).glyf).length {
         if (**(*(*font).glyf).items.offset(j as isize)).yPel as ::core::ffi::c_int
             > 1 as ::core::ffi::c_int
         {
-            needLTSH = true_0 != 0;
+            needLTSH = true;
         }
         j = j.wrapping_add(1);
     }

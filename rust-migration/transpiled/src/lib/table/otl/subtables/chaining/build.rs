@@ -534,9 +534,9 @@ pub unsafe extern "C" fn otfcc_chainingLookupIsContextualLookup(
         || (*lookup).type_0 as ::core::ffi::c_uint
             == otl_type_gsub_chaining as ::core::ffi::c_int as ::core::ffi::c_uint)
     {
-        return false_0 != 0;
+        return false;
     }
-    let mut isContextual: bool = true_0 != 0;
+    let mut isContextual: bool = true;
     let mut j: tableid_t = 0 as tableid_t;
     while (j as size_t) < (*lookup).subtables.length {
         let mut subtable: *const subtable_chaining =

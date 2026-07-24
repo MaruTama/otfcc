@@ -972,7 +972,7 @@ pub unsafe extern "C" fn otfcc_dumpSVG(
             b"SVG \0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _svg: *mut json_value = json_array_new((*svg).length);
         let mut __caryll_index: size_t = 0 as size_t;
@@ -1036,7 +1036,7 @@ pub unsafe extern "C" fn otfcc_dumpSVG(
             b"SVG_\0" as *const u8 as *const ::core::ffi::c_char,
             _svg,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1067,7 +1067,7 @@ pub unsafe extern "C" fn otfcc_parseSVG(
             b"SVG \0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut j: glyphid_t = 0 as glyphid_t;
         while (j as ::core::ffi::c_uint) < (*_svg).u.array.length {
@@ -1115,7 +1115,7 @@ pub unsafe extern "C" fn otfcc_parseSVG(
             }
             j = j.wrapping_add(1);
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

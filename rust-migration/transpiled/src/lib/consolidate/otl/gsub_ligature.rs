@@ -1544,7 +1544,7 @@ pub unsafe extern "C" fn consolidate_gsub_ligature(
             fontop_consolidateCoverage(font, (*(*subtable).items.offset(k as isize)).from, options);
             otl_iCoverage.shrink.expect("non-null function pointer")(
                 (*(*subtable).items.offset(k as isize)).from,
-                false_0 != 0,
+                false,
             );
             if (*(*(*subtable).items.offset(k as isize)).from).numGlyphs == 0 {
                 (*(*options).logger)

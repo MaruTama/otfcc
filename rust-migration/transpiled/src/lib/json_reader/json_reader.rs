@@ -3541,7 +3541,7 @@ unsafe extern "C" fn parseGlyphOrder(
                             as *const ::core::ffi::c_char,
                     ),
                 );
-                ignoreGlyphOrder = false_0 != 0;
+                ignoreGlyphOrder = false;
             }
             placeOrderEntriesFromSubtable(table, go, ignoreGlyphOrder);
         }

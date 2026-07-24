@@ -988,7 +988,7 @@ pub unsafe extern "C" fn otfcc_dumpName(
             b"name\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _name: *mut json_value = json_array_new((*name).length);
         let mut j: uint16_t = 0 as uint16_t;
@@ -1032,7 +1032,7 @@ pub unsafe extern "C" fn otfcc_dumpName(
             b"name\0" as *const u8 as *const ::core::ffi::c_char,
             _name,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1076,7 +1076,7 @@ pub unsafe extern "C" fn otfcc_parseName(
                 b"name\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             let mut j: uint32_t = 0 as uint32_t;
             while j < (*table).u.array.length as uint32_t {
@@ -1234,7 +1234,7 @@ pub unsafe extern "C" fn otfcc_parseName(
                         ) -> ::core::ffi::c_int,
                 ),
             );
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(

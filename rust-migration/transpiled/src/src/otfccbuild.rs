@@ -1682,8 +1682,8 @@ unsafe fn main_0(
         tv_nsec: 0,
     };
     time_now(&raw mut begin);
-    let mut show_help: bool = false_0 != 0;
-    let mut show_version: bool = false_0 != 0;
+    let mut show_help: bool = false;
+    let mut show_version: bool = false;
     let mut outputPath: sds = ::core::ptr::null_mut::<::core::ffi::c_char>();
     let mut inPath: sds = ::core::ptr::null_mut::<::core::ffi::c_char>();
     let mut option_index: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -1873,135 +1873,135 @@ unsafe fn main_0(
                             b"ignore-hints\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).ignore_hints = true_0 != 0;
+                            (*options).ignore_hints = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"keep-average-char-width\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).keep_average_char_width = true_0 != 0;
+                            (*options).keep_average_char_width = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"keep-unicode-ranges\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).keep_unicode_ranges = true_0 != 0;
+                            (*options).keep_unicode_ranges = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"keep-modified-time\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).keep_modified_time = true_0 != 0;
+                            (*options).keep_modified_time = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"merge-features\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).merge_features = true_0 != 0;
+                            (*options).merge_features = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"merge-lookups\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).merge_lookups = true_0 != 0;
+                            (*options).merge_lookups = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"dont-merge-features\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).merge_features = false_0 != 0;
+                            (*options).merge_features = false;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"dont-merge-lookups\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).merge_lookups = false_0 != 0;
+                            (*options).merge_lookups = false;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"ignore-glyph-order\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).ignore_glyph_order = true_0 != 0;
+                            (*options).ignore_glyph_order = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"keep-glyph-order\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).ignore_glyph_order = false_0 != 0;
+                            (*options).ignore_glyph_order = false;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"dont-keep-glyph-order\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).ignore_glyph_order = false_0 != 0;
+                            (*options).ignore_glyph_order = false;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"short-post\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).short_post = true_0 != 0;
+                            (*options).short_post = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"force-cid\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).force_cid = true_0 != 0;
+                            (*options).force_cid = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"subroutinize\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).cff_doSubroutinize = true_0 != 0;
+                            (*options).cff_doSubroutinize = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"stub-cmap4\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).stub_cmap4 = true_0 != 0;
+                            (*options).stub_cmap4 = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"ship\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).ignore_glyph_order = true_0 != 0;
-                            (*options).short_post = true_0 != 0;
-                            (*options).dummy_DSIG = true_0 != 0;
+                            (*options).ignore_glyph_order = true;
+                            (*options).short_post = true;
+                            (*options).dummy_DSIG = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"verbose\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).verbose = true_0 != 0;
+                            (*options).verbose = true;
                         } else if strcmp(
                             longopts[option_index as usize].name,
                             b"quiet\0" as *const u8 as *const ::core::ffi::c_char,
                         ) == 0 as ::core::ffi::c_int
                         {
-                            (*options).quiet = true_0 != 0;
+                            (*options).quiet = true;
                         }
                     }
                 }
             }
             118 => {
-                show_version = true_0 != 0;
+                show_version = true;
             }
             104 => {
-                show_help = true_0 != 0;
+                show_help = true;
             }
             107 => {
-                (*options).ignore_glyph_order = false_0 != 0;
+                (*options).ignore_glyph_order = false;
             }
             105 => {
-                (*options).ignore_glyph_order = true_0 != 0;
+                (*options).ignore_glyph_order = true;
             }
             111 => {
                 outputPath = sdsnew(optarg);
             }
             115 => {
-                (*options).dummy_DSIG = true_0 != 0;
+                (*options).dummy_DSIG = true;
             }
             113 => {
-                (*options).quiet = true_0 != 0;
+                (*options).quiet = true;
             }
             79 => {
                 otfcc_Options_optimizeTo(options, atoi(optarg) as uint8_t);
@@ -2062,7 +2062,7 @@ unsafe fn main_0(
             b"Load file\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         if !inPath.is_null() {
             (*(*options).logger)
@@ -2075,7 +2075,7 @@ unsafe fn main_0(
                     inPath,
                 ),
             );
-            let mut ___loggedstep_v_0: bool = true_0 != 0;
+            let mut ___loggedstep_v_0: bool = true;
             while ___loggedstep_v_0 {
                 readEntireFile(
                     inPath as *mut ::core::ffi::c_char,
@@ -2083,7 +2083,7 @@ unsafe fn main_0(
                     &raw mut length,
                 );
                 sdsfree(inPath);
-                ___loggedstep_v_0 = false_0 != 0;
+                ___loggedstep_v_0 = false;
                 (*(*options).logger)
                     .finish
                     .expect("non-null function pointer")(
@@ -2100,10 +2100,10 @@ unsafe fn main_0(
                     b"Load from stdin\0" as *const u8 as *const ::core::ffi::c_char,
                 ),
             );
-            let mut ___loggedstep_v_1: bool = true_0 != 0;
+            let mut ___loggedstep_v_1: bool = true;
             while ___loggedstep_v_1 {
                 readEntireStdin(&raw mut buffer, &raw mut length);
-                ___loggedstep_v_1 = false_0 != 0;
+                ___loggedstep_v_1 = false;
                 (*(*options).logger)
                     .finish
                     .expect("non-null function pointer")(
@@ -2119,7 +2119,7 @@ unsafe fn main_0(
             log_type_progress,
             push_stopwatch(&raw mut begin),
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -2134,7 +2134,7 @@ unsafe fn main_0(
             b"Parse into JSON\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_2: bool = true_0 != 0;
+    let mut ___loggedstep_v_2: bool = true;
     while ___loggedstep_v_2 {
         jsonRoot = json_parse(buffer, length as size_t);
         free(buffer as *mut ::core::ffi::c_void);
@@ -2162,7 +2162,7 @@ unsafe fn main_0(
             );
             exit(EXIT_FAILURE);
         }
-        ___loggedstep_v_2 = false_0 != 0;
+        ___loggedstep_v_2 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -2177,7 +2177,7 @@ unsafe fn main_0(
             b"Parse\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_3: bool = true_0 != 0;
+    let mut ___loggedstep_v_3: bool = true;
     while ___loggedstep_v_3 {
         let mut parser: *mut otfcc_IFontBuilder = otfcc_newJsonReader();
         font = (*parser).read.expect("non-null function pointer")(
@@ -2211,7 +2211,7 @@ unsafe fn main_0(
             log_type_progress,
             push_stopwatch(&raw mut begin),
         );
-        ___loggedstep_v_3 = false_0 != 0;
+        ___loggedstep_v_3 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -2225,7 +2225,7 @@ unsafe fn main_0(
             b"Consolidate\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_4: bool = true_0 != 0;
+    let mut ___loggedstep_v_4: bool = true;
     while ___loggedstep_v_4 {
         otfcc_iFont.consolidate.expect("non-null function pointer")(font, options);
         (*(*options).logger)
@@ -2236,7 +2236,7 @@ unsafe fn main_0(
             log_type_progress,
             push_stopwatch(&raw mut begin),
         );
-        ___loggedstep_v_4 = false_0 != 0;
+        ___loggedstep_v_4 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -2250,7 +2250,7 @@ unsafe fn main_0(
             b"Build\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v_5: bool = true_0 != 0;
+    let mut ___loggedstep_v_5: bool = true;
     while ___loggedstep_v_5 {
         let mut writer: *mut otfcc_IFontSerializer = otfcc_newOTFWriter();
         let mut otf: *mut caryll_Buffer =
@@ -2265,7 +2265,7 @@ unsafe fn main_0(
                 b"Write to file\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v_6: bool = true_0 != 0;
+        let mut ___loggedstep_v_6: bool = true;
         while ___loggedstep_v_6 {
             let mut outfile: *mut FILE = fopen(
                 outputPath as *const ::core::ffi::c_char,
@@ -2294,7 +2294,7 @@ unsafe fn main_0(
                 outfile,
             );
             fclose(outfile);
-            ___loggedstep_v_6 = false_0 != 0;
+            ___loggedstep_v_6 = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -2313,7 +2313,7 @@ unsafe fn main_0(
         (*writer).free.expect("non-null function pointer")(writer as *mut otfcc_IFontSerializer);
         otfcc_iFont.free.expect("non-null function pointer")(font);
         sdsfree(outputPath);
-        ___loggedstep_v_5 = false_0 != 0;
+        ___loggedstep_v_5 = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

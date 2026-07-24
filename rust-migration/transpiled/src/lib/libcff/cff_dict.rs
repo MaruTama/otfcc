@@ -374,7 +374,7 @@ unsafe extern "C" fn callback_get_key(
 ) {
     let mut context: *mut cff_get_key_context = _context as *mut cff_get_key_context;
     if op == (*context).op && (*context).idx <= top as uint32_t {
-        (*context).found = true_0 != 0;
+        (*context).found = true;
         (*context).res = *stack.offset((*context).idx as isize);
     }
 }
@@ -393,7 +393,7 @@ unsafe extern "C" fn parseDictKey(
         op: 0,
         idx: 0,
     };
-    context.found = false_0 != 0;
+    context.found = false;
     context.idx = idx;
     context.op = op;
     context.res.t = 0 as cff_Value_Type;

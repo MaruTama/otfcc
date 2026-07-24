@@ -1867,8 +1867,8 @@ unsafe extern "C" fn initGlyfReference(mut ref_0: *mut glyf_ComponentReference) 
     (*ref_0).isAnchored = REF_XY;
     (*ref_0).outer = 0 as shapeid_t;
     (*ref_0).inner = (*ref_0).outer;
-    (*ref_0).roundToGrid = false_0 != 0;
-    (*ref_0).useMyMetrics = false_0 != 0;
+    (*ref_0).roundToGrid = false;
+    (*ref_0).useMyMetrics = false;
 }
 unsafe extern "C" fn copyGlyfReference(
     mut dst: *mut glyf_ComponentReference,
@@ -4222,7 +4222,7 @@ pub unsafe extern "C" fn otfcc_dumpGlyf(
             b"glyf\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut glyf: *mut json_value = json_object_new((*table).length);
         let mut j: glyphid_t = 0 as glyphid_t;
@@ -4243,7 +4243,7 @@ pub unsafe extern "C" fn otfcc_dumpGlyf(
         if !(*options).ignore_glyph_order {
             otfcc_dump_glyphorder(table, root);
         }
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -4436,8 +4436,8 @@ unsafe extern "C" fn glyf_parse_reference(mut refdump: *mut json_value) -> glyf_
         ref_0.b = 0.0f64 as scale_t;
         ref_0.c = 0.0f64 as scale_t;
         ref_0.d = 1.0f64 as scale_t;
-        ref_0.roundToGrid = false_0 != 0;
-        ref_0.useMyMetrics = false_0 != 0;
+        ref_0.roundToGrid = false;
+        ref_0.useMyMetrics = false;
     }
     return ref_0;
 }
@@ -4508,7 +4508,7 @@ unsafe extern "C" fn parse_maskbits(mut arr: *mut bool, mut bits: *mut json_valu
     if bits.is_null() {
         let mut j: shapeid_t = 0 as shapeid_t;
         while (j as ::core::ffi::c_int) < 0x100 as ::core::ffi::c_int {
-            *arr.offset(j as isize) = false_0 != 0;
+            *arr.offset(j as isize) = false;
             j = j.wrapping_add(1);
         }
     } else {
@@ -4529,7 +4529,7 @@ unsafe extern "C" fn parse_maskbits(mut arr: *mut bool, mut bits: *mut json_valu
                     *arr.offset(j_0 as isize) = (*b).u.dbl != 0.;
                 }
                 _ => {
-                    *arr.offset(j_0 as isize) = false_0 != 0;
+                    *arr.offset(j_0 as isize) = false;
                 }
             }
             j_0 = j_0.wrapping_add(1);
@@ -4744,7 +4744,7 @@ pub unsafe extern "C" fn otfcc_parseGlyf(
                 b"glyf\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             let mut numGlyphs: glyphid_t = (*table).u.object.length as glyphid_t;
             glyf = table_iGlyf.createN.expect("non-null function pointer")(numGlyphs as size_t);
@@ -5099,7 +5099,7 @@ pub unsafe extern "C" fn otfcc_parseGlyf(
                 sdsfree(gname);
                 j = j.wrapping_add(1);
             }
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -5298,7 +5298,7 @@ unsafe extern "C" fn json_boolof(mut cv: *const json_value) -> bool {
     {
         return (*cv).u.boolean != 0;
     }
-    return false_0 != 0;
+    return false;
 }
 #[inline]
 unsafe extern "C" fn json_obj_getbool(
@@ -5309,7 +5309,7 @@ unsafe extern "C" fn json_obj_getbool(
         || (*obj).type_0 as ::core::ffi::c_uint
             != json_object as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return false_0 != 0;
+        return false;
     }
     let mut _k: uint32_t = 0 as uint32_t;
     while _k < (*obj).u.object.length as uint32_t {
@@ -5326,7 +5326,7 @@ unsafe extern "C" fn json_obj_getbool(
         }
         _k = _k.wrapping_add(1);
     }
-    return false_0 != 0;
+    return false;
 }
 #[inline]
 unsafe extern "C" fn preserialize(mut x: *mut json_value) -> *mut json_value {

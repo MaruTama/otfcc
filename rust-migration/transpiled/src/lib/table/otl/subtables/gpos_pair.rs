@@ -3043,7 +3043,7 @@ pub unsafe extern "C" fn otfcc_build_gpos_pair_individual(
         j_0 = j_0.wrapping_add(1);
     }
     let mut cov: *mut otl_Coverage = covFromCD((*subtable).first);
-    otl_iCoverage.shrink.expect("non-null function pointer")(cov, true_0 != 0);
+    otl_iCoverage.shrink.expect("non-null function pointer")(cov, true);
     let mut root: *mut bk_Block = bk_new_Block(
         b16 as ::core::ffi::c_int,
         1 as ::core::ffi::c_int,

@@ -2084,7 +2084,7 @@ unsafe extern "C" fn callback_extract_fd(
         }
         3102 => {
             if top as ::core::ffi::c_int >= 3 as ::core::ffi::c_int {
-                (*meta).isCID = true_0 != 0;
+                (*meta).isCID = true;
                 (*meta).cidRegistry = sdsget_cff_sid(
                     (*stack.offset((top as ::core::ffi::c_int - 3 as ::core::ffi::c_int) as isize))
                         .c2rust_unnamed
@@ -3393,14 +3393,14 @@ pub unsafe extern "C" fn otfcc_dumpCFF(
             b"CFF\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         json_object_push(
             root,
             b"CFF_\0" as *const u8 as *const ::core::ffi::c_char,
             fdToJson(table),
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -3632,7 +3632,7 @@ unsafe extern "C" fn fdFromJson(
         json_object,
     );
     if !fdarraydump.is_null() {
-        (*table).isCID = true_0 != 0;
+        (*table).isCID = true;
         (*table).fdArrayCount = (*fdarraydump).u.object.length as tableid_t;
         (*table).fdArray = __caryll_allocate_clean(
             (::core::mem::size_of::<*mut table_CFF>() as size_t)
@@ -3645,7 +3645,7 @@ unsafe extern "C" fn fdFromJson(
             *fresh11 = fdFromJson(
                 (*(*fdarraydump).u.object.values.offset(j as isize)).value,
                 options,
-                false_0 != 0,
+                false,
             );
             if !(**(*table).fdArray.offset(j as isize)).fontName.is_null() {
                 sdsfree((**(*table).fdArray.offset(j as isize)).fontName);
@@ -3685,7 +3685,7 @@ unsafe extern "C" fn fdFromJson(
             sdsdup((*table).fontName),
             b"-subfont0\0" as *const u8 as *const ::core::ffi::c_char,
         );
-        (*table).isCID = true_0 != 0;
+        (*table).isCID = true;
     }
     if (*table).isCID as ::core::ffi::c_int != 0 && (*table).cidRegistry.is_null() {
         (*table).cidRegistry = sdsnew(b"CARYLL\0" as *const u8 as *const ::core::ffi::c_char);
@@ -3718,10 +3718,10 @@ pub unsafe extern "C" fn otfcc_parseCFF(
                 b"CFF\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
-            cff = fdFromJson(dump, options, true_0 != 0);
-            ___loggedstep_v = false_0 != 0;
+            cff = fdFromJson(dump, options, true);
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -5871,7 +5871,7 @@ unsafe extern "C" fn json_obj_getbool(
         || (*obj).type_0 as ::core::ffi::c_uint
             != json_object as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return false_0 != 0;
+        return false;
     }
     let mut _k: uint32_t = 0 as uint32_t;
     while _k < (*obj).u.object.length as uint32_t {
@@ -5888,7 +5888,7 @@ unsafe extern "C" fn json_obj_getbool(
         }
         _k = _k.wrapping_add(1);
     }
-    return false_0 != 0;
+    return false;
 }
 #[inline]
 unsafe extern "C" fn json_from_sds(str: sds) -> *mut json_value {

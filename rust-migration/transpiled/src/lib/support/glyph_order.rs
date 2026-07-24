@@ -2255,7 +2255,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
         }
     }
     if !s.is_null() {
-        return false_0 != 0;
+        return false;
     } else {
         s = __caryll_allocate_clean(
             ::core::mem::size_of::<otfcc_GlyphOrderEntry>() as size_t,
@@ -3121,7 +3121,7 @@ unsafe extern "C" fn otfcc_setGlyphOrderByName(
                 }
             }
         }
-        return true_0 != 0;
+        return true;
     };
 }
 unsafe extern "C" fn otfcc_gordNameAFieldShared(
@@ -3430,10 +3430,10 @@ unsafe extern "C" fn otfcc_gordNameAFieldShared(
     }
     if !t.is_null() {
         *field = (*t).name;
-        return true_0 != 0;
+        return true;
     } else {
         *field = ::core::ptr::null_mut::<::core::ffi::c_char>();
-        return false_0 != 0;
+        return false;
     };
 }
 unsafe extern "C" fn otfcc_gordConsolidateHandle(
@@ -3755,7 +3755,7 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
                 .expect("non-null function pointer")(
                 h as *mut otfcc_Handle, (*t).gid, (*t).name
             );
-            return true_0 != 0;
+            return true;
         }
         let mut _hf_hashv_0: ::core::ffi::c_uint = 0;
         let mut _hj_i_0: ::core::ffi::c_uint = 0;
@@ -4080,7 +4080,7 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
                 .expect("non-null function pointer")(
                 h as *mut otfcc_Handle, (*t).gid, (*t).name
             );
-            return true_0 != 0;
+            return true;
         }
     } else if (*h).state as ::core::ffi::c_uint
         == HANDLE_STATE_NAME as ::core::ffi::c_int as ::core::ffi::c_uint
@@ -4408,7 +4408,7 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
                 (*t_0).gid,
                 (*t_0).name,
             );
-            return true_0 != 0;
+            return true;
         }
     } else if (*h).state as ::core::ffi::c_uint
         == HANDLE_STATE_INDEX as ::core::ffi::c_int as ::core::ffi::c_uint
@@ -4421,10 +4421,10 @@ unsafe extern "C" fn otfcc_gordConsolidateHandle(
                 .expect("non-null function pointer")(
                 h as *mut otfcc_Handle, (*h).index, name
             );
-            return true_0 != 0;
+            return true;
         }
     }
-    return false_0 != 0;
+    return false;
 }
 unsafe extern "C" fn gordLookupName(mut go: *mut otfcc_GlyphOrder, mut name: sds) -> bool {
     let mut t: *mut otfcc_GlyphOrderEntry = ::core::ptr::null_mut::<otfcc_GlyphOrderEntry>();
@@ -4729,9 +4729,9 @@ unsafe extern "C" fn gordLookupName(mut go: *mut otfcc_GlyphOrder, mut name: sds
         }
     }
     if !t.is_null() {
-        return true_0 != 0;
+        return true;
     }
-    return false_0 != 0;
+    return false;
 }
 #[no_mangle]
 pub static mut otfcc_pkgGlyphOrder: otfcc_GlyphOrderPackage =  {

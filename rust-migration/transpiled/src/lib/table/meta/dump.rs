@@ -266,7 +266,7 @@ pub unsafe extern "C" fn otfcc_dumpMeta(
             b"meta\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _meta: *mut json_value = json_object_new(3 as size_t);
         json_object_push(
@@ -339,7 +339,7 @@ pub unsafe extern "C" fn otfcc_dumpMeta(
             b"meta\0" as *const u8 as *const ::core::ffi::c_char,
             _meta,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);

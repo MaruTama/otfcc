@@ -171,24 +171,24 @@ pub unsafe extern "C" fn otfcc_Options_optimizeTo(
     mut options: *mut otfcc_Options,
     mut level: uint8_t,
 ) {
-    (*options).cff_rollCharString = false_0 != 0;
-    (*options).short_post = false_0 != 0;
-    (*options).ignore_glyph_order = false_0 != 0;
-    (*options).cff_short_vmtx = false_0 != 0;
-    (*options).merge_features = false_0 != 0;
-    (*options).force_cid = false_0 != 0;
-    (*options).cff_doSubroutinize = false_0 != 0;
+    (*options).cff_rollCharString = false;
+    (*options).short_post = false;
+    (*options).ignore_glyph_order = false;
+    (*options).cff_short_vmtx = false;
+    (*options).merge_features = false;
+    (*options).force_cid = false;
+    (*options).cff_doSubroutinize = false;
     if level as ::core::ffi::c_int >= 1 as ::core::ffi::c_int {
-        (*options).cff_rollCharString = true_0 != 0;
-        (*options).cff_short_vmtx = true_0 != 0;
+        (*options).cff_rollCharString = true;
+        (*options).cff_short_vmtx = true;
     }
     if level as ::core::ffi::c_int >= 2 as ::core::ffi::c_int {
-        (*options).short_post = true_0 != 0;
-        (*options).cff_doSubroutinize = true_0 != 0;
-        (*options).merge_features = true_0 != 0;
+        (*options).short_post = true;
+        (*options).cff_doSubroutinize = true;
+        (*options).merge_features = true;
     }
     if level as ::core::ffi::c_int >= 3 as ::core::ffi::c_int {
-        (*options).ignore_glyph_order = true_0 != 0;
-        (*options).force_cid = true_0 != 0;
+        (*options).ignore_glyph_order = true;
+        (*options).force_cid = true;
     }
 }

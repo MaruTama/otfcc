@@ -1832,7 +1832,7 @@ unsafe extern "C" fn createGlyphOrder(
                 .expect("non-null function pointer")(glyph_order, gname)
             {
                 let mut n: glyphid_t = 2 as glyphid_t;
-                let mut stillIn: bool = false_0 != 0;
+                let mut stillIn: bool = false;
                 loop {
                     if stillIn {
                         n = (n as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as glyphid_t;

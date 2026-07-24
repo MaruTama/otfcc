@@ -888,7 +888,7 @@ pub unsafe extern "C" fn otfcc_dumpPost(
             b"post\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut post: *mut json_value = json_object_new(10 as size_t);
         json_object_push(
@@ -941,7 +941,7 @@ pub unsafe extern "C" fn otfcc_dumpPost(
             b"post\0" as *const u8 as *const ::core::ffi::c_char,
             post,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -970,7 +970,7 @@ pub unsafe extern "C" fn otfcc_parsePost(
                 b"post\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             if (*options).short_post {
                 (*post).version = 0x30000 as ::core::ffi::c_int as f16dot16;
@@ -1012,7 +1012,7 @@ pub unsafe extern "C" fn otfcc_parsePost(
                 table,
                 b"maxMemType1\0" as *const u8 as *const ::core::ffi::c_char,
             ) as uint32_t;
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -1165,7 +1165,7 @@ unsafe extern "C" fn json_obj_getbool(
         || (*obj).type_0 as ::core::ffi::c_uint
             != json_object as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return false_0 != 0;
+        return false;
     }
     let mut _k: uint32_t = 0 as uint32_t;
     while _k < (*obj).u.object.length as uint32_t {
@@ -1182,7 +1182,7 @@ unsafe extern "C" fn json_obj_getbool(
         }
         _k = _k.wrapping_add(1);
     }
-    return false_0 != 0;
+    return false;
 }
 #[inline]
 unsafe extern "C" fn read_16u(mut src: *const uint8_t) -> uint16_t {

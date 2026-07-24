@@ -1740,7 +1740,7 @@ pub unsafe extern "C" fn otfcc_dumpGDEF(
             b"GDEF\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut _gdef: *mut json_value = json_object_new(4 as size_t);
         if !(*gdef).glyphClassDef.is_null() {
@@ -1769,7 +1769,7 @@ pub unsafe extern "C" fn otfcc_dumpGDEF(
             b"GDEF\0" as *const u8 as *const ::core::ffi::c_char,
             _gdef,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1881,7 +1881,7 @@ pub unsafe extern "C" fn otfcc_parseGDEF(
                 b"GDEF\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             gdef = (
                 table_iGDEF.create.expect("non-null function pointer"))();
@@ -1902,7 +1902,7 @@ pub unsafe extern "C" fn otfcc_parseGDEF(
                 ),
                 &raw mut (*gdef).ligCarets,
             );
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(

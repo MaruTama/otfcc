@@ -815,7 +815,7 @@ pub unsafe extern "C" fn otfcc_dumpOS_2(
             b"OS/2\0" as *const u8 as *const ::core::ffi::c_char,
         ),
     );
-    let mut ___loggedstep_v: bool = true_0 != 0;
+    let mut ___loggedstep_v: bool = true;
     while ___loggedstep_v {
         let mut os_2: *mut json_value = json_object_new(30 as size_t);
         json_object_push(
@@ -1056,7 +1056,7 @@ pub unsafe extern "C" fn otfcc_dumpOS_2(
             b"OS_2\0" as *const u8 as *const ::core::ffi::c_char,
             os_2,
         );
-        ___loggedstep_v = false_0 != 0;
+        ___loggedstep_v = false;
         (*(*options).logger)
             .finish
             .expect("non-null function pointer")((*options).logger as *mut otfcc_ILogger);
@@ -1088,7 +1088,7 @@ pub unsafe extern "C" fn otfcc_parseOS_2(
                 b"OS/2\0" as *const u8 as *const ::core::ffi::c_char,
             ),
         );
-        let mut ___loggedstep_v: bool = true_0 != 0;
+        let mut ___loggedstep_v: bool = true;
         while ___loggedstep_v {
             (*os_2).version = json_obj_getnum_fallback(
                 table,
@@ -1339,7 +1339,7 @@ pub unsafe extern "C" fn otfcc_parseOS_2(
                     );
                 }
             }
-            ___loggedstep_v = false_0 != 0;
+            ___loggedstep_v = false;
             (*(*options).logger)
                 .finish
                 .expect("non-null function pointer")(
@@ -1493,7 +1493,7 @@ unsafe extern "C" fn json_obj_getbool(
         || (*obj).type_0 as ::core::ffi::c_uint
             != json_object as ::core::ffi::c_int as ::core::ffi::c_uint
     {
-        return false_0 != 0;
+        return false;
     }
     let mut _k: uint32_t = 0 as uint32_t;
     while _k < (*obj).u.object.length as uint32_t {
@@ -1510,7 +1510,7 @@ unsafe extern "C" fn json_obj_getbool(
         }
         _k = _k.wrapping_add(1);
     }
-    return false_0 != 0;
+    return false;
 }
 #[inline]
 unsafe extern "C" fn otfcc_dump_flags(

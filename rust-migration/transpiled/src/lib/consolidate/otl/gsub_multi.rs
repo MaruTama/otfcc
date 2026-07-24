@@ -1631,7 +1631,7 @@ pub unsafe extern "C" fn consolidate_gsub_multi(
             fontop_consolidateCoverage(font, (*(*subtable).items.offset(k as isize)).to, options);
             otl_iCoverage.shrink.expect("non-null function pointer")(
                 (*(*subtable).items.offset(k as isize)).to,
-                false_0 != 0,
+                false,
             );
             if (*(*(*subtable).items.offset(k as isize)).to).numGlyphs == 0 {
                 (*(*options).logger)
