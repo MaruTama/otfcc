@@ -2,7 +2,6 @@ extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
     pub type _IO_marker;
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -28,6 +27,16 @@ extern "C" {
     fn otfcc_build_chaining(_subtable: *const otl_Subtable) -> *mut caryll_Buffer;
     fn otfcc_build_contextual(_subtable: *const otl_Subtable) -> *mut caryll_Buffer;
     fn otfcc_chainingLookupIsContextualLookup(lookup: *const otl_Lookup) -> bool;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint8_t = u8;

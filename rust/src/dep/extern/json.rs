@@ -21,9 +21,12 @@ extern "C" {
         __dest: *mut ::core::ffi::c_char,
         __src: *const ::core::ffi::c_char,
     ) -> *mut ::core::ffi::c_char;
+    #[cfg(not(target_os = "macos"))]
     fn __ctype_b_loc() -> *mut *const ::core::ffi::c_ushort;
     fn pow(__x: ::core::ffi::c_double, __y: ::core::ffi::c_double) -> ::core::ffi::c_double;
 }
+#[cfg(target_os = "macos")]
+use crate::src::lib::support::ctype_compat::__ctype_b_loc;
 pub type __int64_t = i64;
 pub type int64_t = __int64_t;
 pub type uintptr_t = usize;

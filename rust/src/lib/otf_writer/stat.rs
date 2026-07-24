@@ -2,7 +2,6 @@ extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
     pub type _IO_marker;
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -19,6 +18,16 @@ extern "C" {
     static otfcc_iFont: __caryll_elementinterface_otfcc_Font;
     fn time(__timer: *mut time_t) -> time_t;
     fn round(__x: ::core::ffi::c_double) -> ::core::ffi::c_double;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __int8_t = i8;

@@ -2,7 +2,6 @@ extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
     pub type _IO_marker;
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -80,6 +79,16 @@ extern "C" {
     fn bk_gpos_value(v: otl_PositionValue, format: uint16_t) -> *mut bk_Block;
     fn gpos_dump_value(value: otl_PositionValue) -> *mut json_value;
     fn gpos_parse_value(pos: *mut json_value) -> otl_PositionValue;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_16u};

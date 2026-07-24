@@ -2,7 +2,6 @@ extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
     pub type _IO_marker;
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -37,6 +36,16 @@ extern "C" {
     static iSubtable_gpos_cursive: __caryll_vectorinterface_subtable_gpos_cursive;
     static iSubtable_gpos_markToSingle: __caryll_elementinterface_subtable_gpos_markToSingle;
     static iSubtable_gpos_markToLigature: __caryll_elementinterface_subtable_gpos_markToLigature;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::cvec::{

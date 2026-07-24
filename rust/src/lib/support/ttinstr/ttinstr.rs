@@ -2,7 +2,6 @@ extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
     pub type _IO_marker;
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -54,8 +53,22 @@ extern "C" {
     fn sdsfree(s: sds);
     fn base64_encode(src: *const uint8_t, len: size_t, out_len: *mut size_t) -> *mut uint8_t;
     fn base64_decode(src: *const uint8_t, len: size_t, out_len: *mut size_t) -> *mut uint8_t;
+    #[cfg(not(target_os = "macos"))]
     fn __ctype_b_loc() -> *mut *const ::core::ffi::c_ushort;
+    #[cfg(not(target_os = "macos"))]
     fn __ctype_tolower_loc() -> *mut *const __int32_t;
+}
+#[cfg(target_os = "macos")]
+use crate::src::lib::support::ctype_compat::{__ctype_b_loc, __ctype_tolower_loc};
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub type __uint8_t = u8;

@@ -5,7 +5,6 @@ extern "C" {
     fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn exit(__status: ::core::ffi::c_int) -> !;
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -33,6 +32,16 @@ extern "C" {
     static glyf_iReferenceList: __caryll_vectorinterface_glyf_ReferenceList;
     static table_iGlyf: __caryll_vectorinterface_table_glyf;
     fn otfcc_newGlyf_glyph() -> *mut glyf_Glyph;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_8u, read_8s, read_16u, read_16s, read_32u};
