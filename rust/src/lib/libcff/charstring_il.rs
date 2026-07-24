@@ -2,7 +2,6 @@ extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
     pub type _IO_marker;
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -20,6 +19,16 @@ extern "C" {
     fn cff_mergeCS2Special(blob: *mut caryll_Buffer, val: uint8_t);
     static glyf_iPoint: __caryll_elementinterface_glyf_Point;
     static glyf_iContour: __caryll_vectorinterface_glyf_Contour;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean, __caryll_reallocate};
 pub type __builtin_va_list = __va_list;

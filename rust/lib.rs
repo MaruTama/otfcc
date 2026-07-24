@@ -82,6 +82,7 @@ pub mod src {
             } // mod aglfn
             pub mod alloc;
             pub mod binio;
+            pub mod ctype_compat;
             pub mod cvec;
             pub mod base64 {
                 pub mod base64;

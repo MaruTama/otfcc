@@ -2,7 +2,6 @@ extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
     pub type _IO_marker;
-    static mut stderr: *mut FILE;
     fn fclose(__stream: *mut FILE) -> ::core::ffi::c_int;
     fn fprintf(
         __stream: *mut FILE,
@@ -23,6 +22,16 @@ extern "C" {
     fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn exit(__status: ::core::ffi::c_int) -> !;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint8_t = u8;

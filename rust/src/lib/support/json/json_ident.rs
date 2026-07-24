@@ -22,12 +22,21 @@ extern "C" {
     ) -> ::core::ffi::c_int;
     fn strdup(__s: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
     fn strlen(__s: *const ::core::ffi::c_char) -> size_t;
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
         ...
     ) -> ::core::ffi::c_int;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 pub type __uint16_t = u16;

@@ -31,10 +31,17 @@ extern "C" {
     fn strchr(__s: *const ::core::ffi::c_char, __c: ::core::ffi::c_int)
         -> *mut ::core::ffi::c_char;
     fn strlen(__s: *const ::core::ffi::c_char) -> size_t;
+    #[cfg(not(target_os = "macos"))]
     fn __ctype_b_loc() -> *mut *const ::core::ffi::c_ushort;
+    #[cfg(not(target_os = "macos"))]
     fn __ctype_tolower_loc() -> *mut *const __int32_t;
+    #[cfg(not(target_os = "macos"))]
     fn __ctype_toupper_loc() -> *mut *const __int32_t;
 }
+#[cfg(target_os = "macos")]
+use crate::src::lib::support::ctype_compat::{
+    __ctype_b_loc, __ctype_tolower_loc, __ctype_toupper_loc,
+};
 pub type __builtin_va_list = __va_list;
 #[derive(Copy, Clone)]
 #[repr(C)]

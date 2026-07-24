@@ -24,7 +24,9 @@ extern "C" {
     fn json_measure_ex(_: *mut json_value, _: json_serialize_opts) -> size_t;
     fn json_serialize_ex(buf: *mut ::core::ffi::c_char, _: *mut json_value, _: json_serialize_opts);
     fn json_builder_free(_: *mut json_value);
+    #[cfg(not(target_os = "macos"))]
     static mut stdin: *mut FILE;
+    #[cfg(not(target_os = "macos"))]
     static mut stdout: *mut FILE;
     fn fclose(__stream: *mut FILE) -> ::core::ffi::c_int;
     fn fopen(
@@ -76,6 +78,13 @@ extern "C" {
     fn isatty(__fd: ::core::ffi::c_int) -> ::core::ffi::c_int;
     fn time_now(tv: *mut timespec);
     fn push_stopwatch(sofar: *mut timespec) -> sds;
+}
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stdinp"]
+    static mut stdin: *mut FILE;
+    #[link_name = "__stdoutp"]
+    static mut stdout: *mut FILE;
 }
 pub type __int8_t = i8;
 pub type __uint8_t = u8;

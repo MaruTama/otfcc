@@ -9,7 +9,6 @@ extern "C" {
         __size: size_t,
         __compar: __compar_fn_t,
     );
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -21,6 +20,16 @@ extern "C" {
     fn bufwrite32b(buf: *mut caryll_Buffer, x: uint32_t);
     fn bk_new_Block(type0: ::core::ffi::c_int, ...) -> *mut bk_Block;
     fn bk_cellIsPointer(cell: *mut bk_Cell) -> bool;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;

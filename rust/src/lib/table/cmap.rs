@@ -11,7 +11,6 @@ extern "C" {
     fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn exit(__status: ::core::ffi::c_int) -> !;
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -66,6 +65,16 @@ extern "C" {
     fn bk_newBlockFromBuffer(buf: *mut caryll_Buffer) -> *mut bk_Block;
     fn bk_newBlockFromBufferCopy(buf: *const caryll_Buffer) -> *mut bk_Block;
     fn bk_build_Block(root: *mut bk_Block) -> *mut caryll_Buffer;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::binio::{read_8u, read_16u, read_24u, read_32u};

@@ -11,7 +11,6 @@ extern "C" {
         __size: size_t,
         __compar: __compar_fn_t,
     );
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -74,6 +73,16 @@ extern "C" {
     fn json_serialize_ex(buf: *mut ::core::ffi::c_char, _: *mut json_value, _: json_serialize_opts);
     fn json_builder_free(_: *mut json_value);
     fn round(__x: ::core::ffi::c_double) -> ::core::ffi::c_double;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::cvec::{

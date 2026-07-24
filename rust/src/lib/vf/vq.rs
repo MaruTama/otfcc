@@ -20,7 +20,6 @@ extern "C" {
         __c: ::core::ffi::c_int,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -29,6 +28,16 @@ extern "C" {
     fn fabs(__x: ::core::ffi::c_double) -> ::core::ffi::c_double;
     fn vq_compareRegion(a: *const vq_Region, b: *const vq_Region) -> ::core::ffi::c_int;
     fn vq_showRegion(r: *const vq_Region);
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::cvec::{
     cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,

@@ -24,12 +24,21 @@ extern "C" {
     fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn exit(__status: ::core::ffi::c_int) -> !;
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
         ...
     ) -> ::core::ffi::c_int;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 pub type __off_t = ::core::ffi::c_long;
 pub type __off64_t = ::core::ffi::c_long;

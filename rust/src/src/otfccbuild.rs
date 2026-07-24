@@ -13,9 +13,10 @@ extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
     pub type _IO_marker;
+    #[cfg(not(target_os = "macos"))]
     static mut stdin: *mut FILE;
+    #[cfg(not(target_os = "macos"))]
     static mut stdout: *mut FILE;
-    static mut stderr: *mut FILE;
     fn fclose(__stream: *mut FILE) -> ::core::ffi::c_int;
     fn fopen(
         __filename: *const ::core::ffi::c_char,
@@ -91,6 +92,23 @@ extern "C" {
     fn otfcc_newOTFWriter() -> *mut otfcc_IFontSerializer;
     fn time_now(tv: *mut timespec);
     fn push_stopwatch(sofar: *mut timespec) -> sds;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
+}
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stdinp"]
+    static mut stdin: *mut FILE;
+    #[link_name = "__stdoutp"]
+    static mut stdout: *mut FILE;
 }
 pub type __int8_t = i8;
 pub type __uint8_t = u8;

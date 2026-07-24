@@ -11,7 +11,6 @@ extern "C" {
         __compar: __compar_fn_t,
     );
     fn json_value_free(_: *mut json_value);
-    static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
         __format: *const ::core::ffi::c_char,
@@ -88,6 +87,16 @@ extern "C" {
         length: uint32_t,
         options: *const otfcc_Options,
     ) -> *mut json_value;
+}
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    #[link_name = "__stderrp"]
+    static mut stderr: *mut FILE;
+}
+#[cfg(not(target_os = "macos"))]
+extern "C" {
+    static mut stderr: *mut FILE;
 }
 use crate::src::lib::support::alloc::{__caryll_allocate_clean};
 use crate::src::lib::support::cvec::{
