@@ -1,7 +1,5 @@
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
-    fn calloc(__nmemb: size_t, __size: size_t) -> *mut ::core::ffi::c_void;
-    fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn qsort(
         __base: *mut ::core::ffi::c_void,
@@ -54,6 +52,10 @@ extern "C" {
     fn bkFromAnchor(a: otl_Anchor) -> *mut bk_Block;
 }
 use crate::src::lib::support::binio::{read_16u};
+use crate::src::lib::support::cvec::{
+    cvec_grow, cvec_grow_to, cvec_grow_to_n, cvec_init, cvec_move, cvec_pop, cvec_push,
+    cvec_resize_to, CVecRaw,
+};
 pub type __uint8_t = u8;
 pub type __uint16_t = u16;
 pub type __uint32_t = u32;
@@ -677,32 +679,12 @@ static mut gss_typeinfo: __caryll_elementinterface_otl_GposCursiveEntry = {
     }
 };
 #[inline]
-unsafe extern "C" fn subtable_gpos_cursive_move(
-    mut dst: *mut subtable_gpos_cursive,
-    mut src: *mut subtable_gpos_cursive,
-) {
-    *dst = *src;
-    subtable_gpos_cursive_init(src);
+unsafe extern "C" fn subtable_gpos_cursive_move(dst: *mut subtable_gpos_cursive, src: *mut subtable_gpos_cursive) {
+    cvec_move(as_cvec(dst), as_cvec(src));
 }
 #[inline]
-unsafe extern "C" fn subtable_gpos_cursive_resizeTo(
-    mut arr: *mut subtable_gpos_cursive,
-    mut target: size_t,
-) {
-    (*arr).capacity = target;
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GposCursiveEntry>() as size_t),
-        ) as *mut otl_GposCursiveEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GposCursiveEntry>() as size_t,
-        ) as *mut otl_GposCursiveEntry;
-    };
+unsafe extern "C" fn subtable_gpos_cursive_resizeTo(arr: *mut subtable_gpos_cursive, target: size_t) {
+    cvec_resize_to(as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn subtable_gpos_cursive_filterEnv(
@@ -736,10 +718,12 @@ unsafe extern "C" fn subtable_gpos_cursive_filterEnv(
     (*arr).length = j;
 }
 #[inline]
-unsafe extern "C" fn subtable_gpos_cursive_init(mut arr: *mut subtable_gpos_cursive) {
-    (*arr).length = 0 as size_t;
-    (*arr).capacity = 0 as size_t;
-    (*arr).items = ::core::ptr::null_mut::<otl_GposCursiveEntry>();
+unsafe fn as_cvec(arr: *mut subtable_gpos_cursive) -> *mut CVecRaw<otl_GposCursiveEntry> {
+    arr as *mut CVecRaw<otl_GposCursiveEntry>
+}
+#[inline]
+unsafe extern "C" fn subtable_gpos_cursive_init(arr: *mut subtable_gpos_cursive) {
+    cvec_init(as_cvec(arr));
 }
 #[inline]
 unsafe extern "C" fn subtable_gpos_cursive_disposeItem(
@@ -814,58 +798,20 @@ unsafe extern "C" fn subtable_gpos_cursive_fill(
     }
 }
 #[inline]
-unsafe extern "C" fn subtable_gpos_cursive_push(
-    mut arr: *mut subtable_gpos_cursive,
-    mut elem: otl_GposCursiveEntry,
-) {
-    subtable_gpos_cursive_grow(arr);
-    let fresh0 = (*arr).length;
-    (*arr).length = (*arr).length.wrapping_add(1);
-    *(*arr).items.offset(fresh0 as isize) = elem;
+unsafe extern "C" fn subtable_gpos_cursive_push(arr: *mut subtable_gpos_cursive, elem: otl_GposCursiveEntry) {
+    cvec_push(as_cvec(arr), elem);
 }
 #[inline]
-unsafe extern "C" fn subtable_gpos_cursive_grow(mut arr: *mut subtable_gpos_cursive) {
-    subtable_gpos_cursive_growTo(arr, (*arr).length.wrapping_add(1 as size_t));
+unsafe extern "C" fn subtable_gpos_cursive_grow(arr: *mut subtable_gpos_cursive) {
+    cvec_grow(as_cvec(arr));
 }
 #[inline]
-unsafe extern "C" fn subtable_gpos_cursive_growTo(
-    mut arr: *mut subtable_gpos_cursive,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    while (*arr).capacity < target {
-        (*arr).capacity = (*arr)
-            .capacity
-            .wrapping_add((*arr).capacity.wrapping_div(2 as size_t));
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GposCursiveEntry>() as size_t),
-        ) as *mut otl_GposCursiveEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GposCursiveEntry>() as size_t,
-        ) as *mut otl_GposCursiveEntry;
-    };
+unsafe extern "C" fn subtable_gpos_cursive_growTo(arr: *mut subtable_gpos_cursive, target: size_t) {
+    cvec_grow_to(as_cvec(arr), target);
 }
 #[inline]
-unsafe extern "C" fn subtable_gpos_cursive_pop(
-    mut arr: *mut subtable_gpos_cursive,
-) -> otl_GposCursiveEntry {
-    let mut t: otl_GposCursiveEntry = *(*arr)
-        .items
-        .offset((*arr).length.wrapping_sub(1 as size_t) as isize);
-    (*arr).length = (*arr).length.wrapping_sub(1 as size_t);
-    return t;
+unsafe extern "C" fn subtable_gpos_cursive_pop(arr: *mut subtable_gpos_cursive) -> otl_GposCursiveEntry {
+    cvec_pop(as_cvec(arr))
 }
 #[inline]
 unsafe extern "C" fn subtable_gpos_cursive_copyReplace(
@@ -945,32 +891,8 @@ unsafe extern "C" fn subtable_gpos_cursive_initCapN(
     subtable_gpos_cursive_growToN(arr, n);
 }
 #[inline]
-unsafe extern "C" fn subtable_gpos_cursive_growToN(
-    mut arr: *mut subtable_gpos_cursive,
-    mut target: size_t,
-) {
-    if target <= (*arr).capacity {
-        return;
-    }
-    if (*arr).capacity < __CARYLL_VECTOR_INITIAL_SIZE as size_t {
-        (*arr).capacity = __CARYLL_VECTOR_INITIAL_SIZE as size_t;
-    }
-    if (*arr).capacity < target {
-        (*arr).capacity = target.wrapping_add(1 as size_t);
-    }
-    if !(*arr).items.is_null() {
-        (*arr).items = realloc(
-            (*arr).items as *mut ::core::ffi::c_void,
-            (*arr)
-                .capacity
-                .wrapping_mul(::core::mem::size_of::<otl_GposCursiveEntry>() as size_t),
-        ) as *mut otl_GposCursiveEntry;
-    } else {
-        (*arr).items = calloc(
-            (*arr).capacity,
-            ::core::mem::size_of::<otl_GposCursiveEntry>() as size_t,
-        ) as *mut otl_GposCursiveEntry;
-    };
+unsafe extern "C" fn subtable_gpos_cursive_growToN(arr: *mut subtable_gpos_cursive, target: size_t) {
+    cvec_grow_to_n(as_cvec(arr), target);
 }
 #[inline]
 unsafe extern "C" fn subtable_gpos_cursive_initN(
